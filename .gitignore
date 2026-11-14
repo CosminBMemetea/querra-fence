@@ -1,0 +1,8 @@
+# generated at runtime
+run/
+reports/
+worlds/pasture.sdf
+docs/media/raw/
+__pycache__/
+*.pyc
+.DS_Store
