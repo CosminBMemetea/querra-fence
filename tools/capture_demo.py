@@ -22,7 +22,6 @@ import geo  # noqa: E402
 from gz.transport13 import Node  # noqa: E402
 from gz.msgs10.boolean_pb2 import Boolean  # noqa: E402
 from gz.msgs10.cameratrack_pb2 import CameraTrack  # noqa: E402
-from gz.msgs10.gui_camera_pb2 import GUICamera  # noqa: E402
 from gz.msgs10.image_pb2 import Image  # noqa: E402
 from gz.msgs10.pose_v_pb2 import Pose_V  # noqa: E402
 from gz.msgs10.stringmsg_pb2 import StringMsg  # noqa: E402
@@ -62,45 +61,25 @@ def on_poses(msg):
         latest["poses"].update(poses)
 
 
-def quat_from_rpy(r, p, y):
-    cr, sr = math.cos(r / 2), math.sin(r / 2)
-    cp, sp = math.cos(p / 2), math.sin(p / 2)
-    cy, sy = math.cos(y / 2), math.sin(y / 2)
-    return (cr * cp * cy + sr * sp * sy, sr * cp * cy - cr * sp * sy, cr * sp * cy + sr * cp * sy, cr * cp * sy - sr * sp * cy)
-
-
-def look(cam, target):
-    dx, dy, dz = target[0] - cam[0], target[1] - cam[1], target[2] - cam[2]
-    yaw = math.atan2(dy, dx)
-    pitch = math.atan2(-dz, math.hypot(dx, dy))
-    return quat_from_rpy(0, pitch, yaw)
-
-
-def move_to(cam, target, settle=2.5):
-    track(None)
-    req = GUICamera()
-    req.pose.position.x, req.pose.position.y, req.pose.position.z = cam
-    w, x, y, z = look(cam, target)
-    req.pose.orientation.w, req.pose.orientation.x, req.pose.orientation.y, req.pose.orientation.z = w, x, y, z
-    node.request("/gui/move_to/pose", req, GUICamera, Boolean, 2000)
-    time.sleep(settle)
-
-
 track_pub = node.advertise("/gui/track", CameraTrack)
 
 
-def track(offset, pgain=0.05):
+def track(offset, pgain=0.05, target=DRONE):
+    """GUI camera follows `target` (a model) at `offset` and looks at it."""
     ct = CameraTrack()
-    if offset is None:
-        ct.track_mode = CameraTrack.NONE
-    else:
-        ct.track_mode = CameraTrack.FOLLOW_LOOK_AT
-        ct.follow_target.name = DRONE
-        ct.track_target.name = DRONE
-        ct.follow_offset.x, ct.follow_offset.y, ct.follow_offset.z = offset
-        ct.follow_pgain = pgain
-        ct.track_pgain = pgain * 1.5
+    ct.track_mode = CameraTrack.FOLLOW_LOOK_AT
+    ct.follow_target.name = target
+    ct.track_target.name = target
+    ct.follow_offset.x, ct.follow_offset.y, ct.follow_offset.z = offset
+    ct.follow_pgain = pgain
+    ct.track_pgain = min(1.0, pgain * 1.5)
     track_pub.publish(ct)
+
+
+def frame(target, offset, settle=2.5):
+    """Snap the camera to a still view around one of the invisible focus_* models."""
+    track(offset, 1.0, target)
+    time.sleep(settle)
 
 
 def shot(name, wait=0.6):
@@ -187,18 +166,17 @@ def main():
     time.sleep(4)
 
     # 1. before takeoff: the whole pasture, then the drone on its pad
-    move_to((cx - 45, cy - 98, 58), (cx, cy + 4, 0), 3.5)
+    frame("focus_center", (-45, -98, 58), 3.5)
     shot("01_pasture")
-    move_to((-2.6, -1.9, 1.25), (0.15, 0.1, 0.3), 3.0)
+    frame(DRONE, (-2.6, -1.9, 0.95), 3.0)
     shot("02_drone_on_pad")
-    fe = fence.posts[0]
-    move_to((fe["x"] - 9, fe["y"] - 5, 3.0), (fe["x"] + 4, fe["y"] + 3, 0.8), 3.0)
+    frame("focus_energizer", (-12, -7, 2.2), 3.0)
     shot("03_fence_energizer")
 
     # 2. go: chase camera during takeoff and flight
     rec = Recorder()
     rec.start()
-    track((-7.0, -5.0, 3.5), 0.05)
+    track((-5.0, -3.5, 2.2), 0.08)
     open(GO_FILE, "w").close()
     print("[capture] mission go", flush=True)
     while "Armat" not in mission_log():
@@ -206,7 +184,7 @@ def main():
     t_arm = time.time()
     while time.time() - t_arm < 10:
         shot("04_takeoff", wait=0.2)
-    track((-10.0, -6.0, 5.5), 0.04)
+    track((-6.0, -4.0, 3.0), 0.08)
 
     seen_events = 0
     last_still = time.time()
@@ -229,16 +207,12 @@ def main():
     time.sleep(1.0)
 
     # 3. after landing: the result from above + close-ups of each fault
-    track(None)
-    time.sleep(1.0)
-    move_to((cx + 30, cy - 104, 72), (cx - 2, cy + 8, 0), 4.0)
+    frame("focus_center", (30, -104, 72), 4.0)
     shot("06_result_overview")
     for ft in cfg["faults"]:
-        ax, ay, _ = fence.fault_anchor(ft)
         ox, oy = fence.fault_out(ft)
         tx, ty = -oy, ox
-        cam = (ax + ox * 7 + tx * 5, ay + oy * 7 + ty * 5, 4.2)
-        move_to(cam, (ax, ay, 0.6), 3.0)
+        frame("focus_" + ft["id"], (ox * 7 + tx * 5, oy * 7 + ty * 5, 3.6), 3.0)
         shot("07_fault_%s" % ft["id"])
     with open(os.path.join(RAW, "manifest.json"), "w") as f:
         json.dump({"frames": rec.n, "faults": [f["id"] for f in cfg["faults"]]}, f)

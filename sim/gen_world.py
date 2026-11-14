@@ -213,6 +213,14 @@ def main():
     ]
     for a in geo.herd_layout(cfg, fence):
         parts.append(build_animal(a))
+    # puncte invizibile pe care camera GUI le poate urmări (centrul pășunii, energizatorul, fiecare defect)
+    cx = sum(p[0] for p in fence.poly) / len(fence.poly)
+    cy = sum(p[1] for p in fence.poly) / len(fence.poly)
+    p0 = fence.posts[0]
+    focus = [("focus_center", cx, cy, 0.0), ("focus_energizer", p0["x"] + 3, p0["y"] + 2, 0.8)]
+    focus += [("focus_" + ft["id"], fence.fault_anchor(ft)[0], fence.fault_anchor(ft)[1], 0.6) for ft in cfg["faults"]]
+    for name, x, y, z in focus:
+        parts.append('<model name="%s"><static>true</static><pose>%.3f %.3f %.3f 0 0 0</pose><link name="link"/></model>' % (name, x, y, z))
 
     world = """<?xml version="1.0" encoding="UTF-8"?>
 <!-- GENERAT de sim/gen_world.py din fence.json. Nu edita de mână: schimbă fence.json. -->

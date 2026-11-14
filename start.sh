@@ -36,6 +36,7 @@ if [ "$MODE" = "misiune" ]; then
 fi
 
 "$ROOT/stop.sh" --quiet
+rm -f "$RUN/events.jsonl"
 if [ "$MODE" = "demo" ]; then
   export GARDIAN_DEMO=1 GARDIAN_NO_OPEN=1 GARDIAN_WAIT_FILE="$RUN/demo_go"
   rm -rf "$RUN/demo_go" "$ROOT/docs/media/raw" "$RUN/mission.log"

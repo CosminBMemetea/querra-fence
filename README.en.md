@@ -1,0 +1,153 @@
+# Querra Fence · Gardian X500
+
+*[Română](README.md) · English*
+
+Autonomous electric-fence inspection with a PX4 **Holybro X500**, simulated end to end in **Gazebo Harmonic**.
+The drone flies the fence line on its own, finds faults (broken wire, fallen post, a branch shorting the wires),
+measures where the fence loses voltage, spots animals that got out of the paddock, lands, and writes a report
+with GPS coordinates for every finding.
+
+![The pasture after an inspection flight: yellow route, orange beams on faults, red beams on escaped animals](docs/media/result-overview.jpg)
+
+<p>
+  <img src="docs/media/dronecam.gif" width="49%" alt="Inspection camera passing the broken wire, with the escaped cows boxed">
+  <img src="docs/media/takeoff.gif" width="49%" alt="X500 taking off from its pad next to the fence">
+</p>
+
+## What one flight does
+
+| Step | What happens |
+|---|---|
+| Plan | The fence polygon in `fence.json` becomes a smoothed route 2.5 m outside the wire, 56 waypoints |
+| Fly | PX4 takes off to 12 m, flies the 414 m fence loop at 5 m/s, returns and lands (about 2.5 min) |
+| Detect | A tilted inspection camera and a simulated EM sensor report faults, voltage loss and animals outside the polygon |
+| Report | `reports/raport_*.json` for software, `raport_*.html` with map, tables and the voltage profile |
+
+Result of the sample run in [`docs/sample-report`](docs/sample-report/sample-report.html):
+**3 of 3 faults** found, **3 of 3 escaped animals** found, voltage lost on the top wire right after the break,
+**9 of 24 animals** counted (a perimeter pass only sees 10 to 15 m into the paddock).
+
+## Demo
+
+**Inspection camera.** What the drone sees at 12 m, with detections drawn on the frame.
+
+<p>
+  <img src="docs/media/dronecam-F1.jpg" width="49%" alt="Broken top wire seen from the drone">
+  <img src="docs/media/dronecam-V13.jpg" width="49%" alt="Escaped cow next to the broken wire">
+</p>
+
+**The three faults on the ground.**
+
+![Broken top wire, fallen post, branch on the wires](docs/media/faults.jpg)
+
+**Before takeoff.** The X500 on its pad, and the energizer at the start of the fence.
+
+<p>
+  <img src="docs/media/x500-on-pad.jpg" width="49%" alt="X500 on the landing pad">
+  <img src="docs/media/fence-energizer.jpg" width="49%" alt="Fence energizer and the first fence posts">
+</p>
+
+**The report** (the app is in Romanian).
+
+<img src="docs/media/report.png" width="640" alt="Inspection report with map, fault table, escaped animals and voltage chart">
+
+## Quick start
+
+Tested on an Apple Silicon Mac (M2, 8 GB) with PX4 `main` (v1.18 beta) and Gazebo Harmonic 8.10.
+
+1. Build PX4 for simulation once, with PX4's own Gazebo setup:
+
+   ```bash
+   git clone --recursive https://github.com/PX4/PX4-Autopilot.git ~/PX4-Autopilot
+   cd ~/PX4-Autopilot
+   ./Tools/setup/macos.sh --sim-tools
+   source .venv/bin/activate
+   make px4_sitl
+   ```
+
+2. Run the inspection:
+
+   ```bash
+   git clone https://github.com/CosminBMemetea/querra-fence.git
+   cd querra-fence
+   ./start.sh
+   ```
+
+   Gazebo opens, the drone flies, detections print in the terminal, and the report opens in your browser.
+   Press **Enter** for another flight, **Ctrl+C** to close everything.
+
+| Command | What it does |
+|---|---|
+| `./start.sh` | Full automatic inspection flight and report (default) |
+| `./start.sh manual` | Simulation only; the PX4 console (`pxh>`) stays in the terminal for your own commands |
+| `./start.sh fara-gui` | Same as the default without the Gazebo window, lightest on a laptop |
+| `./start.sh misiune` | Only the inspection flight, on a simulation that is already running |
+| `./start.sh demo` | A filmed flight that regenerates everything in `docs/media` |
+| `./stop.sh` | Stops every process, including leftovers from a crashed run |
+| `tools/install_launcher.sh` | Adds a double-click `Gardian Sim.command` to the Desktop |
+
+PX4 somewhere else: `PX4_DIR=/path/to/PX4-Autopilot ./start.sh`. Nothing inside the PX4 tree is modified.
+
+## How it works
+
+```mermaid
+flowchart LR
+  cfg[fence.json] --> gen[gen_world.py]
+  gen --> world[Gazebo world<br/>pasture.sdf]
+  px4[PX4 SITL<br/>X500] <-->|gz_bridge| world
+  mission[mission.py<br/>route · arming · detector] <-->|MAVLink| px4
+  mission --> events[(events.jsonl)]
+  events --> director[director.py<br/>animals · camera · markers]
+  director <-->|gz-transport| world
+  mission --> report[report JSON + HTML]
+```
+
+| Path | Role |
+|---|---|
+| `fence.json` | Single source of truth: fence polygon, posts, faults, herd, escaped animals, flight and camera settings |
+| `sim/gen_world.py` | Generates the Gazebo world: two-strand fence with insulated gate and energizer, faults, trees, barn, herd |
+| `models/x500_fence` | PX4's X500 plus a 640×400, 15 fps inspection camera tilted 55° down, lighter than the stock 1280×960 one |
+| `sim/mission.py` | pymavlink: smooth-flight PX4 parameters, mission upload, arming as a GCS, detector, report |
+| `sim/director.py` | Gazebo Python: grazing and wandering animals, follow camera, planned route and detection markers |
+| `sim/geo.py` | Shared geometry: posts, fault anchors, outward route, point-in-polygon, local ⇄ GPS, voltage model |
+| `sim/report.py` | HTML report with an SVG map and the voltage profile |
+| `tools/` | Demo capture, media builder, Desktop launcher |
+
+## Configuration
+
+Everything about the scenario lives in `fence.json`. Change it and start again; the world regenerates.
+
+```json
+"fence":   { "polygon": [[10, 6], [70, -4], [128, 14], ...], "post_spacing_m": 6.0, "strand_heights_m": [0.55, 1.0] },
+"faults":  [{ "id": "F1", "type": "wire_break", "segment": 22, "strand": 1 }, ...],
+"herd":    { "cows": 14, "sheep": 10 },
+"mission": { "altitude_m": 12.0, "speed_ms": 5.0, "offset_outside_m": 2.5, "camera_pitch_deg": 55 }
+```
+
+Coordinates are local metres (x east, y north) around `origin`, which sets the GPS position of the pasture.
+
+## Simulated versus real
+
+The flight is real PX4 code: the same mission, parameters and MAVLink commands would drive a physical X500.
+The sensing is not real yet, and the boxes in the demo images say so:
+
+- **Detection** uses the true positions from Gazebo to show what the camera would report. On the drone it is replaced
+  by a vision model running on the camera frames (the `Detector` class in `sim/mission.py`).
+- **Fence voltage** comes from a simple circuit model along the fence. A real version needs a sensor that picks up
+  the energizer pulses from the air, or fixed voltage monitors on the fence.
+- **Coverage**: at 12 m the camera sees about 10 to 15 m to each side. Counting the whole herd needs an extra grid flight.
+
+## Roadmap
+
+1. Train a detector on the Gazebo camera stream, then on real fence photos (broken wire, leaning post, vegetation, cattle, sheep)
+2. Import the fence from a GPS walk or a KML/GeoJSON file instead of local metres
+3. Gimbal and thermal camera for night inspections
+4. Grid flight for full herd counts
+5. Alerts to a phone and a map view of open faults
+6. Hardware: X500 V2, Pixhawk, Raspberry Pi 5 or Jetson companion computer, same MAVLink mission code
+
+## Notes
+
+- The terminal output and the HTML report are in Romanian, the project's working language.
+- Linux is not tested yet. The scripts expect PX4's macOS Gazebo environment (`Tools/setup/macos/.pixi`) and use `open` for the report.
+- Logs for every run are in `run/`: `mission.log`, `px4.log`, `gz_server.log`, `director.log`.

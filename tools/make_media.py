@@ -24,7 +24,7 @@ F = (W / 2) / math.tan(HFOV / 2)
 CAM_T, CAM_PITCH = (0.13, 0.0, -0.06), 0.96
 
 ORANGE, RED, GREEN, YELLOW = (255, 160, 40), (255, 80, 70), (90, 220, 140), (242, 194, 48)
-FAULT_EN = {"wire_break": "broken top wire", "post_down": "fallen post", "branch_short": "branch on wires"}
+FAULT_EN = {"wire_break": "sârmă ruptă", "post_down": "stâlp căzut", "branch_short": "creangă pe gard"}
 
 
 def font(size, bold=False):
@@ -102,7 +102,7 @@ def targets(cfg, fence, poses, C, R):
     for ft in cfg["faults"]:
         bb = bbox(C, R, fault_pts(fence, ft))
         if bb:
-            found.append(dict(kind="fault", id=ft["id"], box=bb, label="FAULT %s · %s" % (ft["id"], FAULT_EN[ft["type"]]), color=ORANGE))
+            found.append(dict(kind="fault", id=ft["id"], box=bb, label="DEFECT %s · %s" % (ft["id"], FAULT_EN[ft["type"]]), color=ORANGE))
     for name, p in poses.items():
         if not (name[:1] in "VO" and name[1:].isdigit()):
             continue
@@ -112,9 +112,9 @@ def targets(cfg, fence, poses, C, R):
         if not bb:
             continue
         out = not geo.inside(fence.poly, p[0], p[1])
-        sp = "cow" if cow else "sheep"
+        sp = "vacă" if cow else "oaie"
         found.append(dict(kind="animal", id=name, box=bb, outside=out, color=RED if out else GREEN,
-                          label=("ESCAPED · %s %s" % (sp, name)) if out else "%s %s" % (sp, name)))
+                          label=("EVADAT · %s %s" % (sp, name)) if out else "%s %s" % (sp, name)))
     return found
 
 
@@ -254,7 +254,7 @@ def main():
                         best[t["id"]] = (score, fr["i"], pf)
         for tid, (_, i, pf) in sorted(best.items()):
             img = np.load(os.path.join(RAW, "stream", "%05d.npy" % i))
-            cap = "X500 inspection camera · %.0f m AGL · detections from simulation ground truth" % pf[3]
+            cap = "Camera de inspecție X500 · %.0f m AGL · detecții din pozițiile reale ale simulării" % pf[3]
             out = os.path.join(MEDIA, "dronecam-%s.jpg" % tid)
             annotate(img, pf[2], cap).convert("RGB").save(out, "JPEG", quality=88, optimize=True)
             made.append(out)
@@ -276,7 +276,7 @@ def main():
                 if not pf:
                     continue
                 img = np.load(os.path.join(RAW, "stream", "%05d.npy" % fr["i"]))
-                gif_frames.append(annotate(img, pf[2], "X500 inspection camera · %.0f m AGL" % pf[3], scale=1))
+                gif_frames.append(annotate(img, pf[2], "Camera de inspecție X500 · %.0f m AGL" % pf[3], scale=1))
             if gif_frames:
                 made.append(save_gif(gif_frames, os.path.join(MEDIA, "dronecam.gif"), 640, 8))
         del events
