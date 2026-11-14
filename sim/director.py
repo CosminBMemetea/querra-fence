@@ -1,9 +1,9 @@
-"""Regizorul simulării (rulează cu Python-ul din mediul Gazebo, are gz.transport13):
+"""Simulation director (runs with the Gazebo Python, which has gz.transport13):
 
-* plimbă animalele (pasc, merg; cele evadate rămân afară, lângă spărtura din gard)
-* scrie pozițiile live în run/animals_live.json (le citește detectorul din mission.py)
-* camera GUI urmărește lin drona
-* desenează traseul planificat și marcaje 3D pentru fiecare detecție (run/events.jsonl)
+* moves the animals (they graze and walk; escaped ones stay outside, near the gap in the fence)
+* writes live positions to run/animals_live.json (read by the detector in mission.py)
+* makes the GUI camera follow the drone smoothly
+* draws the planned route and a 3D marker for every detection (run/events.jsonl)
 """
 import json
 import math
@@ -142,14 +142,14 @@ def main():
     path = geo.mission_path(cfg, fence)
     path_drawn = False
     marked = 0
-    # evenimentele vechi (zborul trecut) nu se mai desenează
+    # events from a previous flight are not drawn again
     events_pos = os.path.getsize(events_path) if os.path.exists(events_path) else 0
     last_live = 0.0
     last_gui = 0.0
     t0 = time.time()
     dt = 1.0 / RATE_HZ
     next_t = time.time()
-    print("[director] animale: %d (evadate: %d), lume: %s" % (len(animals), sum(a.escaped for a in animals), WORLD), flush=True)
+    print("[director] animals: %d (escaped: %d), world: %s" % (len(animals), sum(a.escaped for a in animals), WORLD), flush=True)
 
     while running:
         now = time.time()
@@ -162,7 +162,7 @@ def main():
             ok, _ = node.request(svc_vec, req, Pose_V, Boolean, 200)
             if not ok and now - t0 > 8:
                 use_vec = False
-                print("[director] set_pose_vector indisponibil, folosesc set_pose", flush=True)
+                print("[director] set_pose_vector not available, using set_pose", flush=True)
         else:
             for a in animals:
                 node.request(svc_one, a.pose(), Pose, Boolean, 100)
@@ -174,14 +174,14 @@ def main():
                 json.dump({"t": now, "animals": [dict(id=a.id, kind=a.kind, x=round(a.x, 2), y=round(a.y, 2)) for a in animals]}, f)
             os.replace(tmp, live_path)
 
-        # GUI: camera lină după dronă + traseul planificat (repetăm până apare GUI-ul)
+        # GUI: smooth camera behind the drone + planned route (repeated until the GUI is up)
         if now - last_gui > 3.0 and now - t0 < 90:
             last_gui = now
             if os.environ.get("GARDIAN_DEMO"):
-                # în modul demo camera e condusă de tools/capture_demo.py
+                # in demo mode tools/capture_demo.py drives the camera
                 if not path_drawn:
                     pts = [(x, y, alt) for (x, y) in path]
-                    ok, _ = node.request("/marker", marker("traseu", 1, Marker.LINE_STRIP, (0, 0, 0), (1, 1, 1), (1.0, 0.8, 0.1, 0.9), pts), Marker, Empty, 500)
+                    ok, _ = node.request("/marker", marker("route", 1, Marker.LINE_STRIP, (0, 0, 0), (1, 1, 1), (1.0, 0.8, 0.1, 0.9), pts), Marker, Empty, 500)
                     path_drawn = ok
                 continue_gui = False
             else:
@@ -199,13 +199,13 @@ def main():
             track_pub.publish(ct)
             if not path_drawn:
                 pts = [(x, y, alt) for (x, y) in path]
-                ok, _ = node.request("/marker", marker("traseu", 1, Marker.LINE_STRIP, (0, 0, 0), (1, 1, 1), (1.0, 0.8, 0.1, 0.9), pts), Marker, Empty, 500)
+                ok, _ = node.request("/marker", marker("route", 1, Marker.LINE_STRIP, (0, 0, 0), (1, 1, 1), (1.0, 0.8, 0.1, 0.9), pts), Marker, Empty, 500)
                 path_drawn = ok
 
-        # marcaje pentru detecții noi; un zbor nou golește fișierul -> ștergem marcajele vechi
+        # markers for new detections; a new flight empties the file -> clear the old markers
         if os.path.exists(events_path) and os.path.getsize(events_path) < events_pos:
             clear = Marker()
-            clear.ns = "detectii"
+            clear.ns = "detections"
             clear.action = Marker.DELETE_ALL
             node.request("/marker", clear, Marker, Empty, 300)
             events_pos = 0
@@ -221,12 +221,12 @@ def main():
                     x, y = ev["x"], ev["y"]
                     if ev["kind"] == "fault":
                         col = (1.0, 0.55, 0.1, 0.55)
-                        node.request("/marker", marker("detectii", marked * 2, Marker.CYLINDER, (x, y, 15), (0.5, 0.5, 30), col), Marker, Empty, 300)
-                        node.request("/marker", marker("detectii", marked * 2 + 1, Marker.SPHERE, (x, y, 30.5), (1.6, 1.6, 1.6), (1.0, 0.6, 0.1, 0.9)), Marker, Empty, 300)
+                        node.request("/marker", marker("detections", marked * 2, Marker.CYLINDER, (x, y, 15), (0.5, 0.5, 30), col), Marker, Empty, 300)
+                        node.request("/marker", marker("detections", marked * 2 + 1, Marker.SPHERE, (x, y, 30.5), (1.6, 1.6, 1.6), (1.0, 0.6, 0.1, 0.9)), Marker, Empty, 300)
                     else:
                         col = (1.0, 0.2, 0.2, 0.5)
-                        node.request("/marker", marker("detectii", marked * 2, Marker.CYLINDER, (x, y, 8), (0.3, 0.3, 16), col), Marker, Empty, 300)
-                        node.request("/marker", marker("detectii", marked * 2 + 1, Marker.SPHERE, (x, y, 16.4), (1.0, 1.0, 1.0), (1.0, 0.25, 0.2, 0.9)), Marker, Empty, 300)
+                        node.request("/marker", marker("detections", marked * 2, Marker.CYLINDER, (x, y, 8), (0.3, 0.3, 16), col), Marker, Empty, 300)
+                        node.request("/marker", marker("detections", marked * 2 + 1, Marker.SPHERE, (x, y, 16.4), (1.0, 1.0, 1.0), (1.0, 0.25, 0.2, 0.9)), Marker, Empty, 300)
                 events_pos = f.tell()
 
         next_t += dt
@@ -235,7 +235,7 @@ def main():
             time.sleep(sleep)
         else:
             next_t = time.time()
-    print("[director] oprit", flush=True)
+    print("[director] stopped", flush=True)
 
 
 if __name__ == "__main__":

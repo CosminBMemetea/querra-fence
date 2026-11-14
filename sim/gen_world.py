@@ -1,4 +1,4 @@
-"""Generează worlds/pasture.sdf din fence.json (gard, defecte, copaci, turmă, drona X500)."""
+"""Generates worlds/pasture.sdf from fence.json (fence, faults, trees, herd, X500 drone)."""
 import math
 import os
 import random
@@ -41,7 +41,7 @@ class Visuals:
         self.add("<ellipsoid><radii>%.3f %.3f %.3f</radii></ellipsoid>" % radii, pose, material, shadows)
 
     def rod(self, a, b, r, material, shadows=False):
-        """Cilindru între punctele 3D a și b."""
+        """Cylinder between 3D points a and b."""
         dx, dy, dz = b[0] - a[0], b[1] - a[1], b[2] - a[2]
         L = math.sqrt(dx * dx + dy * dy + dz * dz) or 1e-3
         pitch = math.atan2(math.hypot(dx, dy), dz)
@@ -59,7 +59,7 @@ def static_model(name, visuals, pose=(0, 0, 0, 0, 0, 0)):
 
 
 def mover_model(name, visuals, pose):
-    """Model fără coliziuni și fără gravitație: îl mută sim/director.py cu set_pose (animalele)."""
+    """Model without collisions or gravity, moved by sim/director.py through set_pose (the animals)."""
     return ('<model name="{n}"><pose>{p}</pose><link name="link"><gravity>false</gravity>'
             '<inertial><mass>300</mass><inertia><ixx>50</ixx><ixy>0</ixy><ixz>0</ixz><iyy>50</iyy><iyz>0</iyz><izz>50</izz></inertia></inertial>'
             '\n{v}\n</link></model>').format(n=name, p=" ".join("%.4f" % v for v in pose), v=visuals.xml())
@@ -89,7 +89,7 @@ def build_fence(fence):
             a = fence.attach(k, st)
             b = fence.attach(k + 1, st)
             if broken_seg.get(k) == st:
-                # fir rupt: două capete atârnate până la sol
+                # broken wire: two ends hanging down to the ground
                 for (p0, p1, frac) in ((a, b, 0.32), (b, a, 0.38)):
                     mid = (p0[0] + (p1[0] - p0[0]) * 0.12, p0[1] + (p1[1] - p0[1]) * 0.12, p0[2] * 0.35)
                     end = (p0[0] + (p1[0] - p0[0]) * frac, p0[1] + (p1[1] - p0[1]) * frac, 0.02)
@@ -98,16 +98,16 @@ def build_fence(fence):
                 continue
             dead = any(bs == st and k > seg for seg, bs in fence.broken)
             v.rod(a, b, 0.018, WIRE_DEAD if dead else WIRE)
-    # poarta (mâner izolat) între ultimul stâlp și primul
+    # gate (insulated handle) between the last post and the first
     g, f0 = P[-1], P[0]
     v.rod((g["x"], g["y"], 1.0), (f0["x"], f0["y"], 1.0), 0.012, WIRE)
     v.box((0.25, 0.06, 0.06), ((g["x"] + f0["x"]) / 2, (g["y"] + f0["y"]) / 2, 1.0, 0, 0, math.atan2(f0["y"] - g["y"], f0["x"] - g["x"])), mat(0.08, 0.08, 0.08))
-    # energizatorul la primul stâlp + LED
+    # energizer on the first post + LED
     ox, oy = f0["out"]
     ex, ey = f0["x"] + ox * 0.35, f0["y"] + oy * 0.35
     v.box((0.32, 0.22, 0.38), (ex, ey, 1.05, 0, 0, 0), mat(0.18, 0.2, 0.22))
     v.sphere(0.04, (ex + ox * 0.12, ey + oy * 0.12, 1.2, 0, 0, 0), mat(1, 0.1, 0.05, emissive=(1, 0.1, 0.05)), shadows=False)
-    # plăcuța galbenă de avertizare
+    # yellow warning sign
     s1 = P[2]
     v.box((0.3, 0.01, 0.16), (s1["x"] + s1["out"][0] * 0.06, s1["y"] + s1["out"][1] * 0.06, 0.8, 0, 0, math.atan2(s1["tan"][1], s1["tan"][0])), mat(0.98, 0.8, 0.05))
     return v
@@ -140,10 +140,10 @@ def build_scenery(cfg, fence):
             continue
         add_tree(v, x, y, rnd, rnd.uniform(0.85, 1.25))
         trees += 1
-    # pâlc de umbră în interior
+    # a clump of shade trees inside the paddock
     for (x, y) in ((cx + 8, cy + 10), (cx + 13, cy + 5), (cx + 4, cy + 15)):
         add_tree(v, x, y, rnd, 1.1)
-    # copacul de lângă defectul "creangă pe gard" + creanga căzută peste fire
+    # the tree next to the "branch on the fence" fault + the branch lying across the wires
     for ft in cfg["faults"]:
         if ft["type"] == "branch_short":
             ax, ay, _ = fence.fault_anchor(ft)
@@ -156,7 +156,7 @@ def build_scenery(cfg, fence):
             for f in (0.45, 0.7, 0.92):
                 p = (start[0] + (end[0] - start[0]) * f, start[1] + (end[1] - start[1]) * f, start[2] + (end[2] - start[2]) * f + 0.4)
                 v.sphere(0.75, (p[0], p[1], p[2], 0, 0, 0), rnd.choice(LEAF))
-    # grajd, drum, adăpătoare, platforma dronei
+    # barn, dirt road, water trough, drone pad
     v.box((10, 7, 4.2), (-24, -16, 2.1, 0, 0, 0.1), mat(0.55, 0.22, 0.15))
     v.box((10.6, 4.3, 0.18), (-24 - 0.2, -16 - 1.85, 4.85, 0.62, 0, 0.1), mat(0.22, 0.22, 0.24))
     v.box((10.6, 4.3, 0.18), (-24 + 0.2, -16 + 1.85, 4.85, -0.62, 0, 0.1), mat(0.22, 0.22, 0.24))
@@ -174,8 +174,8 @@ def build_scenery(cfg, fence):
 
 COW_COLORS = {
     "holstein": ((0.93, 0.92, 0.89), (0.08, 0.08, 0.08), (0.93, 0.92, 0.89)),
-    "baltata": ((0.56, 0.27, 0.12), (0.90, 0.87, 0.82), (0.90, 0.87, 0.82)),
-    "bruna": ((0.46, 0.37, 0.29), (0.34, 0.27, 0.21), (0.40, 0.32, 0.25)),
+    "simmental": ((0.56, 0.27, 0.12), (0.90, 0.87, 0.82), (0.90, 0.87, 0.82)),
+    "brown_swiss": ((0.46, 0.37, 0.29), (0.34, 0.27, 0.21), (0.40, 0.32, 0.25)),
 }
 
 
@@ -208,12 +208,12 @@ def main():
     fence = geo.Fence(cfg)
     o = cfg["origin"]
     parts = [
-        static_model("gard_electric", build_fence(fence)),
-        static_model("peisaj", build_scenery(cfg, fence)),
+        static_model("electric_fence", build_fence(fence)),
+        static_model("scenery", build_scenery(cfg, fence)),
     ]
     for a in geo.herd_layout(cfg, fence):
         parts.append(build_animal(a))
-    # puncte invizibile pe care camera GUI le poate urmări (centrul pășunii, energizatorul, fiecare defect)
+    # invisible points the GUI camera can follow (pasture centre, energizer, each fault)
     cx = sum(p[0] for p in fence.poly) / len(fence.poly)
     cy = sum(p[1] for p in fence.poly) / len(fence.poly)
     p0 = fence.posts[0]
@@ -223,7 +223,7 @@ def main():
         parts.append('<model name="%s"><static>true</static><pose>%.3f %.3f %.3f 0 0 0</pose><link name="link"/></model>' % (name, x, y, z))
 
     world = """<?xml version="1.0" encoding="UTF-8"?>
-<!-- GENERAT de sim/gen_world.py din fence.json. Nu edita de mână: schimbă fence.json. -->
+<!-- GENERATED by sim/gen_world.py from fence.json. Do not edit by hand: change fence.json. -->
 <sdf version="1.9">
   <world name="pasture">
     <physics type="ode">
@@ -247,7 +247,7 @@ def main():
       <longitude_deg>{lon}</longitude_deg>
       <elevation>{alt}</elevation>
     </spherical_coordinates>
-    <light name="soare" type="directional">
+    <light name="sun" type="directional">
       <pose>0 0 300 0 0 0</pose>
       <cast_shadows>true</cast_shadows>
       <intensity>1.1</intensity>
@@ -277,7 +277,7 @@ def main():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         f.write(world)
-    print("[gen_world] %s: %d stâlpi, gard %.0f m, %d defecte, %d animale" % (
+    print("[gen_world] %s: %d posts, %.0f m of fence, %d faults, %d animals" % (
         os.path.relpath(OUT, geo.ROOT), len(fence.posts), fence.length, len(cfg["faults"]),
         cfg["herd"]["cows"] + cfg["herd"]["sheep"]))
 

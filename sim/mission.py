@@ -1,12 +1,12 @@
-"""Misiunea de inspecție a gardului pentru X500 (PX4 SITL), prin MAVLink (pymavlink).
+"""Fence inspection mission for the X500 (PX4 SITL) over MAVLink (pymavlink).
 
-1. setează PX4 pentru zbor lin (viteză, accelerație, jerk, altitudini RTL)
-2. urcă misiunea: decolare -> tur complet pe lângă gard -> întoarcere și aterizare
-3. în zbor rulează detectorul (cameră + senzor EM, simulate) și scrie evenimentele
-4. la final salvează raportul JSON + HTML în reports/ și îl deschide
+1. tunes PX4 for smooth flight (speed, acceleration, jerk, RTL altitudes)
+2. uploads the mission: takeoff -> full loop along the fence -> return and land
+3. runs the detector in flight (simulated camera + EM sensor) and writes events
+4. saves a JSON + HTML report in reports/ and opens it
 
-Detectorul de aici folosește pozițiile reale din simulare (ground truth) ca să mimeze
-ce ar găsi camera; în proiectul real îl înlocuiești cu un model YOLO pe fluxul video.
+The detector uses the simulation's ground-truth positions to mimic what the camera
+would find; on the real drone it is replaced by a vision model on the video stream.
 """
 import argparse
 import datetime as dt
@@ -21,7 +21,9 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import geo  # noqa: E402
+import i18n  # noqa: E402
 import report  # noqa: E402
+from i18n import t  # noqa: E402
 
 from pymavlink import mavutil  # noqa: E402
 
@@ -39,12 +41,24 @@ YEL, RED, GRN, DIM, BLD, CYN = "33", "31", "32", "2", "1", "36"
 LOG_PATH = os.path.join(geo.RUN_DIR, "mission.log")
 
 
-def say(msg, color=None):
+def say(key, color=None, **kw):
+    """Terminal in the chosen language (GARDIAN_LANG), run/mission.log always in English."""
+    def resolved(lang):
+        out = {}
+        for k, v in kw.items():
+            if isinstance(v, dict) and set(v) == {"en", "ro"}:
+                v = v[lang]
+            elif isinstance(v, tuple) and len(v) == 2 and all(isinstance(x, str) for x in v):
+                v = i18n.pick(v, lang)
+            out[k] = v
+        return out
+
+    msg = t(key, **resolved(i18n.LANG))
     sys.stdout.write("\r\033[K" if TTY else "")
     print(c(color, msg) if color else msg, flush=True)
     try:
         with open(LOG_PATH, "a", encoding="utf-8") as f:
-            f.write(time.strftime("%H:%M:%S ") + msg + "\n")
+            f.write(time.strftime("%H:%M:%S ") + t(key, "en", **resolved("en")) + "\n")
     except OSError:
         pass
 
@@ -69,7 +83,7 @@ class Drone:
         self._hb = 0.0
 
     def heartbeat(self):
-        """Ne prezentăm ca stație de sol (GCS), altfel PX4 refuză armarea: 'No connection to the GCS'."""
+        """Announce ourselves as a ground station, otherwise PX4 refuses to arm: 'No connection to the GCS'."""
         if time.time() - self._hb > 0.8:
             self._hb = time.time()
             self.m.mav.heartbeat_send(M.MAV_TYPE_GCS, M.MAV_AUTOPILOT_INVALID, 0, 0, M.MAV_STATE_ACTIVE)
@@ -116,7 +130,7 @@ class Drone:
                 return msg
 
     def pump(self, seconds):
-        """Citește mesaje timp de `seconds` secunde (actualizează starea)."""
+        """Read messages for `seconds` seconds (keeps the state up to date)."""
         end = time.time() + seconds
         while time.time() < end:
             self.recv(["__none__"], end - time.time())
@@ -169,7 +183,7 @@ class Drone:
                 if msg.get_type() == "MISSION_ACK":
                     if msg.type == M.MAV_MISSION_ACCEPTED:
                         return True
-                    raise RuntimeError("PX4 a refuzat misiunea (cod %d)" % msg.type)
+                    raise RuntimeError("PX4 rejected the mission (code %d)" % msg.type)
                 it = items[msg.seq]
                 m.mav.mission_item_int_send(self.ts, 1, msg.seq, it["frame"], it["cmd"], 0, 1,
                                             it.get("p1", 0), it.get("p2", 0), it.get("p3", 0), it.get("p4", 0),
@@ -193,7 +207,7 @@ def build_items(cfg, path):
 
 
 class Detector:
-    """Camera fixă înclinată + senzor EM, ca pe drona reală. Folosește pozițiile adevărate din simulare."""
+    """Fixed tilted camera + EM sensor, like on the real drone. Uses the true positions from the simulation."""
 
     def __init__(self, cfg, fence, t0):
         mc = cfg["mission"]
@@ -255,11 +269,12 @@ class Detector:
                     ft["found"] = True
                     ex, ey = ax + self.rnd.gauss(0, 0.5), ay + self.rnd.gauss(0, 0.5)
                     lat, lon = geo.enu_to_gps(self.cfg, ex, ey)
-                    ev = dict(kind="fault", id=ft["id"], type=ft["type"], label=ft["label"], where=fence.fault_where(ft),
+                    ev = dict(kind="fault", id=ft["id"], type=ft["type"], label=i18n.both(i18n.FAULT[ft["type"]]), where=fence.fault_where(ft),
                               x=round(ex, 2), y=round(ey, 2), lat=round(lat, 7), lon=round(lon, 7),
                               fence_s_m=round(fs, 1), confidence=round(self.rnd.uniform(0.86, 0.97), 2))
                     self.emit(ev)
-                    say("  DEFECT  %s — %s · %s · %.6f, %.6f" % (ft["id"], ft["label"], ev["where"], lat, lon), YEL + ";1")
+                    say("fault_line", YEL + ";1", id=ft["id"], label=i18n.FAULT[ft["type"]],
+                        where=ev["where"], lat=lat, lon=lon)
             else:
                 ft["conf"] = max(0.0, ft["conf"] - dt * 0.5)
         for a in animals:
@@ -279,13 +294,13 @@ class Detector:
                 lat, lon = geo.enu_to_gps(self.cfg, ex, ey)
                 dfence = geo.dist_to_polyline(fence.poly, a["x"], a["y"])[0]
                 near = min(self.cfg["faults"], key=lambda f: math.hypot(fence.fault_anchor(f)[0] - a["x"], fence.fault_anchor(f)[1] - a["y"]))
-                kind_ro = "vacă" if a["kind"] == "cow" else "oaie"
-                ev = dict(kind="animal", id=a["id"], species=kind_ro, x=round(ex, 2), y=round(ey, 2), lat=round(lat, 7), lon=round(lon, 7),
+                ev = dict(kind="animal", id=a["id"], species=a["kind"], x=round(ex, 2), y=round(ey, 2), lat=round(lat, 7), lon=round(lon, 7),
                           distance_to_fence_m=round(dfence, 1), near_fault=near["id"], confidence=round(self.rnd.uniform(0.88, 0.98), 2))
                 self.escaped[a["id"]] = ev
                 self.emit(ev)
-                say("  EVADAT  %s (%s) · %.0f m în afara gardului, lângă %s · %.6f, %.6f" % (a["id"], kind_ro, dfence, near["id"], lat, lon), RED + ";1")
-        # senzor EM: citește tensiunea gardului când drona e aproape de el
+                say("escaped_line", RED + ";1", id=a["id"], species=i18n.SPECIES[a["kind"]],
+                    dist=dfence, near=near["id"], lat=lat, lon=lon)
+        # EM sensor: reads the fence voltage while the drone is close to it
         fs, lateral = fence.nearest_s(dx, dy)
         if lateral < 7 and s["alt"] < 25:
             v0 = max(0.0, fence.voltage(0, fs) + self.rnd.gauss(0, 0.07))
@@ -293,8 +308,8 @@ class Detector:
             self.em.append((round(fs, 1), round(v0, 2), round(v1, 2)))
             if v1 < 0.4 and not self.em_lost_reported and any(e[2] > 1 for e in self.em):
                 self.em_lost_reported = True
-                say("  EM      Firul de sus nu mai are tensiune de la ~%.0f m de energizator (fir întrerupt înainte de punctul ăsta)" % fs, CYN)
-                self.events.append(dict(kind="em", label="Tensiune 0 kV pe firul de sus", fence_s_m=round(fs, 1), t_s=round(time.time() - self.t0, 1)))
+                say("em_line", CYN, s=fs)
+                self.events.append(dict(kind="em", label=i18n.both(i18n.MSG["em_event"]), fence_s_m=round(fs, 1), t_s=round(time.time() - self.t0, 1)))
 
 
 def read_animals():
@@ -317,45 +332,49 @@ def main():
     items = build_items(cfg, path)
     herd_total = cfg["herd"]["cows"] + cfg["herd"]["sheep"]
 
-    say("Gardian X500 · misiune inspecție gard (%d m de gard, %d puncte de traseu)" % (fence.length, len(path)), BLD)
+    say("title", BLD, m=fence.length, n=len(path))
     d = Drone(args.url)
-    say("Aștept PX4 pe %s …" % args.url, DIM)
+    say("waiting_px4", DIM, url=args.url)
     if d.recv(["HEARTBEAT"], 120) is None:
-        say("PX4 nu răspunde. Verifică run/px4.log.", RED)
+        say("px4_silent", RED)
         return 2
-    say("PX4 conectat.", GRN)
+    say("px4_ok", GRN)
 
     params = dict(MPC_XY_CRUISE=float(cfg["mission"]["speed_ms"]), MPC_ACC_HOR=2.0, MPC_JERK_AUTO=3.0, MPC_XY_TRAJ_P=0.6,
                   NAV_ACC_RAD=3.0, MIS_TAKEOFF_ALT=float(cfg["mission"]["altitude_m"]), MPC_TKO_SPEED=2.0, MPC_LAND_SPEED=0.8,
                   MPC_YAW_MODE=0, MPC_YAWRAUTO_MAX=40.0, RTL_RETURN_ALT=15.0, RTL_DESCEND_ALT=10.0,
                   NAV_RCL_ACT=0, NAV_DLL_ACT=0, COM_RCL_EXCEPT=1, SIM_BAT_MIN_PCT=20.0)
     bad = [k for k, v in params.items() if not d.set_param(k, v)]
-    say("Parametri de zbor lin setați%s." % ((" (fără: " + ", ".join(bad) + ")") if bad else ""), GRN if not bad else YEL)
+    if bad:
+        say("params_missing", YEL, names=", ".join(bad))
+    else:
+        say("params_ok", GRN)
 
-    say("Aștept GPS și estimatorul …", DIM)
+    say("wait_gps", DIM)
     end = time.time() + 120
     while time.time() < end:
         d.cmd(M.MAV_CMD_REQUEST_MESSAGE, M.MAVLINK_MSG_ID_HOME_POSITION, wait=0.5)
         d.pump(1.0)
         if d.s["home"] and d.s["gps_fix"] >= 3:
             break
-    say("GPS fix %d · %d sateliți · acasă la %.6f, %.6f" % (d.s["gps_fix"], d.s["sats"], *(d.s["home"] or (0, 0))), GRN)
+    home = d.s["home"] or (0.0, 0.0)
+    say("gps", GRN, fix=d.s["gps_fix"], sats=d.s["sats"], lat=home[0], lon=home[1])
 
     if not d.upload(items):
-        say("Nu am putut urca misiunea.", RED)
+        say("upload_fail", RED)
         return 3
-    say("Misiune urcată: %d comenzi (decolare, %d puncte pe lângă gard, întoarcere)." % (len(items), len(path)), GRN)
+    say("uploaded", GRN, items=len(items), n=len(path))
 
     wait_file = os.environ.get("GARDIAN_WAIT_FILE")
     if wait_file:
-        say("Aștept semnalul de start (%s) …" % os.path.basename(wait_file), DIM)
+        say("wait_go", DIM, name=os.path.basename(wait_file))
         while not os.path.exists(wait_file):
             d.pump(0.5)
 
     armed = False
     end = time.time() + 150
     last_note = 0.0
-    say("Aștept ca PX4 să permită armarea (estimatorul se stabilizează, de obicei 30–60 s) …", DIM)
+    say("wait_arm", DIM)
     while time.time() < end and not armed:
         d.cmd(M.MAV_CMD_DO_SET_MODE, M.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, 4, 4)
         r = d.cmd(M.MAV_CMD_COMPONENT_ARM_DISARM, 1)
@@ -366,13 +385,13 @@ def main():
             last_note = time.time()
             reasons = [t for _, t in d.texts[-6:] if "rm" in t or "check" in t.lower() or "fail" in t.lower()]
             if reasons:
-                say("  încă nu: %s" % reasons[-1], DIM)
+                say("not_yet", DIM, reason=reasons[-1])
         d.pump(2.0)
     if not armed:
-        say("PX4 nu a armat. Ultimele mesaje: %s" % "; ".join(t for _, t in d.texts[-6:]), RED)
+        say("no_arm", RED, texts="; ".join(txt for _, txt in d.texts[-6:]))
         return 4
     d.cmd(M.MAV_CMD_MISSION_START, 0, 0)
-    say("Armat. Decolare la %.0f m …" % cfg["mission"]["altitude_m"], BLD)
+    say("armed", BLD, alt=cfg["mission"]["altitude_m"])
 
     t0 = time.time()
     det = Detector(cfg, fence, t0)
@@ -411,34 +430,35 @@ def main():
                 last_status = now
                 seq = s["seq"]
                 if not airborne:
-                    phase = "Decolare" if s["armed"] else "Pregătire"
+                    phase = "ph_takeoff" if s["armed"] else "ph_preflight"
                 elif "RTL" in s["mode"] or seq >= n_wp - 1:
-                    phase = "Retur" if s["alt"] > 9 else "Aterizare"
+                    phase = "ph_return" if s["alt"] > 9 else "ph_landing"
                 elif "LAND" in s["mode"]:
-                    phase = "Aterizare"
+                    phase = "ph_landing"
                 elif seq <= 2:
-                    phase = "Decolare / tranzit"
+                    phase = "ph_transit"
                 else:
-                    phase = "Inspecție gard"
+                    phase = "ph_inspection"
                 pct = max(0, min(100, int(100 * (seq - 2) / max(1, len(path))))) if seq > 2 else 0
                 spd = math.hypot(s["vx"], s["vy"])
                 bat = ("%d%%" % s["bat"]) if s["bat"] is not None else "–"
-                sys.stdout.write("\r\033[K" + c(DIM, "[%s] " % s["mode"]) + c(BLD, phase) +
-                                 "  gard %3d%% · alt %4.1f m · %3.1f m/s · bat %s · defecte %d · evadate %d · văzute %d/%d" % (
-                                     pct, s["alt"], spd, bat, sum(f["found"] for f in det.faults), len(det.escaped), len(det.seen), herd_total))
+                sys.stdout.write("\r\033[K" + c(DIM, "[%s] " % s["mode"]) + c(BLD, t(phase)) +
+                                 t("status", pct=pct, alt=s["alt"], spd=spd, bat=bat, f=sum(f["found"] for f in det.faults),
+                                   e=len(det.escaped), seen=len(det.seen), total=herd_total))
                 sys.stdout.flush()
             if airborne and not s["armed"] and s["alt"] < 1.0:
                 break
             if now - t0 > 900:
-                say("Timp depășit (15 min), opresc monitorizarea.", YEL)
+                say("timeout", YEL)
                 break
     except KeyboardInterrupt:
-        say("Oprit manual. Salvez raportul parțial.", YEL)
+        say("stopped", YEL)
 
     duration = time.time() - t0
-    say("Aterizat. Durată %d:%02d · %.0f m zburați." % (duration // 60, duration % 60, dist), GRN + ";1")
+    say("landed", GRN + ";1", mm=int(duration // 60), ss=int(duration % 60), dist=dist)
     data = dict(
         generated_at=dt.datetime.now().isoformat(timespec="seconds"),
+        language=i18n.LANG,
         drone="Holybro X500 · PX4 SITL · Gazebo Harmonic",
         world="pasture",
         origin=cfg["origin"],
@@ -456,12 +476,12 @@ def main():
     )
     os.makedirs(os.path.join(geo.ROOT, "reports"), exist_ok=True)
     stamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-    jpath = os.path.join(geo.ROOT, "reports", "raport_%s.json" % stamp)
+    jpath = os.path.join(geo.ROOT, "reports", "report_%s.json" % stamp)
     with open(jpath, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     hpath = report.write_html(data, jpath.replace(".json", ".html"))
-    say("Raport: %s" % hpath, BLD)
-    say("  %d defecte · %d animale evadate · %d/%d animale văzute" % (len(data["faults"]), len(data["escaped_animals"]), len(det.seen), herd_total))
+    say("report", BLD, path=hpath)
+    say("summary", f=len(data["faults"]), e=len(data["escaped_animals"]), seen=len(det.seen), total=herd_total)
     if not args.no_open and not os.environ.get("GARDIAN_NO_OPEN"):
         subprocess.run(["open", hpath], check=False)
     return 0

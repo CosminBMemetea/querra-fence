@@ -5,7 +5,7 @@
     <include merge="true">
       <uri>model://x500</uri>
     </include>
-    <!-- Camera de inspecție: 640x400 la 15 fps (mai ușoară decât camera PX4 1280x960@30, ca simularea să meargă fluid pe M2) -->
+    <!-- Inspection camera: 640x400 at 15 fps (lighter than the PX4 1280x960@30 camera, keeps the simulation smooth on an M2) -->
     <link name="fence_cam_link">
       <pose relative_to="base_link">0.13 0 -0.06 0 0.96 0</pose>
       <inertial>

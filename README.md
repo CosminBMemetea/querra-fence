@@ -1,61 +1,59 @@
 # Querra Fence · Gardian X500
 
-*Română · [English](README.en.md)*
+Autonomous electric-fence inspection with a PX4 **Holybro X500**, simulated end to end in **Gazebo Harmonic**.
+The drone flies the fence line on its own, finds faults (broken wire, fallen post, a branch shorting the wires),
+measures where the fence loses voltage, spots animals that got out of the paddock, lands, and writes a report
+with GPS coordinates for every finding.
 
-Inspecție autonomă a gardului electric cu o dronă **Holybro X500** pe PX4, simulată cap-coadă în **Gazebo Harmonic**.
-Drona zboară singură de-a lungul gardului, găsește defectele (sârmă ruptă, stâlp căzut, creangă care scurtcircuitează firele),
-măsoară unde gardul rămâne fără tensiune, vede animalele ieșite din țarc, aterizează și scrie un raport
-cu coordonatele GPS ale fiecărei probleme.
-
-![Pășunea după zborul de inspecție: traseul galben, stâlpi portocalii pe defecte, roșii pe animalele evadate](docs/media/result-overview.jpg)
+![The pasture after an inspection flight: yellow route, orange beams on faults, red beams on escaped animals](docs/media/result-overview.jpg)
 
 <p>
-  <img src="docs/media/dronecam.gif" width="49%" alt="Camera de inspecție trece pe lângă sârma ruptă și încadrează vacile evadate">
-  <img src="docs/media/takeoff.gif" width="49%" alt="X500 decolează de pe platforma de lângă gard">
+  <img src="docs/media/dronecam.gif" width="49%" alt="Inspection camera passing the broken wire, with the escaped cows boxed">
+  <img src="docs/media/takeoff.gif" width="49%" alt="X500 taking off from its pad next to the fence">
 </p>
 
-## Ce face un zbor
+## What one flight does
 
-| Pas | Ce se întâmplă |
+| Step | What happens |
 |---|---|
-| Plan | Conturul gardului din `fence.json` devine un traseu rotunjit la 2,5 m în exteriorul sârmei, 56 de puncte |
-| Zbor | PX4 decolează la 12 m, face turul de 414 m al gardului cu 5 m/s, se întoarce și aterizează (cam 2,5 min) |
-| Detecție | O cameră înclinată și un senzor EM simulat raportează defectele, pierderea de tensiune și animalele din afara gardului |
-| Raport | `reports/raport_*.json` pentru alte programe, `raport_*.html` cu hartă, tabele și profilul de tensiune |
+| Plan | The fence polygon in `fence.json` becomes a smoothed route 2.5 m outside the wire, 56 waypoints |
+| Fly | PX4 takes off to 12 m, flies the 414 m fence loop at 5 m/s, returns and lands (about 2.5 min) |
+| Detect | A tilted inspection camera and a simulated EM sensor report faults, voltage loss and animals outside the polygon |
+| Report | `reports/raport_*.json` for software, `raport_*.html` with map, tables and the voltage profile |
 
-Rezultatul zborului din [`docs/sample-report`](docs/sample-report/sample-report.html):
-**3 din 3 defecte** găsite, **3 din 3 animale evadate** găsite, tensiune pierdută pe firul de sus imediat după ruptură,
-**9 din 24 de animale** numărate (un tur pe lângă gard vede doar 10–15 m spre interiorul pășunii).
+Result of the sample run in [`docs/sample-report`](docs/sample-report/sample-report.html):
+**3 of 3 faults** found, **3 of 3 escaped animals** found, voltage lost on the top wire right after the break,
+**9 of 24 animals** counted (a perimeter pass only sees 10 to 15 m into the paddock).
 
 ## Demo
 
-**Camera de inspecție.** Ce vede drona de la 12 m, cu detecțiile desenate pe imagine.
+**Inspection camera.** What the drone sees at 12 m, with detections drawn on the frame.
 
 <p>
-  <img src="docs/media/dronecam-F1.jpg" width="49%" alt="Sârma de sus ruptă, văzută din dronă">
-  <img src="docs/media/dronecam-V13.jpg" width="49%" alt="Vacă evadată lângă sârma ruptă">
+  <img src="docs/media/dronecam-F1.jpg" width="49%" alt="Broken top wire seen from the drone">
+  <img src="docs/media/dronecam-V13.jpg" width="49%" alt="Escaped cow next to the broken wire">
 </p>
 
-**Cele trei defecte, de aproape.**
+**The three faults on the ground.**
 
-![Sârmă ruptă, stâlp căzut, creangă pe gard](docs/media/faults.jpg)
+![Broken top wire, fallen post, branch on the wires](docs/media/faults.jpg)
 
-**Înainte de decolare.** X500 pe platformă și energizatorul de la capătul gardului.
+**Before takeoff.** The X500 on its pad, and the energizer at the start of the fence.
 
 <p>
-  <img src="docs/media/x500-on-pad.jpg" width="49%" alt="X500 pe platforma de aterizare">
-  <img src="docs/media/fence-energizer.jpg" width="49%" alt="Energizatorul și primii stâlpi ai gardului">
+  <img src="docs/media/x500-on-pad.jpg" width="49%" alt="X500 on the landing pad">
+  <img src="docs/media/fence-energizer.jpg" width="49%" alt="Fence energizer and the first fence posts">
 </p>
 
-**Raportul de la final.**
+**The report.** It opens in the language the flight ran in and has an EN | RO switch.
 
-<img src="docs/media/report.png" width="640" alt="Raport de inspecție cu hartă, tabel de defecte, animale evadate și grafic de tensiune">
+<img src="docs/media/report.png" width="640" alt="Inspection report with map, fault table, escaped animals and voltage chart">
 
-## Pornire rapidă
+## Quick start
 
-Testat pe un Mac cu Apple Silicon (M2, 8 GB), cu PX4 `main` (v1.18 beta) și Gazebo Harmonic 8.10.
+Tested on an Apple Silicon Mac (M2, 8 GB) with PX4 `main` (v1.18 beta) and Gazebo Harmonic 8.10.
 
-1. Compilezi o dată PX4 pentru simulare, cu instalarea Gazebo din PX4:
+1. Build PX4 for simulation once, with PX4's own Gazebo setup:
 
    ```bash
    git clone --recursive https://github.com/PX4/PX4-Autopilot.git ~/PX4-Autopilot
@@ -65,7 +63,7 @@ Testat pe un Mac cu Apple Silicon (M2, 8 GB), cu PX4 `main` (v1.18 beta) și Gaz
    make px4_sitl
    ```
 
-2. Pornești inspecția:
+2. Run the inspection:
 
    ```bash
    git clone https://github.com/CosminBMemetea/querra-fence.git
@@ -73,49 +71,51 @@ Testat pe un Mac cu Apple Silicon (M2, 8 GB), cu PX4 `main` (v1.18 beta) și Gaz
    ./start.sh
    ```
 
-   Se deschide Gazebo, drona zboară, detecțiile apar în terminal, iar raportul se deschide în browser.
-   **Enter** = încă un zbor, **Ctrl+C** = închide tot.
+   Gazebo opens, the drone flies, detections print in the terminal, and the report opens in your browser.
+   Press **Enter** for another flight, **Ctrl+C** to close everything.
 
-| Comandă | Ce face |
+| Command | What it does |
 |---|---|
-| `./start.sh` | Zbor automat de inspecție și raport (implicit) |
-| `./start.sh manual` | Doar simularea; consola PX4 (`pxh>`) rămâne în terminal pentru comenzile tale |
-| `./start.sh fara-gui` | Ca varianta implicită, fără fereastra Gazebo; cel mai ușor pentru laptop |
-| `./start.sh misiune` | Doar zborul de inspecție, pe o simulare deja pornită |
-| `./start.sh demo` | Un zbor filmat care refă toate imaginile din `docs/media` |
-| `./stop.sh` | Oprește tot, inclusiv procese rămase de la o rulare căzută |
-| `tools/install_launcher.sh` | Pune pe Desktop `Gardian Sim.command`: dublu-click și pornește |
+| `./start.sh` | Full automatic inspection flight and report (default) |
+| `./start.sh manual` | Simulation only; the PX4 console (`pxh>`) stays in the terminal for your own commands |
+| `./start.sh headless` | Same as the default without the Gazebo window, lightest on a laptop |
+| `./start.sh mission` | Only the inspection flight, on a simulation that is already running |
+| `./start.sh demo` | A filmed flight that regenerates everything in `docs/media` |
+| `./stop.sh` | Stops every process, including leftovers from a crashed run |
+| `tools/install_launcher.sh` | Adds a double-click `Gardian Sim.command` to the Desktop |
 
-PX4 în alt loc: `PX4_DIR=/cale/spre/PX4-Autopilot ./start.sh`. Nu se modifică nimic în PX4.
+Add `--lang ro` to any mode (or set `GARDIAN_LANG=ro`) for Romanian in the terminal and the report; English is the default.
+PX4 somewhere else: `PX4_DIR=/path/to/PX4-Autopilot ./start.sh`. Nothing inside the PX4 tree is modified.
 
-## Cum funcționează
+## How it works
 
 ```mermaid
 flowchart LR
   cfg[fence.json] --> gen[gen_world.py]
-  gen --> world[Lumea Gazebo<br/>pasture.sdf]
+  gen --> world[Gazebo world<br/>pasture.sdf]
   px4[PX4 SITL<br/>X500] <-->|gz_bridge| world
-  mission[mission.py<br/>traseu · armare · detector] <-->|MAVLink| px4
+  mission[mission.py<br/>route · arming · detector] <-->|MAVLink| px4
   mission --> events[(events.jsonl)]
-  events --> director[director.py<br/>animale · cameră · marcaje]
+  events --> director[director.py<br/>animals · camera · markers]
   director <-->|gz-transport| world
-  mission --> report[raport JSON + HTML]
+  mission --> report[report JSON + HTML]
 ```
 
-| Fișier | Rol |
+| Path | Role |
 |---|---|
-| `fence.json` | Singura sursă de adevăr: conturul gardului, stâlpii, defectele, turma, animalele evadate, setările de zbor și cameră |
-| `sim/gen_world.py` | Generează lumea Gazebo: gard cu două fire, poartă izolată, energizator, defecte, copaci, grajd, turmă |
-| `models/x500_fence` | X500 din PX4 plus o cameră de inspecție 640×400 la 15 fps, înclinată 55° în jos, mai ușoară decât cea standard 1280×960 |
-| `sim/mission.py` | pymavlink: parametri PX4 pentru zbor lin, urcarea misiunii, armare ca stație de sol, detector, raport |
-| `sim/director.py` | Python Gazebo: animale care pasc și se plimbă, cameră urmăritoare, traseul și marcajele detecțiilor |
-| `sim/geo.py` | Geometrie comună: stâlpi, poziția defectelor, traseul exterior, punct-în-poligon, local ⇄ GPS, modelul de tensiune |
-| `sim/report.py` | Raportul HTML cu hartă SVG și profilul de tensiune |
-| `tools/` | Filmarea demo, generarea imaginilor, scurtătura de pe Desktop |
+| `fence.json` | Single source of truth: fence polygon, posts, faults, herd, escaped animals, flight and camera settings |
+| `sim/gen_world.py` | Generates the Gazebo world: two-strand fence with insulated gate and energizer, faults, trees, barn, herd |
+| `models/x500_fence` | PX4's X500 plus a 640×400, 15 fps inspection camera tilted 55° down, lighter than the stock 1280×960 one |
+| `sim/mission.py` | pymavlink: smooth-flight PX4 parameters, mission upload, arming as a GCS, detector, report |
+| `sim/director.py` | Gazebo Python: grazing and wandering animals, follow camera, planned route and detection markers |
+| `sim/geo.py` | Shared geometry: posts, fault anchors, outward route, point-in-polygon, local ⇄ GPS, voltage model |
+| `sim/report.py` | HTML report with an SVG map, the voltage profile and an EN \| RO switch |
+| `sim/i18n.py` | Every message a person reads, in English and Romanian |
+| `tools/` | Demo capture, media builder, Desktop launcher |
 
-## Configurare
+## Configuration
 
-Tot scenariul e în `fence.json`. Îl modifici și pornești din nou; lumea se regenerează singură.
+Everything about the scenario lives in `fence.json`. Change it and start again; the world regenerates.
 
 ```json
 "fence":   { "polygon": [[10, 6], [70, -4], [128, 14], ...], "post_spacing_m": 6.0, "strand_heights_m": [0.55, 1.0] },
@@ -124,31 +124,32 @@ Tot scenariul e în `fence.json`. Îl modifici și pornești din nou; lumea se r
 "mission": { "altitude_m": 12.0, "speed_ms": 5.0, "offset_outside_m": 2.5, "camera_pitch_deg": 55 }
 ```
 
-Coordonatele sunt în metri locali (x spre est, y spre nord) față de `origin`, care fixează poziția GPS a pășunii.
+Coordinates are local metres (x east, y north) around `origin`, which sets the GPS position of the pasture.
 
-## Ce e simulat și ce e real
+## Simulated versus real
 
-Zborul e cod PX4 real: aceeași misiune, aceiași parametri și aceleași comenzi MAVLink ar conduce un X500 adevărat.
-Partea de senzori nu e încă reală, iar imaginile demo spun asta:
+The flight is real PX4 code: the same mission, parameters and MAVLink commands would drive a physical X500.
+The sensing is not real yet, and the boxes in the demo images say so:
 
-- **Detecția** folosește pozițiile adevărate din Gazebo ca să arate ce ar raporta camera. Pe dronă se înlocuiește
-  cu un model de recunoaștere pe imaginile camerei (clasa `Detector` din `sim/mission.py`).
-- **Tensiunea gardului** vine dintr-un model electric simplu de-a lungul gardului. Varianta reală are nevoie de un senzor
-  care prinde pulsurile energizatorului din aer, sau de monitoare de tensiune fixe pe gard.
-- **Acoperirea**: de la 12 m camera vede cam 10–15 m în fiecare parte. Pentru numărarea întregii turme e nevoie de un zbor în grilă.
+- **Detection** uses the true positions from Gazebo to show what the camera would report. On the drone it is replaced
+  by a vision model running on the camera frames (the `Detector` class in `sim/mission.py`).
+- **Fence voltage** comes from a simple circuit model along the fence. A real version needs a sensor that picks up
+  the energizer pulses from the air, or fixed voltage monitors on the fence.
+- **Coverage**: at 12 m the camera sees about 10 to 15 m to each side. Counting the whole herd needs an extra grid flight.
 
-## Ce urmează
+## Roadmap
 
-1. Un model de detecție antrenat pe imaginile camerei din Gazebo, apoi pe poze reale (sârmă ruptă, stâlp înclinat, vegetație, vaci, oi)
-2. Gardul importat dintr-un traseu GPS sau dintr-un fișier KML/GeoJSON, în loc de metri locali
-3. Gimbal și cameră termală pentru inspecții pe timp de noapte
-4. Zbor în grilă pentru numărarea completă a turmei
-5. Alerte pe telefon și o hartă cu defectele nerezolvate
-6. Hardware: X500 V2, Pixhawk, un calculator de bord Raspberry Pi 5 sau Jetson, același cod de misiune MAVLink
+1. Train a detector on the Gazebo camera stream, then on real fence photos (broken wire, leaning post, vegetation, cattle, sheep)
+2. Import the fence from a GPS walk or a KML/GeoJSON file instead of local metres
+3. Gimbal and thermal camera for night inspections
+4. Grid flight for full herd counts
+5. Alerts to a phone and a map view of open faults
+6. Hardware: X500 V2, Pixhawk, Raspberry Pi 5 or Jetson companion computer, same MAVLink mission code
 
-## Bine de știut
+## Notes
 
-- Mesajele din terminal și raportul HTML sunt în română.
-- Pe Linux nu e testat încă. Scripturile folosesc mediul Gazebo pentru macOS din PX4 (`Tools/setup/macos/.pixi`) și comanda `open` pentru raport.
-- Logurile fiecărei rulări sunt în `run/`: `mission.log`, `px4.log`, `gz_server.log`, `director.log`.
-  Cele două erori „Unable to load Ogre Plugin” din `gz_server.log` sunt normale pe Mac: camera randează oricum.
+- The simulation speaks English and Romanian (`--lang ro`). Logs and JSON data are always in English.
+- The demo images in `docs/media` currently carry Romanian labels; `./start.sh demo` regenerates them in English.
+- Linux is not tested yet. The scripts expect PX4's macOS Gazebo environment (`Tools/setup/macos/.pixi`) and use `open` for the report.
+- Logs for every run are in `run/`: `mission.log`, `px4.log`, `gz_server.log`, `director.log`.
+  The two "Unable to load Ogre Plugin" errors in `gz_server.log` are normal on macOS; the camera renders anyway.

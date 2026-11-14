@@ -1,13 +1,15 @@
-"""Geometria pășunii: gard, stâlpi, defecte, traseu dronă, conversii GPS.
+"""Pasture geometry: fence, posts, faults, drone route, GPS conversions.
 
-Doar stdlib, ca să meargă și cu Python-ul din .venv (pymavlink),
-și cu cel din mediul Gazebo (pixi).
-Coordonate locale: x = est, y = nord (ENU), în metri; originea = platforma dronei.
+Standard library only, so it runs with both the PX4 .venv Python (pymavlink)
+and the Gazebo (pixi) Python.
+Local coordinates: x = east, y = north (ENU), in metres; origin = the drone pad.
 """
 import json
 import math
 import os
 import random
+
+import i18n
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RUN_DIR = os.path.join(ROOT, "run")
@@ -62,7 +64,7 @@ def inside(poly, x, y):
 
 
 def dist_to_polyline(poly, x, y, closed=True):
-    """Distanța minimă de la (x, y) la conturul poligonului, plus punctul cel mai apropiat."""
+    """Shortest distance from (x, y) to the polygon outline, plus the closest point."""
     best = (1e18, (0.0, 0.0))
     n = len(poly)
     for i in range(n if closed else n - 1):
@@ -93,7 +95,7 @@ class Fence:
     def outward(self, dx, dy):
         L = math.hypot(dx, dy) or 1.0
         dx, dy = dx / L, dy / L
-        # CCW: interiorul e în stânga muchiei -> exteriorul în dreapta
+        # CCW: the inside is left of the edge -> the outside is on the right
         return (dy, -dx) if self.ccw else (-dy, dx)
 
     def _build_posts(self, spacing, gate):
@@ -136,7 +138,7 @@ class Fence:
                 self.shorts.append((self.segment_mid(ft["segment"])[2], 0.55))
 
     def attach(self, i, strand):
-        """Punctul 3D unde firul `strand` se prinde de stâlpul i (ține cont de înclinare)."""
+        """3D point where wire `strand` is attached to post i (accounts for a leaning post)."""
         p = self.posts[i]
         h = self.heights[strand]
         a = p["tilt"]
@@ -159,13 +161,14 @@ class Fence:
         return self.posts[ft["segment"]]["out"]
 
     def fault_where(self, ft):
+        """Where the fault is, in both languages: {"en": ..., "ro": ...}."""
         if ft["type"] == "post_down":
-            return "stâlpul %d" % ft["post"]
+            return i18n.both(i18n.WHERE["post"], post=ft["post"])
         k = ft["segment"]
-        return "între stâlpii %d–%d" % (k, k + 1)
+        return i18n.both(i18n.WHERE["segment"], a=k, b=k + 1)
 
     def voltage(self, strand, s):
-        """Tensiunea (kV) pe firul `strand` la distanța s de energizator (model simplu)."""
+        """Voltage (kV) on wire `strand` at distance s from the energizer (simple model)."""
         load = sum(l for _, l in self.shorts)
         v = self.kv / (1 + load) - 0.0015 * s
         for s_short, _ in self.shorts:
@@ -177,7 +180,7 @@ class Fence:
         return max(0.0, v)
 
     def nearest_s(self, x, y):
-        """Distanța de-a lungul gardului a celui mai apropiat punct de (x, y) + distanța laterală."""
+        """Distance along the fence of the point closest to (x, y), plus the lateral distance."""
         best = (1e18, 0.0)
         P = self.posts
         for i in range(len(P) - 1):
@@ -193,7 +196,7 @@ class Fence:
 
 # ---------- drone path ----------
 def mission_path(cfg, fence):
-    """Traseu închis pe lângă gard (în exterior), cu colțuri rotunjite, pornind lângă casă."""
+    """Closed route along the outside of the fence, rounded corners, starting next to home."""
     m = cfg["mission"]
     off = m["offset_outside_m"]
     poly = fence.poly
@@ -208,7 +211,7 @@ def mission_path(cfg, fence):
         for j in range(steps):
             t = j / steps
             pts.append((ax + (bx - ax) * t + ox * off, ay + (by - ay) * t + oy * off))
-    # Chaikin: colțuri rotunde -> zbor fluid
+    # Chaikin smoothing: rounded corners -> smooth flight
     for _ in range(4):
         new = []
         for i in range(len(pts)):
@@ -216,12 +219,12 @@ def mission_path(cfg, fence):
             new.append((0.75 * p[0] + 0.25 * q[0], 0.75 * p[1] + 0.25 * q[1]))
             new.append((0.25 * p[0] + 0.75 * q[0], 0.25 * p[1] + 0.75 * q[1]))
         pts = new
-    # pornim de la punctul cel mai apropiat de primul stâlp (energizator)
+    # start at the point closest to the first post (the energizer)
     p0 = fence.posts[0]
     start = min(range(len(pts)), key=lambda i: math.hypot(pts[i][0] - p0["x"], pts[i][1] - p0["y"]))
     pts = pts[start:] + pts[:start]
     pts.append(pts[0])
-    # reeșantionare la distanță constantă
+    # resample at a constant spacing
     spacing = m["waypoint_spacing_m"]
     out = [pts[0]]
     acc = 0.0
@@ -261,11 +264,11 @@ def herd_layout(cfg, fence):
                 if inside(poly, x, y) and dist_to_polyline(poly, x, y)[0] > 7 and free(x, y):
                     break
             idx[kind] += 1
-            aid = ("V%02d" if kind == "cow" else "O%02d") % idx[kind]
+            aid = ("C%02d" if kind == "cow" else "S%02d") % idx[kind]
             placed.append((x, y))
             animals.append(dict(id=aid, kind=kind, x=x, y=y, yaw=rnd.uniform(-math.pi, math.pi), escaped=False,
-                                breed=rnd.choice(["holstein", "baltata", "bruna"]) if kind == "cow" else "oaie"))
-    # evadatele: le mutăm pe unele din turmă afară, lângă defect
+                                breed=rnd.choice(["holstein", "simmental", "brown_swiss"]) if kind == "cow" else "sheep"))
+    # escaped animals: move some of the herd outside, next to a fault
     faults = {f["id"]: f for f in cfg["faults"]}
     for e in cfg.get("escaped", []):
         ft = faults[e["near_fault"]]

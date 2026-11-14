@@ -16,6 +16,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sim"))
 import geo  # noqa: E402
+import i18n  # noqa: E402
 
 MEDIA = os.path.join(geo.ROOT, "docs", "media")
 RAW = os.path.join(MEDIA, "raw")
@@ -24,7 +25,6 @@ F = (W / 2) / math.tan(HFOV / 2)
 CAM_T, CAM_PITCH = (0.13, 0.0, -0.06), 0.96
 
 ORANGE, RED, GREEN, YELLOW = (255, 160, 40), (255, 80, 70), (90, 220, 140), (242, 194, 48)
-FAULT_EN = {"wire_break": "sârmă ruptă", "post_down": "stâlp căzut", "branch_short": "creangă pe gard"}
 
 
 def font(size, bold=False):
@@ -102,19 +102,19 @@ def targets(cfg, fence, poses, C, R):
     for ft in cfg["faults"]:
         bb = bbox(C, R, fault_pts(fence, ft))
         if bb:
-            found.append(dict(kind="fault", id=ft["id"], box=bb, label="DEFECT %s · %s" % (ft["id"], FAULT_EN[ft["type"]]), color=ORANGE))
+            found.append(dict(kind="fault", id=ft["id"], box=bb, label="%s %s · %s" % (i18n.pick(("FAULT", "DEFECT")), ft["id"], i18n.pick(i18n.FAULT_SHORT[ft["type"]]).lower()), color=ORANGE))
     for name, p in poses.items():
-        if not (name[:1] in "VO" and name[1:].isdigit()):
+        if not (name[:1] in "CSVO" and name[1:].isdigit()):  # C/S (V/O in older recordings)
             continue
-        cow = name[0] == "V"
+        cow = name[0] in "CV"
         yaw = 2 * math.atan2(p[6], p[3])
         bb = bbox(C, R, box_pts(p[0], p[1], yaw, 1.25 if cow else 0.72, 0.45 if cow else 0.38, 1.6 if cow else 1.05))
         if not bb:
             continue
         out = not geo.inside(fence.poly, p[0], p[1])
-        sp = "vacă" if cow else "oaie"
+        sp = i18n.pick(i18n.SPECIES["cow" if cow else "sheep"])
         found.append(dict(kind="animal", id=name, box=bb, outside=out, color=RED if out else GREEN,
-                          label=("EVADAT · %s %s" % (sp, name)) if out else "%s %s" % (sp, name)))
+                          label=("%s · %s %s" % (i18n.pick(("ESCAPED", "EVADAT")), sp, name)) if out else "%s %s" % (sp, name)))
     return found
 
 
@@ -164,7 +164,7 @@ def save_gif(frames, dst, width, fps):
 
 
 def report_shot(out):
-    reports = sorted(glob.glob(os.path.join(geo.ROOT, "reports", "raport_*.html")))
+    reports = sorted(glob.glob(os.path.join(geo.ROOT, "reports", "report_*.html")))
     brave = "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
     chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     exe = next((b for b in (chrome, brave) if os.path.exists(b)), None)
@@ -172,7 +172,7 @@ def report_shot(out):
         return None
     tmp = os.path.join(RAW, "report_full.png")
     subprocess.run([exe, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=2",
-                    "--window-size=860,1900", "--screenshot=" + tmp, "file://" + reports[-1]],
+                    "--window-size=860,1900", "--screenshot=" + tmp, "file://" + reports[-1] + "#" + i18n.LANG],
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=60, check=False)
     if not os.path.exists(tmp):
         return None
@@ -214,7 +214,7 @@ def main():
             im = Image.open(files[0]).convert("RGB")
             im = im.resize((640, round(im.height * 640 / im.width)), Image.LANCZOS)
             d = ImageDraw.Draw(im, "RGBA")
-            label = "%s · %s" % (ft["id"], FAULT_EN[ft["type"]])
+            label = "%s · %s" % (ft["id"], i18n.pick(i18n.FAULT_SHORT[ft["type"]]).lower())
             d.rectangle((0, im.height - 40, im.width, im.height), fill=(8, 16, 18, 210))
             d.text((14, im.height - 32), label, fill=YELLOW, font=font(20, True))
             panels.append(im)
@@ -254,7 +254,8 @@ def main():
                         best[t["id"]] = (score, fr["i"], pf)
         for tid, (_, i, pf) in sorted(best.items()):
             img = np.load(os.path.join(RAW, "stream", "%05d.npy" % i))
-            cap = "Camera de inspecție X500 · %.0f m AGL · detecții din pozițiile reale ale simulării" % pf[3]
+            cap = i18n.pick(("X500 inspection camera · %.0f m AGL · detections from simulation ground truth",
+                             "Camera de inspecție X500 · %.0f m AGL · detecții din pozițiile reale ale simulării")) % pf[3]
             out = os.path.join(MEDIA, "dronecam-%s.jpg" % tid)
             annotate(img, pf[2], cap).convert("RGB").save(out, "JPEG", quality=88, optimize=True)
             made.append(out)
@@ -276,7 +277,7 @@ def main():
                 if not pf:
                     continue
                 img = np.load(os.path.join(RAW, "stream", "%05d.npy" % fr["i"]))
-                gif_frames.append(annotate(img, pf[2], "Camera de inspecție X500 · %.0f m AGL" % pf[3], scale=1))
+                gif_frames.append(annotate(img, pf[2], i18n.pick(("X500 inspection camera · %.0f m AGL", "Camera de inspecție X500 · %.0f m AGL")) % pf[3], scale=1))
             if gif_frames:
                 made.append(save_gif(gif_frames, os.path.join(MEDIA, "dronecam.gif"), 640, 8))
         del events

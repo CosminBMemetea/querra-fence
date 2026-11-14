@@ -179,7 +179,7 @@ def main():
     track((-5.0, -3.5, 2.2), 0.08)
     open(GO_FILE, "w").close()
     print("[capture] mission go", flush=True)
-    while "Armat" not in mission_log():
+    while "Armed" not in mission_log():
         time.sleep(0.5)
     t_arm = time.time()
     while time.time() - t_arm < 10:
@@ -189,7 +189,7 @@ def main():
     seen_events = 0
     last_still = time.time()
     n_still = 0
-    while "Aterizat" not in mission_log() and "Raport:" not in mission_log():
+    while "Landed" not in mission_log() and "Report:" not in mission_log():
         try:
             with open(EVENTS, encoding="utf-8") as f:
                 lines = f.readlines()

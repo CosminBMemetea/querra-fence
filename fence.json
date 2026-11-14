@@ -1,5 +1,5 @@
 {
-  "_info": "Configurația pășunii. Coordonate locale în metri: x = est, y = nord, originea = platforma dronei. Schimbi aici gardul, defectele sau turma și rulezi din nou ./start.sh (lumea se regenerează singură).",
+  "_info": "Pasture configuration. Local coordinates in metres: x = east, y = north, origin = the drone pad. Change the fence, faults or herd here and run ./start.sh again; the world regenerates itself.",
 
   "origin": { "lat": 45.69410, "lon": 21.46020, "alt_m": 95.0 },
 
@@ -12,9 +12,9 @@
   },
 
   "faults": [
-    { "id": "F1", "type": "wire_break",   "segment": 22, "strand": 1, "label": "Sârmă ruptă (firul de sus)" },
-    { "id": "F2", "type": "post_down",    "post": 41,                  "label": "Stâlp căzut, sârmele ating solul" },
-    { "id": "F3", "type": "branch_short", "segment": 58,               "label": "Creangă pe gard, scurtcircuit" }
+    { "id": "F1", "type": "wire_break",   "segment": 22, "strand": 1 },
+    { "id": "F2", "type": "post_down",    "post": 41 },
+    { "id": "F3", "type": "branch_short", "segment": 58 }
   ],
 
   "herd": { "cows": 14, "sheep": 10 },
