@@ -3,6 +3,7 @@ run/
 reports/
 worlds/pasture.sdf
 docs/media/raw/
+scenario/
 __pycache__/
 *.pyc
 .DS_Store

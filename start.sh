@@ -60,7 +60,7 @@ if [ "$MODE" = mission ]; then
 fi
 
 "$ROOT/stop.sh" --quiet
-rm -f "$RUN/events.jsonl"
+rm -f "$RUN/events.jsonl" "$RUN/ground_state.json" "$RUN/drone_state.json" "$RUN/dispatch.json"
 if [ "$MODE" = demo ]; then
   export GARDIAN_DEMO=1 GARDIAN_NO_OPEN=1 GARDIAN_WAIT_FILE="$RUN/demo_go"
   rm -rf "$RUN/demo_go" "$ROOT/docs/media/raw" "$RUN/mission.log"
@@ -140,8 +140,22 @@ if [ "$MODE" = guard ]; then
 fi
 
 step "Starting PX4 on the X500" "Pornesc PX4 pe X500"
-"$PX4_BIN" -d > "$RUN/px4.log" 2>&1 &
-echo $! > "$RUN/px4.pid"; disown
+start_px4() {
+  "$PX4_BIN" -d > "$RUN/px4.log" 2>&1 &
+  echo $! > "$RUN/px4.pid"; disown
+  for _ in $(seq 1 45); do
+    grep -q "Startup script returned successfully" "$RUN/px4.log" 2>/dev/null && return 0
+    sleep 1
+  done
+  return 1
+}
+# PX4's startup script can occasionally hang on one of its own commands: restart it instead of waiting forever
+if ! start_px4; then
+  info "PX4 startup stalled, restarting it" "Pornirea PX4 s-a blocat, îl repornesc"
+  pkill -9 -f "px4_sitl_default/bin/px4" 2>/dev/null; pkill -9 -f "^px4-" 2>/dev/null
+  rm -f /tmp/px4-sock-0 /tmp/px4_lock-0
+  start_px4 || fail "PX4 did not start. See $RUN/px4.log" "PX4 nu a pornit. Vezi $RUN/px4.log"
+fi
 
 if [ "$MODE" = demo ]; then
   step "Demo mode: filming the flight for docs/media" "Mod demo: filmez zborul pentru docs/media"

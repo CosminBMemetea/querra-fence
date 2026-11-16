@@ -29,6 +29,8 @@ pkill -f "gz sim" 2>/dev/null
 sleep 1
 pkill -9 -f "gz sim" 2>/dev/null
 pkill -9 -f "px4_sitl_default/bin/px4" 2>/dev/null
+pkill -9 -f "^px4-" 2>/dev/null                 # PX4 client commands stuck in its startup script
+rm -f /tmp/px4-sock-0 /tmp/px4_lock-0
 if [ $QUIET -eq 0 ]; then
   if [ "${GARDIAN_LANG:-en}" = ro ]; then echo "Simularea Gardian X500 e oprită."; else echo "Gardian X500 simulation stopped."; fi
 fi
