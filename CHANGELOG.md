@@ -12,6 +12,12 @@
 - Escaped animals near the gate are reported as "near the gate" instead of the nearest fault
 - `stop.sh` also stops leftover guard loops, the RTSP relay and the stream bridge
 
+### Jetson brain
+- `sim/state_server.py`: read-only JSON state of the ground station, the drone and the latest events (port 8095)
+- `brain/server.py` + `brain/index.html`: chat page on the Jetson; answers typed questions out loud from the RTSP frames
+  and live facts with a local vision model (Ollama), facts-only fallback, Piper voice (or `say` / the browser)
+- `docs/jetson-brain.md`: Jetson setup, direct-cable network, sharing sound in Zoom/Teams/Meet, scenario timeline
+
 ## v0.1.0 · 2026-11-14
 
 First release: a complete electric-fence inspection flight in simulation.

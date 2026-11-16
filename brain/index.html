@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gardian · ground station</title>
+<style>
+:root {
+  --bg: #0b1517; --panel: #0f1d21; --line: rgba(190, 225, 214, .14); --fg: #e6efe9; --mut: #8ea29d;
+  --volt: #f2c230; --cyan: #7fd3ff; --ok: #4cc38a; --crit: #ff5b4f;
+  --ui: -apple-system, "SF Pro Text", "Segoe UI", system-ui, sans-serif; --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--fg); font: 16px/1.5 var(--ui); display: flex; flex-direction: column; }
+header { display: flex; align-items: center; gap: 16px; padding: 14px 22px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand b { font-size: 22px; letter-spacing: .01em; }
+.brand span { color: var(--mut); font-size: 14px; }
+.chips { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { font: 12px/1 var(--mono); padding: 7px 10px; border-radius: 99px; border: 1px solid var(--line); color: var(--mut); display: inline-flex; align-items: center; gap: 7px; }
+.chip i { width: 7px; height: 7px; border-radius: 50%; background: var(--mut); }
+.chip.on i { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.chip.off i { background: var(--crit); }
+main { flex: 1; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px; padding: 18px 22px; min-height: 0; }
+.cams { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 12px; align-content: start; }
+.cam { position: relative; background: #000; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; aspect-ratio: 16 / 9; }
+.cam.big { grid-column: 1 / -1; }
+.cam img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cam .tag { position: absolute; left: 10px; top: 10px; font: 600 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; background: rgba(8, 16, 18, .75); padding: 6px 8px; border-radius: 6px; }
+.cam .tag::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--crit); margin-right: 7px; vertical-align: 1px; animation: rec 1.4s steps(2) infinite; }
+.cam .wait { position: absolute; inset: 0; display: grid; place-items: center; color: var(--mut); font-size: 14px; }
+@keyframes rec { 50% { opacity: .2; } }
+.chat { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; min-height: 0; }
+.log { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.msg { max-width: 92%; padding: 11px 14px; border-radius: 12px; font-size: 17px; line-height: 1.5; }
+.q { align-self: flex-end; background: rgba(127, 211, 255, .12); border: 1px solid rgba(127, 211, 255, .25); }
+.a { align-self: flex-start; background: rgba(255, 255, 255, .04); border: 1px solid var(--line); }
+.a small { display: block; margin-top: 6px; color: var(--mut); font: 11px/1.3 var(--mono); }
+.a.speaking { border-color: var(--volt); box-shadow: 0 0 0 1px rgba(242, 194, 48, .25); }
+.empty { color: var(--mut); font-size: 15px; margin: auto; text-align: center; max-width: 34ch; }
+.facts { font: 12px/1.5 var(--mono); color: var(--mut); white-space: pre-wrap; border-top: 1px dashed var(--line); margin-top: 8px; padding-top: 8px; }
+.sugg { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 18px 12px; }
+.sugg button { font: 14px var(--ui); color: var(--fg); background: rgba(255, 255, 255, .05); border: 1px solid var(--line); border-radius: 99px; padding: 7px 12px; cursor: pointer; }
+.sugg button:hover { background: rgba(255, 255, 255, .1); }
+form { display: flex; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--line); }
+input[type=text] { flex: 1; min-width: 0; font: 17px var(--ui); color: var(--fg); background: #0a1416; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+button.ask { font: 600 16px var(--ui); background: var(--volt); color: #1b1606; border: 0; border-radius: 10px; padding: 0 20px; cursor: pointer; }
+button:disabled { opacity: .5; cursor: progress; }
+:focus-visible { outline: 2px solid var(--volt); outline-offset: 2px; }
+.opts { display: flex; gap: 14px; align-items: center; padding: 0 18px 12px; color: var(--mut); font-size: 13px; }
+.dots::after { content: "…"; animation: dots 1.2s steps(4) infinite; display: inline-block; width: 1.2em; overflow: hidden; vertical-align: bottom; }
+@keyframes dots { from { width: 0; } to { width: 1.2em; } }
+footer { padding: 8px 22px 12px; color: var(--mut); font-size: 12px; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .cam .tag::before, .dots::after { animation: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><b>Gardian</b><span>ground station brain · NVIDIA Jetson</span></div>
+  <div class="chips">
+    <span class="chip" id="cModel"><i></i><span>model</span></span>
+    <span class="chip" id="cVoice"><i></i><span>voice</span></span>
+    <span class="chip" id="cCams"><i></i><span>cameras</span></span>
+  </div>
+</header>
+<main>
+  <section class="cams" aria-label="Live cameras">
+    <div class="cam big"><img id="img-rgb" alt="Mast RGB camera"><span class="tag">Mast · RGB</span><span class="wait" id="w-rgb">waiting for stream</span></div>
+    <div class="cam"><img id="img-thermal" alt="Mast thermal camera"><span class="tag">Mast · thermal</span><span class="wait" id="w-thermal">waiting for stream</span></div>
+    <div class="cam"><img id="img-drone" alt="Drone inspection camera"><span class="tag">Drone · camera</span><span class="wait" id="w-drone">waiting for stream</span></div>
+  </section>
+  <section class="chat" aria-label="Conversation">
+    <div class="log" id="log" aria-live="polite"><p class="empty" id="empty">Ask the ground station what it sees. It answers from its cameras and sensors, out loud.</p></div>
+    <div class="sugg" id="sugg">
+      <button type="button">What do you see right now?</button>
+      <button type="button">Are any animals outside the fence?</button>
+      <button type="button">Is the fence OK?</button>
+      <button type="button">What is the drone doing?</button>
+      <button type="button">What does the thermal camera show?</button>
+    </div>
+    <div class="opts"><label><input type="checkbox" id="showFacts"> show the facts behind each answer</label></div>
+    <form id="form"><input type="text" id="q" autocomplete="off" placeholder="Type a question and press Enter" aria-label="Question"><button class="ask" id="send">Ask</button></form>
+  </section>
+</main>
+<footer>Simulated farm (Gazebo + PX4) streamed over RTSP. The Jetson answers with a local vision-language model and live sensor facts.</footer>
+<script>
+const $ = (id) => document.getElementById(id);
+let busy = false, lang = 'en';
+
+function chip(el, on, text) { el.className = 'chip ' + (on ? 'on' : 'off'); el.querySelector('span').textContent = text; }
+
+async function status() {
+  try {
+    const s = await (await fetch('/status')).json();
+    lang = s.lang;
+    chip($('cModel'), s.ollama && s.model !== 'none', s.ollama && s.model !== 'none' ? s.model : 'facts only');
+    chip($('cVoice'), s.voice !== 'browser', 'voice: ' + s.voice);
+    const live = Object.values(s.frames).filter((a) => a !== null && a < 10).length;
+    chip($('cCams'), live > 0, live + '/3 cameras live');
+  } catch (e) { chip($('cModel'), false, 'brain offline'); }
+}
+
+function refresh() {
+  for (const n of ['rgb', 'thermal', 'drone']) {
+    const img = new Image();
+    img.onload = () => { $('img-' + n).src = img.src; $('w-' + n).hidden = true; };
+    img.onerror = () => { $('w-' + n).hidden = false; };
+    img.src = '/frame/' + n + '.jpg?t=' + Date.now();
+  }
+}
+
+function add(cls, text) {
+  $('empty')?.remove();
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls;
+  d.textContent = text;
+  $('log').appendChild(d);
+  $('log').scrollTop = $('log').scrollHeight;
+  return d;
+}
+
+function say(text, bubble, audioUrl) {
+  bubble.classList.add('speaking');
+  const done = () => bubble.classList.remove('speaking');
+  if (audioUrl) {
+    const a = new Audio(audioUrl);
+    a.onended = done; a.onerror = done;
+    a.play().catch(done);
+  } else if ('speechSynthesis' in window) {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang === 'ro' ? 'ro-RO' : 'en-US';
+    u.onend = done;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  } else { done(); }
+}
+
+async function ask(q) {
+  if (busy || !q.trim()) return;
+  busy = true; $('send').disabled = true; $('q').value = '';
+  add('q', q);
+  const wait = add('a', ''); wait.innerHTML = '<span class="dots">Looking</span>';
+  try {
+    const r = await (await fetch('/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q }) })).json();
+    wait.textContent = r.answer;
+    const meta = document.createElement('small');
+    meta.textContent = r.model + ' · ' + r.images + ' images · ' + (r.latency_ms / 1000).toFixed(1) + ' s';
+    wait.appendChild(meta);
+    if ($('showFacts').checked) {
+      const f = document.createElement('div'); f.className = 'facts'; f.textContent = r.facts.map((x) => '• ' + x).join('\n'); wait.appendChild(f);
+    }
+    say(r.answer, wait, r.audio);
+  } catch (e) {
+    wait.textContent = 'The brain did not answer. Is brain/server.py running?';
+  }
+  busy = false; $('send').disabled = false; $('q').focus();
+}
+
+$('form').addEventListener('submit', (e) => { e.preventDefault(); ask($('q').value); });
+$('sugg').addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') ask(e.target.textContent); });
+status(); refresh();
+setInterval(status, 5000); setInterval(refresh, 1000);
+$('q').focus();
+</script>
+</body>
+</html>

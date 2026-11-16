@@ -96,6 +96,10 @@ sends the drone when an animal leaves through the gate or the fence voltage drop
 RTSP streams, so a real Jetson can run its models on the simulation before it goes to the field.
 See [docs/ground-station.md](docs/ground-station.md).
 
+**Ask the Jetson what it sees.** `brain/server.py` runs on the Jetson: it takes the RTSP frames and the live state
+(`sim/state_server.py`), answers typed questions with a local vision-language model (Ollama) grounded in sensor facts,
+and speaks the answer (Piper). Setup and run sheet: [docs/jetson-brain.md](docs/jetson-brain.md).
+
 ![Simulated ground-station streams](docs/media/ground-cameras.png)
 
 ## How it works
