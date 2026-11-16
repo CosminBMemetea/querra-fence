@@ -99,7 +99,7 @@ def write_html(d, path):
     ) or "<tr><td colspan=6>%s</td></tr>" % L("No faults found.", "Niciun defect găsit.")
     rows_a = "".join(
         "<tr><td>{id}</td><td>{sp}</td><td class=m>{lat:.6f}, {lon:.6f}</td><td>{df:.0f} m</td><td>{nf}</td></tr>".format(
-            id=a["id"], sp=L(species2(a["species"])), lat=a["lat"], lon=a["lon"], df=a["distance_to_fence_m"], nf=a["near_fault"])
+            id=a["id"], sp=L(species2(a["species"])), lat=a["lat"], lon=a["lon"], df=a["distance_to_fence_m"], nf=L("gate", "poartă") if a["near_fault"] == "gate" else a["near_fault"])
         for a in d["escaped_animals"]
     ) or "<tr><td colspan=5>%s</td></tr>" % L("No animals outside the fence.", "Niciun animal în afara gardului.")
     h = d["herd"]
@@ -128,7 +128,7 @@ td{{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}} td.m{{f
 .note{{color:var(--mut);font-size:13.5px;max-width:68ch}}
 </style></head><body class="{bodyclass}"><main>
 <header>
- <div><h1>{t_title}</h1><div class="sub">{gen} · {drone} · {t_origin} {lat:.5f}, {lon:.5f}</div></div>
+ <div><h1>{t_title}</h1><div class="sub">{gen} · {drone} · {t_origin} {lat:.5f}, {lon:.5f}</div>{trig}</div>
  <div class="lang" role="group" aria-label="Language"><button type="button" data-l="en">EN</button><button type="button" data-l="ro">RO</button></div>
 </header>
 <div class="k">
@@ -163,6 +163,9 @@ td{{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}} td.m{{f
 </script>
 </body></html>""".format(
         lang=lang, bodyclass="ro" if lang == "ro" else "",
+        trig=('<div class="sub" style="color:#7fd3ff;margin-top:4px">%s</div>' % L(
+            i18n.MSG["trigger"][0].format(reason=text2(d["trigger"]["label"])[0]),
+            i18n.MSG["trigger"][1].format(reason=text2(d["trigger"]["label"])[1]))) if d.get("trigger") else "",
         gen=html.escape(d["generated_at"].replace("T", " ")), drone=html.escape(d["drone"]), lat=d["origin"]["lat"], lon=d["origin"]["lon"],
         nf=len(d["faults"]), ne=len(d["escaped_animals"]), seen=h["seen"], total=h["total"], dm=m["duration_s"] // 60, ds=m["duration_s"] % 60,
         dist=m["distance_m"], fl=m["fence_length_m"], map=_map_svg(d), rf=rows_f, ra=rows_a, em=_em_svg(d, m["fence_length_m"]),

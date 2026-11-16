@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Ground station + drone (`./start.sh guard`)
+- Ground station on a pole at the gate: RGB and thermal cameras on the mast, iToF depth sensor on the gate post
+- Animals carry body heat for the thermal camera (16-bit, kelvin × 100, mapped to −5…45 °C in the stream)
+- Simulated cameras published as RTSP through a local MediaMTX relay (`--share` for the local network), ready for a Jetson
+- `ground/node.py`: sees animals outside the fence, counts animals through the gate, reads the fence monitor,
+  and sends the drone; the mission report shows what triggered the flight
+- Scenario: gate left open, a cow walks out; fault onset times (`onset_s`) drop the fence voltage mid-run
+- Escaped animals near the gate are reported as "near the gate" instead of the nearest fault
+- `stop.sh` also stops leftover guard loops, the RTSP relay and the stream bridge
+
 ## v0.1.0 · 2026-11-14
 
 First release: a complete electric-fence inspection flight in simulation.

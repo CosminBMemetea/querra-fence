@@ -49,7 +49,34 @@ MSG = {
     "ph_return": ("Return", "Întoarcere"),
     "ph_landing": ("Landing", "Aterizare"),
     "em_event": ("0 kV on the top wire", "0 kV pe firul de sus"),
+    # ground/node.py (the ground station)
+    "g_start": ("Ground station on · cameras: {cams} · fence alarm below {kv:.1f} kV",
+                "Stația de sol pornită · camere: {cams} · alarmă gard sub {kv:.1f} kV"),
+    "g_status": ("Ground station · {n} animals in view · fence {e:.1f} kV at the energizer, {end} at the far end",
+                 "Stația de sol · {n} animale în cadru · gard {e:.1f} kV la energizator, {end} la capăt"),
+    "g_outside": ("  GROUND   {id} ({species}) is outside the fence, {dist:.0f} m from the gate · seen by {cam}",
+                  "  SOL      {id} ({species}) e în afara gardului, la {dist:.0f} m de poartă · văzut de {cam}"),
+    "g_gate": ("  GROUND   {id} went {dir} through the gate (iToF) · {n} animals out through the gate so far",
+               "  SOL      {id} a ieșit {dir} pe poartă (iToF) · {n} animale ieșite pe poartă până acum"),
+    "g_volt": ("  GROUND   Fence monitor: {wire} wire at the far end is at {kv:.1f} kV (alarm below {thr:.1f} kV)",
+               "  SOL      Monitor gard: firul {wire} de la capătul gardului are {kv:.1f} kV (alarmă sub {thr:.1f} kV)"),
+    "g_dispatch": ("  GROUND → AIR  Sending the drone to check: {reason}",
+                   "  SOL → AER    Trimit drona să verifice: {reason}"),
+    "g_busy": ("  GROUND   The drone is already out; the alert goes into its report.",
+               "  SOL      Drona e deja în aer; alerta intră în raportul ei."),
+    "guard_wait": ("Guard mode: the ground station watches; the drone takes off when it raises an alert. Ctrl+C stops everything.",
+                   "Mod de pază: stația de sol veghează; drona decolează când apare o alertă. Ctrl+C oprește tot."),
+    "trigger": ("Triggered by the ground station: {reason}", "Declanșat de stația de sol: {reason}"),
 }
+
+REASON = {
+    "animal_outside": ("animal outside the fence near the gate", "animal în afara gardului lângă poartă"),
+    "gate_exit": ("animal left through the gate", "animal ieșit pe poartă"),
+    "voltage": ("fence voltage alarm", "alarmă de tensiune pe gard"),
+}
+WIRE = {0: ("bottom", "de jos"), 1: ("top", "de sus")}
+DIRECTION = {"out": ("out", "afară"), "in": ("in", "înăuntru")}
+CAM = {"rgb": ("RGB camera", "camera RGB"), "thermal": ("thermal camera", "camera termală"), "depth": ("iToF", "iToF")}
 
 FAULT = {
     "wire_break": ("Broken wire (top strand)", "Sârmă ruptă (firul de sus)"),

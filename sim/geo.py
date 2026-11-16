@@ -126,16 +126,19 @@ class Fence:
 
     def _apply_faults(self):
         self.broken = set()   # (segment, strand)
-        self.shorts = []      # (s_along, load)
+        self.breaks = []      # (segment, strand, onset_s)
+        self.shorts = []      # (s_along, load, onset_s)
         for ft in self.faults:
             t = ft["type"]
+            onset = float(ft.get("onset_s", 0.0))
             if t == "wire_break":
                 self.broken.add((ft["segment"], ft.get("strand", 1)))
+                self.breaks.append((ft["segment"], ft.get("strand", 1), onset))
             elif t == "post_down":
                 self.posts[ft["post"]]["tilt"] = math.radians(62)
-                self.shorts.append((self.posts[ft["post"]]["s"], 0.35))
+                self.shorts.append((self.posts[ft["post"]]["s"], 0.35, onset))
             elif t == "branch_short":
-                self.shorts.append((self.segment_mid(ft["segment"])[2], 0.55))
+                self.shorts.append((self.segment_mid(ft["segment"])[2], 0.55, onset))
 
     def attach(self, i, strand):
         """3D point where wire `strand` is attached to post i (accounts for a leaning post)."""
@@ -167,17 +170,31 @@ class Fence:
         k = ft["segment"]
         return i18n.both(i18n.WHERE["segment"], a=k, b=k + 1)
 
-    def voltage(self, strand, s):
-        """Voltage (kV) on wire `strand` at distance s from the energizer (simple model)."""
-        load = sum(l for _, l in self.shorts)
-        v = self.kv / (1 + load) - 0.0015 * s
-        for s_short, _ in self.shorts:
+    def voltage(self, strand, s, t=None):
+        """Voltage (kV) on wire `strand` at distance s from the energizer (simple model).
+
+        `t` is the time in seconds since the start of the scenario: a fault with `onset_s`
+        only counts once it has happened. Without `t` every fault counts.
+        """
+        def active(onset):
+            return t is None or onset <= t
+        shorts = [(ss, load) for ss, load, onset in self.shorts if active(onset)]
+        v = self.kv / (1 + sum(load for _, load in shorts)) - 0.0015 * s
+        for s_short, _ in shorts:
             if s > s_short:
                 v -= 0.4
-        for (seg, st) in self.broken:
-            if st == strand and s > self.posts[seg]["s"]:
+        for seg, st, onset in self.breaks:
+            if st == strand and s > self.posts[seg]["s"] and active(onset):
                 return 0.0
         return max(0.0, v)
+
+    def gate(self):
+        """The gate between the last post and the first one: centre, outward normal, direction."""
+        a, b = self.posts[-1], self.posts[0]
+        tx, ty = b["x"] - a["x"], b["y"] - a["y"]
+        L = math.hypot(tx, ty) or 1.0
+        return dict(a=(a["x"], a["y"]), b=(b["x"], b["y"]), center=((a["x"] + b["x"]) / 2, (a["y"] + b["y"]) / 2),
+                    out=self.outward(tx, ty), tan=(tx / L, ty / L), width=L)
 
     def nearest_s(self, x, y):
         """Distance along the fence of the point closest to (x, y), plus the lateral distance."""
@@ -192,6 +209,57 @@ class Fence:
             if d < best[0]:
                 best = (d, P[i]["s"] + t * (P[i + 1]["s"] - P[i]["s"]))
         return best[1], best[0]
+
+
+# ---------- ground station ----------
+def ground_station(cfg, fence):
+    """Mast position and camera aims for the ground station (Jetson on a pole near the gate)."""
+    gs = dict(cfg.get("ground_station", {}))
+    g = fence.gate()
+    (gx, gy), (ox, oy), (tx, ty) = g["center"], g["out"], g["tan"]
+    off_out, off_side = gs.get("mast_offset_m", [8.0, -8.0])
+    mx, my = gs.get("position", [gx + ox * off_out + tx * off_side, gy + oy * off_out + ty * off_side])
+    cx = sum(p[0] for p in fence.poly) / len(fence.poly)
+    cy = sum(p[1] for p in fence.poly) / len(fence.poly)
+    h = gs.get("mast_height_m", 4.5)
+    rgb_target = ((gx + cx) / 2, (gy + cy) / 2)
+    cams = {
+        "rgb": dict(pos=(mx, my, h), yaw=math.atan2(rgb_target[1] - my, rgb_target[0] - mx), pitch=math.radians(12),
+                    hfov=math.radians(110), size=(640, 360), fps=10, range=120.0),
+        "thermal": dict(pos=(mx, my, h - 0.25), yaw=math.atan2(cy - my, cx - mx), pitch=math.radians(9),
+                        hfov=math.radians(50), size=(320, 240), fps=9, range=150.0),
+        # iToF on the gate post, looking down at the opening (short range, like a real ToF sensor)
+        "depth": dict(pos=(g["a"][0] + ox * 0.3, g["a"][1] + oy * 0.3, 2.4), yaw=math.atan2(ty, tx), pitch=math.radians(50),
+                      hfov=math.radians(70), size=(320, 240), fps=10, range=8.0),
+    }
+    # mast cameras sit on a short arm in front of the pole, so the pole is not in the picture
+    for name in ("rgb", "thermal"):
+        c = cams[name]
+        c["pos"] = (mx + 0.35 * math.cos(c["yaw"]), my + 0.35 * math.sin(c["yaw"]), c["pos"][2])
+    for name, c in cams.items():
+        c.update(gs.get("cameras", {}).get(name, {}))
+    return dict(mast=(mx, my), height=h, gate=g, cams=cams,
+                alarm_kv=gs.get("voltage_alarm_kv", 3.0))
+
+
+def in_camera_view(cam, x, y, z=0.8):
+    """Is the world point inside the camera's field of view and range (pinhole, no occlusion)?"""
+    px, py, pz = cam["pos"]
+    dx, dy, dz = x - px, y - py, z - pz
+    dist = math.sqrt(dx * dx + dy * dy + dz * dz)
+    if dist > cam["range"] or dist < 0.3:
+        return False
+    cyaw, syaw = math.cos(cam["yaw"]), math.sin(cam["yaw"])
+    fwd_h = dx * cyaw + dy * syaw          # along the camera heading
+    side = -dx * syaw + dy * cyaw          # to the left
+    cp, sp = math.cos(cam["pitch"]), math.sin(cam["pitch"])
+    fwd = fwd_h * cp - dz * sp             # optical axis (pitched down)
+    up = fwd_h * sp + dz * cp
+    if fwd <= 0.1:
+        return False
+    th = math.tan(cam["hfov"] / 2)
+    tv = th * cam["size"][1] / cam["size"][0]
+    return abs(side / fwd) <= th and abs(up / fwd) <= tv
 
 
 # ---------- drone path ----------

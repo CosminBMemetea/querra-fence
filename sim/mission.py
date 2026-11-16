@@ -293,13 +293,16 @@ class Detector:
                 ex, ey = a["x"] + self.rnd.gauss(0, 0.6), a["y"] + self.rnd.gauss(0, 0.6)
                 lat, lon = geo.enu_to_gps(self.cfg, ex, ey)
                 dfence = geo.dist_to_polyline(fence.poly, a["x"], a["y"])[0]
-                near = min(self.cfg["faults"], key=lambda f: math.hypot(fence.fault_anchor(f)[0] - a["x"], fence.fault_anchor(f)[1] - a["y"]))
+                near_f = min(self.cfg["faults"], key=lambda f: math.hypot(fence.fault_anchor(f)[0] - a["x"], fence.fault_anchor(f)[1] - a["y"]))
+                gx, gy = fence.gate()["center"]
+                d_fault = math.hypot(fence.fault_anchor(near_f)[0] - a["x"], fence.fault_anchor(near_f)[1] - a["y"])
+                near = {"id": "gate", "label": ("the gate", "poartă")} if math.hypot(gx - a["x"], gy - a["y"]) < d_fault else {"id": near_f["id"], "label": (near_f["id"], near_f["id"])}
                 ev = dict(kind="animal", id=a["id"], species=a["kind"], x=round(ex, 2), y=round(ey, 2), lat=round(lat, 7), lon=round(lon, 7),
                           distance_to_fence_m=round(dfence, 1), near_fault=near["id"], confidence=round(self.rnd.uniform(0.88, 0.98), 2))
                 self.escaped[a["id"]] = ev
                 self.emit(ev)
                 say("escaped_line", RED + ";1", id=a["id"], species=i18n.SPECIES[a["kind"]],
-                    dist=dfence, near=near["id"], lat=lat, lon=lon)
+                    dist=dfence, near=near["label"], lat=lat, lon=lon)
         # EM sensor: reads the fence voltage while the drone is close to it
         fs, lateral = fence.nearest_s(dx, dy)
         if lateral < 7 and s["alt"] < 25:
@@ -333,6 +336,13 @@ def main():
     herd_total = cfg["herd"]["cows"] + cfg["herd"]["sheep"]
 
     say("title", BLD, m=fence.length, n=len(path))
+    trigger = None
+    if os.environ.get("GARDIAN_TRIGGER"):
+        try:
+            trigger = json.loads(os.environ["GARDIAN_TRIGGER"])
+            say("trigger", CYN, reason=trigger["label"])
+        except (ValueError, KeyError):
+            trigger = None
     d = Drone(args.url)
     say("waiting_px4", DIM, url=args.url)
     if d.recv(["HEARTBEAT"], 120) is None:
@@ -459,6 +469,7 @@ def main():
     data = dict(
         generated_at=dt.datetime.now().isoformat(timespec="seconds"),
         language=i18n.LANG,
+        trigger=trigger,
         drone="Holybro X500 · PX4 SITL · Gazebo Harmonic",
         world="pasture",
         origin=cfg["origin"],

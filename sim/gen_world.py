@@ -17,16 +17,24 @@ def mat(r, g, b, emissive=None, spec=0.08):
         r, g, b, spec, e[0], e[1], e[2])
 
 
+GROUND = bool(os.environ.get("GARDIAN_GROUND"))  # guard mode: ground station, thermal heat, scenario
+
+
 class Visuals:
-    def __init__(self):
+    def __init__(self, heat=None):
         self.items = []
         self.n = 0
+        self.heat = heat if GROUND else None  # surface temperature in K, seen by the thermal camera
 
     def add(self, geom, pose, material, shadows=True):
         self.n += 1
+        extra = ""
+        if self.heat:
+            extra = ('<plugin filename="gz-sim-thermal-system" name="gz::sim::systems::Thermal">'
+                     '<temperature>%.1f</temperature></plugin>' % self.heat)
         self.items.append(
-            '<visual name="v{n}"><pose>{p}</pose><geometry>{g}</geometry>{m}<cast_shadows>{s}</cast_shadows></visual>'.format(
-                n=self.n, p=" ".join("%.4f" % v for v in pose), g=geom, m=material, s="true" if shadows else "false"))
+            '<visual name="v{n}"><pose>{p}</pose><geometry>{g}</geometry>{m}<cast_shadows>{s}</cast_shadows>{x}</visual>'.format(
+                n=self.n, p=" ".join("%.4f" % v for v in pose), g=geom, m=material, s="true" if shadows else "false", x=extra))
 
     def box(self, size, pose, material, shadows=True):
         self.add("<box><size>%.3f %.3f %.3f</size></box>" % size, pose, material, shadows)
@@ -73,7 +81,7 @@ LEAF = [mat(0.20, 0.38, 0.12), mat(0.25, 0.44, 0.15), mat(0.17, 0.33, 0.13), mat
 BARK = mat(0.33, 0.24, 0.17)
 
 
-def build_fence(fence):
+def build_fence(fence, gate_open=False):
     v = Visuals()
     P = fence.posts
     for i, p in enumerate(P):
@@ -100,8 +108,14 @@ def build_fence(fence):
             v.rod(a, b, 0.018, WIRE_DEAD if dead else WIRE)
     # gate (insulated handle) between the last post and the first
     g, f0 = P[-1], P[0]
-    v.rod((g["x"], g["y"], 1.0), (f0["x"], f0["y"], 1.0), 0.012, WIRE)
-    v.box((0.25, 0.06, 0.06), ((g["x"] + f0["x"]) / 2, (g["y"] + f0["y"]) / 2, 1.0, 0, 0, math.atan2(f0["y"] - g["y"], f0["x"] - g["x"])), mat(0.08, 0.08, 0.08))
+    if gate_open:
+        # left open: the spring wire and its handle lie on the ground next to the gate post
+        hx, hy = g["x"] + g["out"][0] * 0.6, g["y"] + g["out"][1] * 0.6
+        v.rod((g["x"], g["y"], 1.0), (hx, hy, 0.03), 0.012, WIRE_DEAD)
+        v.box((0.25, 0.06, 0.06), (hx, hy, 0.03, 0, 0, 0.6), mat(0.08, 0.08, 0.08), shadows=False)
+    else:
+        v.rod((g["x"], g["y"], 1.0), (f0["x"], f0["y"], 1.0), 0.012, WIRE)
+        v.box((0.25, 0.06, 0.06), ((g["x"] + f0["x"]) / 2, (g["y"] + f0["y"]) / 2, 1.0, 0, 0, math.atan2(f0["y"] - g["y"], f0["x"] - g["x"])), mat(0.08, 0.08, 0.08))
     # energizer on the first post + LED
     ox, oy = f0["out"]
     ex, ey = f0["x"] + ox * 0.35, f0["y"] + oy * 0.35
@@ -180,7 +194,7 @@ COW_COLORS = {
 
 
 def build_animal(a):
-    v = Visuals()
+    v = Visuals(heat=311.0 if a["kind"] == "cow" else 312.0)
     if a["kind"] == "cow":
         body, patch, head = COW_COLORS[a["breed"]]
         B, Pm, H = mat(*body), mat(*patch), mat(*head)
@@ -203,14 +217,66 @@ def build_animal(a):
     return mover_model(a["id"], v, (a["x"], a["y"], 0, 0, 0, a["yaw"]))
 
 
+def sensor_xml(name, kind, cam, topic):
+    x, y, z = cam["pos"]
+    w, h = cam["size"]
+    if kind == "thermal":
+        # 16-bit, value = kelvin / 0.01, like a radiometric thermal camera; sim/stream.py maps it to 8-bit
+        image = "<width>%d</width><height>%d</height><format>L16</format>" % (w, h)
+        plugin = ('<plugin filename="gz-sim-thermal-sensor-system" name="gz::sim::systems::ThermalSensor">'
+                  '<min_temp>253.15</min_temp><max_temp>373.15</max_temp><resolution>0.01</resolution></plugin>')
+        stype = "thermal"
+    elif kind == "depth":
+        image = "<width>%d</width><height>%d</height><format>R_FLOAT32</format>" % (w, h)
+        plugin, stype = "", "depth_camera"
+    else:
+        image, plugin, stype = "<width>%d</width><height>%d</height>" % (w, h), "", "camera"
+    return ('<sensor name="{n}" type="{t}"><pose>{x:.3f} {y:.3f} {z:.3f} 0 {p:.4f} {yaw:.4f}</pose>'
+            '<camera><horizontal_fov>{fov:.4f}</horizontal_fov><image>{img}</image><clip><near>0.2</near><far>{far:.1f}</far></clip></camera>'
+            '<always_on>1</always_on><update_rate>{fps}</update_rate><visualize>false</visualize><topic>{topic}</topic>{plugin}</sensor>').format(
+        n=name, t=stype, x=x, y=y, z=z, p=cam["pitch"], yaw=cam["yaw"], fov=cam["hfov"], img=image,
+        far=max(cam["range"], 10.0) if kind != "depth" else cam["range"], fps=cam["fps"], topic=topic, plugin=plugin)
+
+
+def build_ground_station(cfg, fence):
+    """Jetson on a pole near the gate: RGB + thermal on the mast, iToF depth on the gate post."""
+    gs = geo.ground_station(cfg, fence)
+    mx, my = gs["mast"]
+    h = gs["height"]
+    v = Visuals()
+    grey, dark = mat(0.55, 0.57, 0.6, spec=0.3), mat(0.12, 0.13, 0.14)
+    v.cyl(0.07, h - 0.15, (mx, my, (h - 0.15) / 2, 0, 0, 0), grey)
+    v.box((0.5, 0.35, 0.6), (mx, my, 1.1, 0, 0, gs["cams"]["rgb"]["yaw"]), mat(0.85, 0.86, 0.84))      # cabinet with the Jetson
+    v.box((0.02, 0.2, 0.08), (mx + 0.26 * math.cos(gs["cams"]["rgb"]["yaw"]), my + 0.26 * math.sin(gs["cams"]["rgb"]["yaw"]), 1.25, 0, 0, gs["cams"]["rgb"]["yaw"]),
+          mat(0.2, 0.9, 0.4, emissive=(0.1, 0.8, 0.3)), shadows=False)                                  # status LED strip
+    v.box((1.1, 0.7, 0.04), (mx - 0.3, my, h - 1.0, 0, 0.6, gs["cams"]["rgb"]["yaw"] + math.pi), mat(0.1, 0.15, 0.3, spec=0.6))  # solar panel
+    v.cyl(0.01, 0.6, (mx + 0.1, my + 0.1, h + 0.3, 0, 0, 0), dark)                                        # LTE / LoRa antenna
+    for name in ("rgb", "thermal"):
+        c = gs["cams"][name]
+        x, y, z = c["pos"]
+        v.rod((mx, my, z), (x, y, z), 0.025, grey)                                                        # arm
+        v.box((0.22, 0.12, 0.12), (x - 0.13 * math.cos(c["yaw"]), y - 0.13 * math.sin(c["yaw"]), z, 0, c["pitch"], c["yaw"]),
+              mat(0.9, 0.9, 0.9) if name == "rgb" else mat(0.25, 0.25, 0.27))                           # housing behind the lens
+    d = gs["cams"]["depth"]
+    v.box((0.1, 0.1, 0.06), (d["pos"][0], d["pos"][1], d["pos"][2], 0, d["pitch"], d["yaw"]), dark)
+    v.cyl(0.03, d["pos"][2], (d["pos"][0], d["pos"][1], d["pos"][2] / 2, 0, 0, 0), grey)
+    sensors = (sensor_xml("rgb", "rgb", gs["cams"]["rgb"], "/ground/rgb") +
+               sensor_xml("thermal", "thermal", gs["cams"]["thermal"], "/ground/thermal") +
+               sensor_xml("itof", "depth", gs["cams"]["depth"], "/ground/depth"))
+    return ('<model name="ground_station"><static>true</static><link name="link">\n%s\n%s\n</link></model>' % (v.xml(), sensors))
+
+
 def main():
     cfg = geo.load_config()
     fence = geo.Fence(cfg)
     o = cfg["origin"]
+    scenario = cfg.get("scenario", {}) if GROUND else {}
     parts = [
-        static_model("electric_fence", build_fence(fence)),
+        static_model("electric_fence", build_fence(fence, gate_open=scenario.get("gate_open", False))),
         static_model("scenery", build_scenery(cfg, fence)),
     ]
+    if GROUND:
+        parts.append(build_ground_station(cfg, fence))
     for a in geo.herd_layout(cfg, fence):
         parts.append(build_animal(a))
     # invisible points the GUI camera can follow (pasture centre, energizer, each fault)
@@ -277,9 +343,9 @@ def main():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         f.write(world)
-    print("[gen_world] %s: %d posts, %.0f m of fence, %d faults, %d animals" % (
+    print("[gen_world] %s: %d posts, %.0f m of fence, %d faults, %d animals%s" % (
         os.path.relpath(OUT, geo.ROOT), len(fence.posts), fence.length, len(cfg["faults"]),
-        cfg["herd"]["cows"] + cfg["herd"]["sheep"]))
+        cfg["herd"]["cows"] + cfg["herd"]["sheep"], " + ground station" if GROUND else ""))
 
 
 if __name__ == "__main__":

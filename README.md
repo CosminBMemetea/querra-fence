@@ -81,11 +81,22 @@ Tested on an Apple Silicon Mac (M2, 8 GB) with PX4 `main` (v1.18 beta) and Gazeb
 | `./start.sh headless` | Same as the default without the Gazebo window, lightest on a laptop |
 | `./start.sh mission` | Only the inspection flight, on a simulation that is already running |
 | `./start.sh demo` | A filmed flight that regenerates everything in `docs/media` |
+| `./start.sh guard` | Ground + air: a ground station at the gate (RGB, thermal, iToF, fence monitor) sends the drone when it sees a problem; its cameras stream as RTSP ([details](docs/ground-station.md)) |
 | `./stop.sh` | Stops every process, including leftovers from a crashed run |
 | `tools/install_launcher.sh` | Adds a double-click `Gardian Sim.command` to the Desktop |
 
 Add `--lang ro` to any mode (or set `GARDIAN_LANG=ro`) for Romanian in the terminal and the report; English is the default.
 PX4 somewhere else: `PX4_DIR=/path/to/PX4-Autopilot ./start.sh`. Nothing inside the PX4 tree is modified.
+
+## Ground station + drone
+
+`./start.sh guard` adds a Jetson-style ground station on a pole at the gate: RGB and thermal cameras on the mast,
+an iToF depth sensor on the gate post, and a fence monitor at the far end of the wire. It watches all the time and
+sends the drone when an animal leaves through the gate or the fence voltage drops. Its cameras are published as
+RTSP streams, so a real Jetson can run its models on the simulation before it goes to the field.
+See [docs/ground-station.md](docs/ground-station.md).
+
+![Simulated ground-station streams](docs/media/ground-cameras.png)
 
 ## How it works
 

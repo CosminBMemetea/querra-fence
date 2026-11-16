@@ -12,7 +12,7 @@
   },
 
   "faults": [
-    { "id": "F1", "type": "wire_break",   "segment": 22, "strand": 1 },
+    { "id": "F1", "type": "wire_break",   "segment": 22, "strand": 1, "onset_s": 75 },
     { "id": "F2", "type": "post_down",    "post": 41 },
     { "id": "F3", "type": "branch_short", "segment": 58 }
   ],
@@ -34,6 +34,19 @@
     "camera_hfov_deg": 69,
     "camera_aspect": 1.6,
     "detect_range_m": 40
+  },
+
+  "ground_station": {
+    "_info": "Jetson on a pole near the gate: RGB + thermal on the mast, iToF depth on the gate post. Used by ./start.sh guard.",
+    "mast_height_m": 4.5,
+    "mast_offset_m": [8.0, -8.0],
+    "voltage_alarm_kv": 3.0
+  },
+
+  "scenario": {
+    "_info": "Only in guard mode. The gate is left open and one cow walks out after gate_escape_after_s seconds; F1 above breaks at onset_s.",
+    "gate_open": true,
+    "gate_escape_after_s": 35
   },
 
   "seed": 7

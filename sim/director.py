@@ -51,6 +51,15 @@ class Animal:
         self.max_speed = rnd.uniform(0.7, 1.0) if self.kind == "cow" else rnd.uniform(0.55, 0.85)
         self.phase = rnd.uniform(0, 6.28)
         self.home = a.get("home", (self.x, self.y))
+        self.route = []  # scripted waypoints (the gate escape), followed without the fence rules
+
+    def escape_through(self, points):
+        """Walk out along `points` (inside the gate -> gate -> outside), then roam outside."""
+        self.route = list(points)
+        self.max_speed = max(self.max_speed, 1.4)  # a cow that found the gap trots
+        self.tx, self.ty = self.route.pop(0)
+        self.mode = "walk"
+        self.timer = 999
 
     def ok(self, x, y):
         d = geo.dist_to_polyline(self.poly, x, y)[0]
@@ -86,11 +95,18 @@ class Animal:
             self.speed += max(-0.6 * dt, min(0.6 * dt, target_speed - self.speed))
             nx = self.x + math.cos(self.yaw) * self.speed * dt
             ny = self.y + math.sin(self.yaw) * self.speed * dt
-            if self.ok(nx, ny) or not self.ok(self.x, self.y):
+            if self.route or self.timer > 900 or self.ok(nx, ny) or not self.ok(self.x, self.y):
                 self.x, self.y = nx, ny
             else:
                 self.timer = 0
-            if dist < 0.6 or self.timer <= 0:
+            if self.route and dist < 1.0:
+                self.tx, self.ty = self.route.pop(0)
+            elif self.timer > 900 and not self.route and dist < 1.0:
+                # reached the end of the escape: from now on it roams outside
+                self.escaped = True
+                self.home = (self.x, self.y)
+                self.mode, self.timer = "graze", self.rnd.uniform(5, 12)
+            elif dist < 0.6 or self.timer <= 0:
                 self.mode = "graze"
                 self.timer = self.rnd.uniform(5, 18)
         self.phase += dt * self.speed * 6
@@ -147,12 +163,28 @@ def main():
     last_live = 0.0
     last_gui = 0.0
     t0 = time.time()
+    # guard mode: the gate is open and one cow walks out after a while (fence.json "scenario")
+    scenario = cfg.get("scenario", {}) if os.environ.get("GARDIAN_GROUND") else {}
+    escape_at = scenario.get("gate_escape_after_s")
+    ground_path = os.path.join(geo.RUN_DIR, "ground_events.jsonl")
+    ground_pos = 0
+    ground_marked = 0
     dt = 1.0 / RATE_HZ
     next_t = time.time()
     print("[director] animals: %d (escaped: %d), world: %s" % (len(animals), sum(a.escaped for a in animals), WORLD), flush=True)
 
     while running:
         now = time.time()
+        if escape_at is not None and now - t0 >= escape_at:
+            escape_at = None
+            g = fence.gate()
+            (gx, gy), (ox, oy), (tx, ty) = g["center"], g["out"], g["tan"]
+            inside = [a for a in animals if not a.escaped and a.kind == "cow"]
+            if inside:
+                cow = min(inside, key=lambda a: math.hypot(a.x - gx, a.y - gy))
+                cow.escape_through([(gx - ox * 5, gy - oy * 5), (gx - ox * 1, gy - oy * 1), (gx + ox * 4, gy + oy * 4),
+                                    (gx + ox * 13 + tx * 4, gy + oy * 13 + ty * 4)])
+                print("[director] scenario: %s walks out through the open gate" % cow.id, flush=True)
         for a in animals:
             a.step(dt)
         if use_vec:
@@ -228,6 +260,21 @@ def main():
                         node.request("/marker", marker("detections", marked * 2, Marker.CYLINDER, (x, y, 8), (0.3, 0.3, 16), col), Marker, Empty, 300)
                         node.request("/marker", marker("detections", marked * 2 + 1, Marker.SPHERE, (x, y, 16.4), (1.0, 1.0, 1.0), (1.0, 0.25, 0.2, 0.9)), Marker, Empty, 300)
                 events_pos = f.tell()
+        # ground station alerts: cyan beams
+        if os.path.exists(ground_path):
+            with open(ground_path, encoding="utf-8") as f:
+                f.seek(ground_pos)
+                for line in f:
+                    try:
+                        ev = json.loads(line)
+                    except ValueError:
+                        continue
+                    if "x" not in ev:
+                        continue
+                    ground_marked += 1
+                    node.request("/marker", marker("ground", ground_marked * 2, Marker.CYLINDER, (ev["x"], ev["y"], 6), (0.35, 0.35, 12), (0.2, 0.85, 1.0, 0.5)), Marker, Empty, 300)
+                    node.request("/marker", marker("ground", ground_marked * 2 + 1, Marker.SPHERE, (ev["x"], ev["y"], 12.4), (0.9, 0.9, 0.9), (0.2, 0.85, 1.0, 0.9)), Marker, Empty, 300)
+                ground_pos = f.tell()
 
         next_t += dt
         sleep = next_t - time.time()
