@@ -117,13 +117,16 @@ if [ "$MODE" = manual ]; then
 fi
 
 if [ "$MODE" = guard ]; then
-  step "Starting the RTSP relay and the camera streams" "Pornesc releul RTSP și fluxurile camerelor"
+  step "Starting the RTSP relay, the camera streams and the state API" "Pornesc releul RTSP, fluxurile camerelor și API-ul de stare"
   BIND=127.0.0.1; [ "$SHARE" = 1 ] && BIND=0.0.0.0
+  HOST=127.0.0.1
+  if [ "$SHARE" = 1 ]; then HOST="${GARDIAN_HOST:-$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo 127.0.0.1)}"; fi
+  "$PY" "$ROOT/sim/state_server.py" --host "$BIND" --port 8095 > "$RUN/state.log" 2>&1 &
+  echo $! > "$RUN/state.pid"; disown
+  info "state API: http://$HOST:8095/state" "API de stare: http://$HOST:8095/state"
   if command -v docker >/dev/null && docker info >/dev/null 2>&1; then
     docker rm -f gardian-relay >/dev/null 2>&1
     if docker run -d --rm --name gardian-relay -p "$BIND:8554:8554" bluenviron/mediamtx:1.21.3 >/dev/null 2>"$RUN/relay.log"; then
-      HOST=127.0.0.1
-      if [ "$SHARE" = 1 ]; then HOST="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo 127.0.0.1)"; fi
       export GARDIAN_RTSP="rtsp://127.0.0.1:8554"
       "$CONDA_PREFIX/bin/python" "$ROOT/sim/stream.py" > "$RUN/stream.log" 2>&1 &
       echo $! > "$RUN/stream.pid"; disown

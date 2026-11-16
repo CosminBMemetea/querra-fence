@@ -315,6 +315,17 @@ class Detector:
                 self.events.append(dict(kind="em", label=i18n.both(i18n.MSG["em_event"]), fence_s_m=round(fs, 1), t_s=round(time.time() - self.t0, 1)))
 
 
+def write_drone_state(state):
+    """Live drone state for the state API (sim/state_server.py) and the Jetson brain."""
+    path = os.path.join(geo.RUN_DIR, "drone_state.json")
+    try:
+        with open(path + ".tmp", "w") as f:
+            json.dump(state, f)
+        os.replace(path + ".tmp", path)
+    except OSError:
+        pass
+
+
 def read_animals():
     try:
         with open(os.path.join(geo.RUN_DIR, "animals_live.json")) as f:
@@ -436,7 +447,7 @@ def main():
                 last_det = now
                 if not track or math.hypot(x - track[-1][0], y - track[-1][1]) > 2:
                     track.append((round(x, 1), round(y, 1)))
-            if now - last_status > 0.5 and TTY:
+            if now - last_status > 0.5:
                 last_status = now
                 seq = s["seq"]
                 if not airborne:
@@ -452,10 +463,18 @@ def main():
                 pct = max(0, min(100, int(100 * (seq - 2) / max(1, len(path))))) if seq > 2 else 0
                 spd = math.hypot(s["vx"], s["vy"])
                 bat = ("%d%%" % s["bat"]) if s["bat"] is not None else "–"
-                sys.stdout.write("\r\033[K" + c(DIM, "[%s] " % s["mode"]) + c(BLD, t(phase)) +
-                                 t("status", pct=pct, alt=s["alt"], spd=spd, bat=bat, f=sum(f["found"] for f in det.faults),
-                                   e=len(det.escaped), seen=len(det.seen), total=herd_total))
-                sys.stdout.flush()
+                write_drone_state(dict(
+                    t=now, phase=phase[3:], mode=s["mode"], armed=s["armed"], x=round(x, 1), y=round(y, 1),
+                    lat=s["lat"], lon=s["lon"], alt_m=round(s["alt"], 1), speed_ms=round(spd, 1),
+                    heading_deg=round(math.degrees(s["yaw"]) % 360), battery_pct=s["bat"], fence_pct=pct,
+                    faults_found=[dict(id=f["id"], type=f["type"]) for f in det.faults if f["found"]],
+                    escaped_found=sorted(det.escaped), animals_seen=len(det.seen), herd_total=herd_total,
+                    trigger=trigger["label"]["en"] if trigger else None))
+                if TTY:
+                    sys.stdout.write("\r\033[K" + c(DIM, "[%s] " % s["mode"]) + c(BLD, t(phase)) +
+                                     t("status", pct=pct, alt=s["alt"], spd=spd, bat=bat, f=sum(f["found"] for f in det.faults),
+                                       e=len(det.escaped), seen=len(det.seen), total=herd_total))
+                    sys.stdout.flush()
             if airborne and not s["armed"] and s["alt"] < 1.0:
                 break
             if now - t0 > 900:
@@ -465,6 +484,10 @@ def main():
         say("stopped", YEL)
 
     duration = time.time() - t0
+    write_drone_state(dict(t=time.time(), phase="on_pad", mode=d.s["mode"], armed=False, alt_m=0.0, speed_ms=0.0,
+                           faults_found=[dict(id=f["id"], type=f["type"]) for f in det.faults if f["found"]],
+                           escaped_found=sorted(det.escaped), animals_seen=len(det.seen), herd_total=herd_total,
+                           last_flight_s=round(duration)))
     say("landed", GRN + ";1", mm=int(duration // 60), ss=int(duration % 60), dist=dist)
     data = dict(
         generated_at=dt.datetime.now().isoformat(timespec="seconds"),

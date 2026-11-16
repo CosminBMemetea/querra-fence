@@ -79,6 +79,14 @@ class FenceMonitor:
                     end=[f.voltage(s, f.length, el) for s in (0, 1)])
 
 
+def write_state(state):
+    """Live ground-station state for the state API and the Jetson brain."""
+    path = os.path.join(RUN, "ground_state.json")
+    with open(path + ".tmp", "w") as f:
+        json.dump(state, f)
+    os.replace(path + ".tmp", path)
+
+
 def side_of_gate(gate, x, y):
     """>0 outside the fence line at the gate, <0 inside."""
     (gx, gy), (ox, oy) = gate["center"], gate["out"]
@@ -162,6 +170,13 @@ def main():
                           kv_energizer=round(v["energizer"][strand], 2)))
                 dispatch("voltage")
             volt_alarm[strand] = low
+        write_state(dict(
+            t=now, uptime_s=round(now - t0), animals_in_view=in_view,
+            by_camera={name: sorted(a["id"] for a in animals if name in eyes.seen_by(a)) for name in station["cams"]},
+            outside_seen=sorted(reported_outside), gate_out=gate_out,
+            fence=dict(energizer_kv=[round(x, 2) for x in v["energizer"]], end_kv=[round(x, 2) for x in v["end"]],
+                       alarm_below_kv=thr, alarms=[["bottom", "top"][k] for k, on in volt_alarm.items() if on]),
+            drone_requested=sorted(dispatched_reasons)))
         if now - last_status > 30:
             last_status = now
             end = " / ".join("%.1f kV" % x for x in v["end"])
