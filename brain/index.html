@@ -24,6 +24,8 @@ header { display: flex; align-items: center; gap: 16px; padding: 14px 22px; bord
 .chip i { width: 7px; height: 7px; border-radius: 50%; background: var(--mut); }
 .chip.on i { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
 .chip.off i { background: var(--crit); }
+button.chip { background: none; cursor: pointer; color: var(--fg); }
+button.chip:hover { background: rgba(255, 255, 255, .08); }
 main { flex: 1; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px; padding: 18px 22px; min-height: 0; }
 .cams { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 12px; align-content: start; }
 .cam { position: relative; background: #000; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; aspect-ratio: 16 / 9; }
@@ -65,6 +67,8 @@ footer { padding: 8px 22px 12px; color: var(--mut); font-size: 12px; }
     <span class="chip" id="cModel"><i></i><span>model</span></span>
     <span class="chip" id="cVoice"><i></i><span>voice</span></span>
     <span class="chip" id="cCams"><i></i><span>cameras</span></span>
+    <span class="chip on" id="cReplay" hidden><i></i><span>scenario</span></span>
+    <button type="button" class="chip" id="restart" hidden>Restart scenario</button>
   </div>
 </header>
 <main>
@@ -101,6 +105,11 @@ async function status() {
     chip($('cVoice'), s.voice !== 'browser', 'voice: ' + s.voice);
     const live = Object.values(s.frames).filter((a) => a !== null && a < 10).length;
     chip($('cCams'), live > 0, live + '/3 cameras live');
+    if (s.replay) {
+      const mm = (x) => Math.floor(x / 60) + ':' + String(x % 60).padStart(2, '0');
+      $('cReplay').hidden = false; $('restart').hidden = false;
+      $('cReplay').querySelector('span').textContent = 'recorded run ' + mm(s.replay.elapsed) + ' / ' + mm(s.replay.duration);
+    }
   } catch (e) { chip($('cModel'), false, 'brain offline'); }
 }
 
@@ -161,8 +170,9 @@ async function ask(q) {
 
 $('form').addEventListener('submit', (e) => { e.preventDefault(); ask($('q').value); });
 $('sugg').addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') ask(e.target.textContent); });
+$('restart').addEventListener('click', async () => { await fetch('/restart', { method: 'POST' }); status(); });
 status(); refresh();
-setInterval(status, 5000); setInterval(refresh, 1000);
+setInterval(status, 2000); setInterval(refresh, 1000);
 $('q').focus();
 </script>
 </body>

@@ -53,7 +53,7 @@ def state():
     now = time.time()
     ground = read_json("ground_state.json")
     if ground and now - ground.get("t", 0) > 5:
-        ground = dict(ground, stale=True)
+        ground = None  # the ground station is not running (or not yet): no stale data
     drone = read_json("drone_state.json")
     if drone and drone.get("phase") != "on_pad" and now - drone.get("t", 0) > 5:
         drone = dict(drone, phase="on_pad", stale=True)
