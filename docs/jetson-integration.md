@@ -59,7 +59,11 @@ the synthetic set.
 
 ## Field control panel
 
-`http://mmx-desktop.local:8080` (or the Jetson's IP) is a phone-friendly page in Romanian. It starts and stops field
-mode, shows live status and the latest annotated frame, switches autostart, querra-vision and the detector engine, lists
-past runs with downloads and confirmed alerts with map links, and offers a safe shutdown. Actions need a PIN. The code
-is in [`jetson/panel/`](../jetson/panel/), a snapshot of `~/querra-scout-20261107/panel/` on the Jetson.
+`http://mmx-desktop.local:8080` (or the Jetson's IP) is the field dashboard, in English or Polish. It shows both
+cameras live, the LD2450 radar targets and the GPS fix, and starts and stops data collection. It also switches start at
+boot, the Vision demo and the detector engine, lists runs with downloads and confirmed alerts with map links, and offers
+a safe shutdown. The panel is the only owner of the cameras. Field mode reads the USB camera and the gpsd fix from it
+over QFC1 on `127.0.0.1:5602`, so the live view keeps running while data is collected. The code and the device-ownership
+table are in [`jetson/panel/`](../jetson/panel/).
+
+![Panel v2](img/panel-v2-desktop.png)

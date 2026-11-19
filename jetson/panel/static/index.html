@@ -1,215 +1,314 @@
 <!doctype html>
-<html lang="ro">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b0f14">
-<title>QUERRA · Panou teren</title>
+<meta name="theme-color" content="#090d12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>QUERRA Fence</title>
 <style>
-:root{--bg:#0b0f14;--card:#121922;--card2:#18212c;--line:#223041;--txt:#e6edf3;--mut:#8b9bb0;--acc:#f5c518;--ok:#2ecc71;--bad:#ff4d4f;--warn:#ffa940;--blue:#4da3ff}
-*{box-sizing:border-box}main>*,.grid>*,.big>*,.row .t{min-width:0}html,body{overflow-x:hidden;margin:0;background:var(--bg);color:var(--txt);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-header{position:sticky;top:0;z-index:5;background:rgba(11,15,20,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:12px 16px calc(12px);display:flex;align-items:center;gap:12px}
-.logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.18em;font-size:18px}
-.logo svg{width:28px;height:28px}
-.logo small{display:block;font-weight:500;letter-spacing:.02em;font-size:11px;color:var(--mut)}
-.pill{margin-left:auto;padding:6px 12px;border-radius:999px;font-weight:700;font-size:13px;background:var(--card2);border:1px solid var(--line);white-space:nowrap}
-.pill.run{background:rgba(46,204,113,.15);border-color:var(--ok);color:var(--ok)}
-.pill.stop{background:rgba(255,169,64,.12);border-color:var(--warn);color:var(--warn)}
-.pill.off{color:var(--mut)}
-main{max-width:1100px;margin:0 auto;padding:14px;display:grid;gap:14px;grid-template-columns:1fr}
-@media(min-width:900px){main{grid-template-columns:1.1fr .9fr}.span2{grid-column:1/-1}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
-.card h2{margin:0 0 10px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);font-weight:700}
-.big{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-button{font:inherit;color:inherit;cursor:pointer;border:0}
-.btn{border-radius:14px;padding:18px 8px;font-size:18px;font-weight:800;letter-spacing:.02em;display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .08s,opacity .2s}
-.btn:active{transform:scale(.97)}.btn:disabled{opacity:.35;cursor:not-allowed}
-.btn small{font-size:12px;font-weight:500;opacity:.85}
-.start{background:linear-gradient(180deg,#27c267,#1a9a50);color:#04140a}
-.stopb{background:linear-gradient(180deg,#ff5f61,#d9363e);color:#fff}
-.note{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--card2);font-size:14px}
-.note.safe{border-left:4px solid var(--ok)}.note.wait{border-left:4px solid var(--warn)}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-@media(min-width:520px){.grid{grid-template-columns:repeat(3,1fr)}}
-.kv{background:var(--card2);border-radius:12px;padding:10px}
-.kv b{display:block;font-size:20px;font-weight:750;margin-top:2px;word-break:break-word}
-.kv>span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
-.kv.wide{grid-column:1/-1}
-.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}.mut{color:var(--mut)}
-.frame{width:100%;aspect-ratio:16/9;border-radius:12px;background:#000 center/contain no-repeat;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--mut);overflow:hidden}
-.frame img{width:100%;height:100%;object-fit:contain}
-.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
-.row:last-child{border-bottom:0}
-.row .t{flex:1}.row .t div{font-weight:650}.row .t small{color:var(--mut)}
-.sw{position:relative;width:54px;height:32px;border-radius:999px;background:#2a3646;flex:none}.ready .sw,.ready .sw::after{transition:.2s}
-.sw::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#cfd8e3}
+:root{--bg:#090d12;--bg2:#0d131a;--card:#111821;--card2:#17202b;--line:#1f2b38;--txt:#e8eef5;--mut:#8796a8;--acc:#f5c518;--acc2:#ffdf5d;--ok:#2fd27a;--bad:#ff5a5f;--warn:#ffad42;--blue:#52a8ff;--rad:#2fd27a}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{min-height:100vh;background:radial-gradient(1200px 600px at 80% -10%,#15202c 0,var(--bg) 60%) no-repeat var(--bg);}
+html,body{margin:0;color:var(--txt);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Ubuntu,sans-serif;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+header{position:sticky;top:0;z-index:10;background:rgba(9,13,18,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand svg{width:34px;height:34px}
+.brand b{font-weight:850;letter-spacing:.2em;font-size:17px}
+.brand b i{font-style:normal;color:var(--acc);letter-spacing:.08em;font-weight:700;margin-left:6px}
+.brand small{display:block;color:var(--mut);font-size:11px;letter-spacing:.04em}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--card2);border:1px solid var(--line);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mut)}
+.pill.ok .dot{background:var(--ok);box-shadow:0 0 8px var(--ok)}.pill.bad .dot{background:var(--bad)}.pill.warn .dot{background:var(--warn)}
+.pill.rec{border-color:var(--ok);color:var(--ok)}.pill.rec .dot{background:var(--bad);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.lang{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:2px}
+.lang button{padding:5px 10px;border-radius:8px;font-weight:800;font-size:12px;color:var(--mut)}
+.lang button.on{background:var(--acc);color:#111}
+main{padding:14px;display:grid;gap:14px;grid-template-columns:1fr;max-width:1880px;margin:0 auto}
+main>*{min-width:0}
+@media(min-width:900px){main{grid-template-columns:repeat(2,minmax(0,1fr))}.cams{grid-column:1/-1}}
+@media(min-width:1280px){main{grid-template-columns:repeat(12,minmax(0,1fr))}
+ .cams{grid-column:1/9;grid-row:1}.collect{grid-column:9/13;grid-row:1/3}.radar{grid-column:1/5;grid-row:2/4}
+ .system{grid-column:5/9;grid-row:2}.gps{grid-column:9/13;grid-row:3}.alerts{grid-column:5/9;grid-row:3}.runs{grid-column:1/-1;grid-row:4}}
+.card{background:linear-gradient(180deg,var(--card),#0f151d);border:1px solid var(--line);border-radius:18px;padding:14px;position:relative;box-shadow:0 10px 30px #0005}
+.card h2{margin:0 0 12px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);font-weight:800;display:flex;align-items:center;gap:8px}
+.card h2 .r{margin-left:auto;letter-spacing:.02em;text-transform:none;font-weight:600}
+.camgrid{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:640px){.camgrid{grid-template-columns:1fr 1fr}}
+.cam{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#000;border:1px solid var(--line)}
+.cam img{width:100%;height:100%;object-fit:cover;display:block}
+.cam .tag{position:absolute;left:10px;top:10px;padding:4px 9px;border-radius:8px;background:#000a;font-size:12px;font-weight:750;display:flex;gap:6px;align-items:center}
+.cam .fps{position:absolute;right:10px;top:10px;padding:4px 8px;border-radius:8px;background:#000a;font-size:12px;color:var(--mut)}
+.cam .over{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#000c;text-align:center;padding:16px;color:var(--mut)}
+.cam .over.hide{display:none}
+.btnsm{padding:8px 14px;border-radius:10px;background:var(--acc);color:#111;font-weight:800}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{border-radius:14px;padding:16px 8px;font-size:18px;font-weight:850;display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .08s,opacity .2s}
+.btn:active{transform:scale(.97)}.btn:disabled{opacity:.3;cursor:not-allowed}
+.btn small{font-size:12px;font-weight:600;opacity:.8}
+.start{background:linear-gradient(180deg,#31d27c,#1b9d55);color:#03140a}
+.stop{background:linear-gradient(180deg,#ff6669,#d8363c);color:#fff}
+.safe{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--card2);font-size:14px;border-left:4px solid var(--mut)}
+.safe.ok{border-color:var(--ok)}.safe.wait{border-color:var(--warn)}.safe.rec{border-color:var(--bad)}
+.kvs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+@media(min-width:520px){.kvs.k3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.kv{background:var(--card2);border-radius:12px;padding:9px 11px;min-width:0}
+.kv>span{display:block;font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em}
+.kv b{display:block;font-size:19px;font-weight:750;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kv.w{grid-column:1/-1}.kv b.sm{font-size:14px}
+.row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row .t{flex:1;min-width:0}.row .t div{font-weight:700}.row .t small{color:var(--mut);font-size:12.5px}
+.sw{position:relative;width:52px;height:30px;border-radius:999px;background:#2a3646;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#cfd8e3}
+.ready .sw,.ready .sw::after{transition:.2s}
 .sw.on{background:var(--ok)}.sw.on::after{left:25px;background:#fff}
 .seg{display:flex;background:#2a3646;border-radius:10px;padding:3px;flex:none}
-.seg button{background:none;padding:8px 14px;border-radius:8px;font-weight:700;color:var(--mut)}
+.seg button{padding:7px 13px;border-radius:8px;font-weight:800;color:var(--mut)}
 .seg button.on{background:var(--acc);color:#111}
-.list{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow:auto}
-.item{background:var(--card2);border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center}
-.item .t{flex:1;min-width:0}.item .t div{font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.item .t small{color:var(--mut)}
-.chip{font-size:12px;padding:3px 8px;border-radius:999px;background:#2a3646;white-space:nowrap}
-.chip.r{background:rgba(255,77,79,.18);color:#ff8a8c}
-a.lnk{color:var(--blue);text-decoration:none;font-weight:650;white-space:nowrap}
-.pwr{width:100%;background:#2a1416;border:1px solid #5a2427;color:#ff8a8c;padding:14px;border-radius:12px;font-weight:750}
-code{background:#0006;padding:2px 6px;border-radius:6px}
-#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(120px);background:#1f2a37;border:1px solid var(--line);padding:12px 16px;border-radius:12px;max-width:92vw;transition:.25s;z-index:20;box-shadow:0 8px 30px #0008}
-#toast.show{transform:translateX(-50%) translateY(0)}
-.modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:30;padding:20px}
-.modal.show{display:flex}
-.modal .box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;width:100%;max-width:340px;text-align:center}
-.modal input{width:100%;font-size:28px;letter-spacing:.4em;text-align:center;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--txt);margin:12px 0}
-.modal .acts{display:flex;gap:10px}.modal .acts button{flex:1;padding:12px;border-radius:12px;font-weight:750;background:#2a3646}
-.modal .acts .pri{background:var(--acc);color:#111}
-footer{text-align:center;color:var(--mut);font-size:12px;padding:6px 0 24px}
-.lockbtn{background:none;color:var(--mut);font-size:12px;text-decoration:underline}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}.mut{color:var(--mut)}
+a.lnk{color:var(--blue);text-decoration:none;font-weight:700}
+.fixbadge{display:inline-block;padding:3px 10px;border-radius:8px;font-weight:850;font-size:13px;background:#2a3646}
+.fixbadge.f3{background:rgba(47,210,122,.18);color:var(--ok)}.fixbadge.f2{background:rgba(255,173,66,.18);color:var(--warn)}.fixbadge.f0{background:rgba(255,90,95,.15);color:var(--bad)}
+.radwrap{position:relative}
+canvas#rad{width:100%;aspect-ratio:2/1.25;display:block}
+.tgts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+.tg{background:var(--card2);border-radius:12px;padding:8px 10px;font-size:13px;border-top:3px solid var(--line)}
+.tg b{font-size:17px;display:block}.tg.off{opacity:.35}
+.radstat{font-size:12px;color:var(--mut);margin-top:8px;display:flex;flex-wrap:wrap;gap:4px 12px}
+.list{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow:auto}
+.item{background:var(--card2);border-radius:12px;padding:9px 12px;display:flex;gap:10px;align-items:center}
+.item .t{flex:1;min-width:0}.item .t div{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.item .t small{color:var(--mut)}
+.chip{font-size:12px;padding:3px 8px;border-radius:999px;background:rgba(255,90,95,.18);color:#ff9a9d;white-space:nowrap;font-weight:700}
+.runs .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.pwr{width:100%;margin-top:10px;background:#24131a;border:1px solid #4d2229;color:#ff9a9d;padding:12px;border-radius:12px;font-weight:800}
+code{background:#0007;padding:2px 6px;border-radius:6px}
+#toast{visibility:hidden;position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(140px);background:#1c2633;border:1px solid var(--line);padding:12px 16px;border-radius:12px;max-width:92vw;transition:.25s;z-index:20;box-shadow:0 8px 30px #000a}
+#toast.show{visibility:visible;transform:translateX(-50%) translateY(0)}
+footer{text-align:center;color:var(--mut);font-size:12px;padding:4px 0 24px}
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">
-    <svg viewBox="0 0 32 32" fill="none"><path d="M4 24V9M12 24V9M20 24V9M28 24V9" stroke="#8b9bb0" stroke-width="2" stroke-linecap="round"/><path d="M4 13h24M4 19h24" stroke="#f5c518" stroke-width="2"/><path d="M18 3l-4 8h4l-3 7" stroke="#f5c518" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>
-    <div>QUERRA<small id="host">Panou teren · Jetson</small></div>
+  <div class="brand">
+    <svg viewBox="0 0 32 32" fill="none"><rect x="1" y="1" width="30" height="30" rx="8" fill="#141c26" stroke="#2a3646"/><path d="M7 25V10M13 25V10M19 25V10M25 25V10" stroke="#8796a8" stroke-width="1.8" stroke-linecap="round"/><path d="M6 14h20M6 20h20" stroke="#f5c518" stroke-width="1.8"/><path d="M18 4l-4 8h4l-3 7" stroke="#ffdf5d" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+    <div><b>QUERRA<i>FENCE</i></b><small id="host">Jetson</small></div>
   </div>
-  <div id="pill" class="pill off">…</div>
+  <div class="pills">
+    <span class="pill" id="pRec"><span class="dot"></span><span id="pRecT">…</span></span>
+    <span class="pill" id="pGps"><span class="dot"></span>GPS <span id="pGpsT"></span></span>
+    <span class="pill" id="pRad"><span class="dot"></span><span data-i="radar">Radar</span></span>
+    <span class="pill" id="pCam"><span class="dot"></span><span data-i="cams">Cameras</span></span>
+  </div>
+  <div class="lang"><button id="lEN" onclick="setLang('en')">EN</button><button id="lPL" onclick="setLang('pl')">PL</button></div>
 </header>
 
 <main>
-  <section class="card">
-    <h2>Mod teren</h2>
+  <section class="card cams">
+    <h2><span data-i="live">Live cameras</span><span class="r mut" id="camOwner"></span></h2>
+    <div class="camgrid">
+      <div class="cam"><img id="imgUsb" alt=""><span class="tag"><span class="dot" id="dUsb"></span>USB · Arducam</span><span class="fps" id="fUsb"></span><div class="over" id="oUsb"></div></div>
+      <div class="cam"><img id="imgCsi" alt=""><span class="tag"><span class="dot" id="dCsi"></span>CSI · IMX219</span><span class="fps" id="fCsi"></span><div class="over" id="oCsi"></div></div>
+    </div>
+  </section>
+
+  <section class="card collect">
+    <h2><span data-i="collection">Data collection</span><span class="r" id="runName"></span></h2>
     <div class="big">
-      <button class="btn start" id="bStart" onclick="act('/api/field/start')">▶ PORNEȘTE<small>cameră + GPS + detector</small></button>
-      <button class="btn stopb" id="bStop" onclick="act('/api/field/stop')">■ OPREȘTE<small>salvează și închide</small></button>
+      <button class="btn start" id="bStart" onclick="act('/api/field/start')">▶ <span data-i="start">START</span><small data-i="startSub">camera + GPS + detector</small></button>
+      <button class="btn stop" id="bStop" onclick="act('/api/field/stop')">■ <span data-i="stop">STOP</span><small data-i="stopSub">save and close</small></button>
     </div>
-    <div id="safe" class="note">…</div>
-  </section>
-
-  <section class="card">
-    <h2>Ultimul cadru adnotat</h2>
-    <div class="frame" id="frame">fără cadre încă</div>
-    <div class="mut" style="font-size:12px;margin-top:6px" id="frameName"></div>
-  </section>
-
-  <section class="card span2">
-    <h2>Stare live</h2>
-    <div class="grid">
-      <div class="kv"><span>Cadre</span><b id="frames">–</b></div>
-      <div class="kv"><span>FPS</span><b id="fps">–</b></div>
-      <div class="kv"><span>Alerte confirmate</span><b id="alerts">–</b></div>
-      <div class="kv"><span>GPS</span><b id="gps">–</b></div>
-      <div class="kv wide"><span>Poziție</span><b id="coords">–</b></div>
-      <div class="kv wide"><span>Ultimele detecții</span><b id="dets" style="font-size:16px">–</b></div>
-      <div class="kv"><span>SSD liber</span><b id="ssd">–</b></div>
-      <div class="kv"><span>Disc sistem liber</span><b id="root">–</b></div>
-      <div class="kv"><span>Temp. CPU / GPU</span><b id="temp">–</b></div>
-      <div class="kv"><span>Mod putere</span><b id="pmode">–</b></div>
-      <div class="kv"><span>Funcționează de</span><b id="uptime">–</b></div>
-      <div class="kv"><span>RAM / încărcare</span><b id="mem">–</b></div>
-      <div class="kv wide"><span>Rulare curentă</span><b id="run" style="font-size:14px">–</b></div>
-      <div class="kv wide" id="errBox" style="display:none"><span>Ultima eroare</span><b id="err" style="font-size:13px" class="warn"></b></div>
+    <div class="safe" id="safe">…</div>
+    <div class="kvs k3">
+      <div class="kv"><span data-i="elapsed">Elapsed</span><b id="cElapsed">–</b></div>
+      <div class="kv"><span data-i="frames">Frames</span><b id="cFrames">–</b></div>
+      <div class="kv"><span>FPS</span><b id="cFps">–</b></div>
+      <div class="kv"><span data-i="size">Run size</span><b id="cSize">–</b></div>
+      <div class="kv"><span data-i="alertsShort">Alerts</span><b id="cAlerts">–</b></div>
+      <div class="kv"><span data-i="diskLeft">Disk left</span><b id="cDisk">–</b></div>
+      <div class="kv w"><span data-i="lastDet">Last detections</span><b class="sm" id="cDets">–</b></div>
+    </div>
+    <div style="margin-top:6px">
+      <div class="row"><div class="t"><div data-i="autostart">Start at boot</div><small data-i="autostartSub">Collection starts by itself when the Jetson powers on</small></div><button class="sw" id="swAuto" onclick="toggleAuto()"></button></div>
+      <div class="row"><div class="t"><div data-i="model">Detector model</div><small data-i="modelSub">Change only while collection is stopped</small></div><div class="seg" id="seg"></div></div>
+      <div class="row"><div class="t"><div data-i="vision">Vision demo</div><small data-i="visionSub">Uses both cameras; live view pauses while it runs</small></div><button class="sw" id="swVision" onclick="toggleVision()"></button></div>
     </div>
   </section>
 
-  <section class="card">
-    <h2>Setări</h2>
-    <div class="row"><div class="t"><div>Pornire automată la boot</div><small>Modul teren pornește singur după ce Jetsonul primește curent</small></div><button class="sw" id="swAuto" onclick="toggle('auto')"></button></div>
-    <div class="row"><div class="t"><div>querra-vision</div><small>Demo cu două camere; ocupă camera USB</small></div><button class="sw" id="swVision" onclick="toggle('vision')"></button></div>
-    <div class="row"><div class="t"><div>Model detector</div><small>Se schimbă doar cu modul teren oprit</small></div><div class="seg" id="seg"></div></div>
+  <section class="card gps">
+    <h2>GPS<span class="r"><span class="fixbadge f0" id="gFix">–</span></span></h2>
+    <div class="kvs k3">
+      <div class="kv"><span data-i="sats">Satellites</span><b id="gSats">–</b></div>
+      <div class="kv"><span>HDOP</span><b id="gHdop">–</b></div>
+      <div class="kv"><span data-i="sinceFix">Since fix</span><b id="gAge">–</b></div>
+      <div class="kv w"><span data-i="position">Position</span><b id="gPos">–</b></div>
+      <div class="kv"><span data-i="altitude">Altitude</span><b id="gAlt">–</b></div>
+      <div class="kv"><span data-i="speed">Speed</span><b id="gSpd">–</b></div>
+      <div class="kv"><span data-i="heading">Heading</span><b id="gTrk">–</b></div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>Alerte recente</h2>
-    <div class="list" id="alertList"><div class="mut">Nicio alertă confirmată.</div></div>
+  <section class="card radar">
+    <h2>Radar · LD2450<span class="r" id="rStat"></span></h2>
+    <div class="radwrap"><canvas id="rad" width="800" height="500"></canvas></div>
+    <div class="tgts" id="tgts"></div>
+    <div class="radstat" id="rInfo"></div>
   </section>
 
-  <section class="card span2">
-    <h2>Rulări salvate</h2>
-    <div class="list" id="runList"><div class="mut">…</div></div>
-  </section>
-
-  <section class="card span2">
-    <h2>Oprire</h2>
-    <button class="pwr" onclick="powerOff()">⏻ Oprire sigură Jetson</button>
+  <section class="card system">
+    <h2 data-i="system">System</h2>
+    <div class="kvs">
+      <div class="kv"><span>CPU / GPU</span><b id="sTemp">–</b></div>
+      <div class="kv"><span data-i="power">Power mode</span><b id="sPow">–</b></div>
+      <div class="kv"><span>RAM</span><b id="sMem">–</b></div>
+      <div class="kv"><span data-i="uptime">Uptime</span><b id="sUp">–</b></div>
+      <div class="kv"><span data-i="ssd">SSD free</span><b id="sSsd">–</b></div>
+      <div class="kv"><span data-i="root">System disk free</span><b id="sRoot">–</b></div>
+    </div>
+    <button class="pwr" onclick="powerOff()">⏻ <span data-i="shutdown">Safe Jetson shutdown</span></button>
     <div id="pwrNote" class="mut" style="margin-top:8px;font-size:13px"></div>
   </section>
-</main>
-<footer><span id="upd">–</span> · <button class="lockbtn" onclick="forget()">uită PIN-ul</button></footer>
 
+  <section class="card alerts">
+    <h2 data-i="alerts">Confirmed alerts</h2>
+    <div class="list" id="alertList"></div>
+  </section>
+
+  <section class="card runs">
+    <h2 data-i="runs">Recent runs</h2>
+    <div class="list" id="runList"></div>
+  </section>
+</main>
+<footer><span id="upd">–</span> · QUERRA Fence</footer>
 <div id="toast"></div>
-<div class="modal" id="pinModal"><div class="box">
-  <div style="font-weight:800;font-size:18px">PIN QUERRA</div>
-  <div class="mut" style="font-size:13px">Necesar pentru comenzi</div>
-  <input id="pinIn" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code">
-  <div class="acts"><button onclick="pinDone(null)">Anulează</button><button class="pri" onclick="pinDone(document.getElementById('pinIn').value)">OK</button></div>
-</div></div>
 
 <script>
-const $=id=>document.getElementById(id);
-let S=null, pinResolve=null, busy=false;
-const lt=z=>z?new Date(z).toLocaleString('ro-RO',{hour12:false}):'';
-const fmtUp=s=>{const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return (d?d+'z ':'')+h+'h '+m+'m'};
-function toast(m,bad){const t=$('toast');t.textContent=m;t.style.borderColor=bad?'#ff4d4f':'#223041';t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3500)}
-function askPin(){return new Promise(r=>{pinResolve=r;$('pinIn').value='';$('pinModal').classList.add('show');setTimeout(()=>$('pinIn').focus(),50)})}
-function pinDone(v){$('pinModal').classList.remove('show');pinResolve&&pinResolve(v);pinResolve=null}
-$('pinIn').addEventListener('keydown',e=>{if(e.key==='Enter')pinDone(e.target.value)});
-function forget(){localStorage.removeItem('qpin');toast('PIN-ul a fost uitat pe acest dispozitiv')}
-async function getPin(){let p=localStorage.getItem('qpin');if(p)return p;p=await askPin();if(!p)return null;
-  const r=await fetch('/api/login',{method:'POST',headers:{'X-Pin':p}});if(r.ok){localStorage.setItem('qpin',p);return p}
-  toast((await r.json()).msg||'PIN greșit',true);return null}
-async function post(url,body){const p=await getPin();if(!p)return null;
-  const r=await fetch(url,{method:'POST',headers:{'X-Pin':p,'Content-Type':'application/json'},body:JSON.stringify(body||{})});
-  const j=await r.json().catch(()=>({msg:'eroare'}));if(r.status===401)localStorage.removeItem('qpin');
-  toast(j.msg||(r.ok?'OK':'Eroare'),!r.ok||j.ok===false);return j}
-async function act(url,body){if(busy)return;busy=true;try{await post(url,body)}finally{busy=false;refresh()}}
-function toggle(k){if(!S)return;if(k==='auto'){if(!S.autostart_field&&!confirm('Activezi pornirea automată a modului teren la fiecare pornire a Jetsonului?'))return;act('/api/autostart',{on:!S.autostart_field})}
-  else act('/api/vision',{on:S.vision!=='active'})}
-async function powerOff(){const j=await post('/api/poweroff',{});if(!j)return;
-  if(j.needs_sudo){$('pwrNote').innerHTML='Oprirea cere parola de administrator. Din terminal (SSH): <code>sudo poweroff</code>, sau ține apăsat butonul de pornire. Datele sunt deja scrise pe disc când scrie „Sigur de oprit”.';return}
-  if(j.ok===false&&j.msg==='confirmare lipsă'){if(confirm('Sigur oprești Jetsonul?'))act('/api/poweroff',{confirm:'OPRESTE'})}}
+const T={en:{radar:"Radar",cams:"Cameras",live:"Live cameras",collection:"Data collection",start:"START",startSub:"camera + GPS + detector",stop:"STOP",stopSub:"save and close",
+elapsed:"Elapsed",frames:"Frames",size:"Run size",alertsShort:"Alerts",diskLeft:"Disk left",lastDet:"Last detections",autostart:"Start at boot",autostartSub:"Collection starts by itself when the Jetson powers on",
+model:"Detector model",modelSub:"Change only while collection is stopped",vision:"Vision demo",visionSub:"Uses both cameras; live view pauses while it runs",sats:"Satellites",sinceFix:"Since fix",position:"Position",altitude:"Altitude",speed:"Speed",heading:"Heading",
+system:"System",power:"Power mode",uptime:"Uptime",ssd:"SSD free",root:"System disk free",shutdown:"Safe Jetson shutdown",alerts:"Confirmed alerts",runs:"Recent runs",
+recording:"RECORDING",stopping:"STOPPING…",idle:"IDLE",safeOk:"<b>Safe to power off.</b> Data is on disk; you can unplug the power bank.",safeStop:"Saving the current chunk… <b>keep the power on</b>.",safeRec:"Recording. Press <b>STOP</b> before unplugging.",
+waiting:"Waiting for the camera…",noAlerts:"No confirmed alerts yet.",noRuns:"No runs yet.",map:"Map",framesW:"frames",alertsW:"alerts",ago:"ago",
+camOff:"Starting camera…",camBlockedVision:"Cameras are used by the Vision demo",camBlockedRec:"Cameras are used by the dual-camera recorder",camMissing:"Camera not connected",camError:"Camera error",takeCams:"Use cameras here",
+ownerPanel:"cameras: this panel",ownerVision:"cameras: Vision demo",ownerRec:"cameras: recorder",
+radarOffline:"Radar service offline",radarNoData:"Sensor connected, no data",radarConn:"connected",radarDisc:"not connected",readonly:"n/a (read-only)",demo:"DEMO data",
+noTarget:"no target",dist:"distance",angle:"angle",away:"moving away",closer:"approaching",still:"still",
+fix3:"3D FIX",fix2:"2D FIX",fix0:"NO FIX",gpsdDown:"gpsd not reachable",
+ok_started:"Collection is starting (camera + GPS + detector).",ok_stopping:"Stopping: finishing the current chunk and writing data to disk.",already_running:"Collection is already running.",stop_first:"Stop data collection first.",
+autostart_on:"Start at boot: ON",autostart_off:"Start at boot: off",model_set:"Field model:",vision_on:"Vision demo started; live view paused.",vision_off:"Vision demo stopped; cameras back in the panel.",
+needs_sudo:"Shutdown needs the admin password. In a terminal: <code>sudo poweroff</code>, or hold the power button once it says Safe to power off.",confirmOff:"Power off the Jetson now?",confirmAuto:"Start data collection automatically every time the Jetson powers on?",
+pwrDirect:"Shuts the Jetson down from here.",pwrSafe:"Safe to unplug now (or sudo poweroff over SSH).",pwrStop:"Stop data collection first.",updated:"updated",error:"Error",offline:"NO CONNECTION"},
+pl:{radar:"Radar",cams:"Kamery",live:"Kamery na żywo",collection:"Zbieranie danych",start:"START",startSub:"kamera + GPS + detektor",stop:"STOP",stopSub:"zapisz i zamknij",
+elapsed:"Czas",frames:"Klatki",size:"Rozmiar",alertsShort:"Alarmy",diskLeft:"Wolne miejsce",lastDet:"Ostatnie wykrycia",autostart:"Start przy uruchomieniu",autostartSub:"Zbieranie rusza samo po włączeniu Jetsona",
+model:"Model detektora",modelSub:"Zmiana tylko przy zatrzymanym zbieraniu",vision:"Demo Vision",visionSub:"Zajmuje obie kamery; podgląd na żywo jest wstrzymany",sats:"Satelity",sinceFix:"Od pozycji",position:"Pozycja",altitude:"Wysokość",speed:"Prędkość",heading:"Kurs",
+system:"System",power:"Tryb zasilania",uptime:"Czas pracy",ssd:"Wolne na SSD",root:"Wolne na dysku systemowym",shutdown:"Bezpieczne wyłączenie Jetsona",alerts:"Potwierdzone alarmy",runs:"Ostatnie sesje",
+recording:"NAGRYWANIE",stopping:"ZATRZYMYWANIE…",idle:"BEZCZYNNY",safeOk:"<b>Można bezpiecznie wyłączyć.</b> Dane są na dysku; możesz odłączyć powerbank.",safeStop:"Zapisywanie bieżącego fragmentu… <b>nie odłączaj zasilania</b>.",safeRec:"Nagrywanie. Naciśnij <b>STOP</b> przed odłączeniem zasilania.",
+waiting:"Czekam na kamerę…",noAlerts:"Brak potwierdzonych alarmów.",noRuns:"Brak sesji.",map:"Mapa",framesW:"klatek",alertsW:"alarmów",ago:"temu",
+camOff:"Uruchamiam kamerę…",camBlockedVision:"Kamery są zajęte przez demo Vision",camBlockedRec:"Kamery są zajęte przez rejestrator dwukamerowy",camMissing:"Kamera niepodłączona",camError:"Błąd kamery",takeCams:"Użyj kamer tutaj",
+ownerPanel:"kamery: ten panel",ownerVision:"kamery: demo Vision",ownerRec:"kamery: rejestrator",
+radarOffline:"Usługa radaru niedostępna",radarNoData:"Czujnik podłączony, brak danych",radarConn:"połączony",radarDisc:"niepodłączony",readonly:"b.d. (tylko odczyt)",demo:"Dane DEMO",
+noTarget:"brak celu",dist:"odległość",angle:"kąt",away:"oddala się",closer:"zbliża się",still:"stoi",
+fix3:"FIX 3D",fix2:"FIX 2D",fix0:"BRAK FIX",gpsdDown:"gpsd niedostępny",
+ok_started:"Zbieranie danych startuje (kamera + GPS + detektor).",ok_stopping:"Zatrzymywanie: kończę bieżący fragment i zapisuję dane na dysk.",already_running:"Zbieranie już trwa.",stop_first:"Najpierw zatrzymaj zbieranie danych.",
+autostart_on:"Start przy uruchomieniu: WŁ.",autostart_off:"Start przy uruchomieniu: wył.",model_set:"Model w terenie:",vision_on:"Demo Vision uruchomione; podgląd wstrzymany.",vision_off:"Demo Vision zatrzymane; kamery wróciły do panelu.",
+needs_sudo:"Wyłączenie wymaga hasła administratora. W terminalu: <code>sudo poweroff</code> albo przytrzymaj przycisk zasilania, gdy panel pokaże „Można bezpiecznie wyłączyć”.",confirmOff:"Wyłączyć teraz Jetsona?",confirmAuto:"Uruchamiać zbieranie danych automatycznie przy każdym włączeniu Jetsona?",
+pwrDirect:"Wyłącza Jetsona stąd.",pwrSafe:"Można teraz odłączyć zasilanie (lub sudo poweroff przez SSH).",pwrStop:"Najpierw zatrzymaj zbieranie danych.",updated:"aktualizacja",error:"Błąd",offline:"BRAK POŁĄCZENIA"}};
+let L=new URLSearchParams(location.search).get('lang')||localStorage.getItem('qlang')||'en'; if(!T[L])L='en';
+const t=k=>(T[L][k]??T.en[k]??k), $=id=>document.getElementById(id);
+function setLang(l){L=l;localStorage.setItem('qlang',l);document.documentElement.lang=l;$('lEN').classList.toggle('on',l==='en');$('lPL').classList.toggle('on',l==='pl');
+  document.querySelectorAll('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));if(S)render(S);lists()}
+function toast(m,bad){const e=$('toast');e.innerHTML=m;e.style.borderColor=bad?'#ff5a5f':'#1f2b38';e.classList.add('show');clearTimeout(e._h);e._h=setTimeout(()=>e.classList.remove('show'),3800)}
+const fmtDur=s=>{if(s==null)return'–';s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}h ${String(m).padStart(2,'0')}m`:`${m}:${String(x).padStart(2,'0')}`};
+const fmtUp=s=>{const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return(d?d+'d ':'')+h+'h '+m+'m'};
+const lt=z=>z?new Date(z).toLocaleString(L==='pl'?'pl-PL':'en-GB',{hour12:false}):'';
+let S=null,busy=false;
+async function post(url,body){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});
+  const j=await r.json().catch(()=>({ok:false,code:'error'}));const key=j.code==='started'?'ok_started':j.code==='stopping'&&j.ok?'ok_stopping':j.code;
+  if(j.code!=='needs_sudo'&&j.code!=='confirm')toast((T[L][key]?t(key):(j.msg||t('error')))+(j.code==='model_set'?' '+j.msg:''),!r.ok||j.ok===false);return j}
+async function act(url,body){if(busy)return;busy=true;try{return await post(url,body)}finally{busy=false;refresh()}}
+function toggleAuto(){if(!S)return;const on=!S.collection.autostart;if(on&&!confirm(t('confirmAuto')))return;act('/api/autostart',{on})}
+function toggleVision(){if(S)act('/api/vision',{on:!S.vision})}
+async function powerOff(){const j=await post('/api/poweroff',{});if(j.code==='needs_sudo'){$('pwrNote').innerHTML=t('needs_sudo');return}
+  if(j.code==='confirm'&&confirm(t('confirmOff')))act('/api/poweroff',{confirm:'POWEROFF'})}
+function pill(id,cls){$(id).className='pill '+(cls||'')}
 function setSw(el,on){el.classList.toggle('on',!!on)}
-function render(s){S=s;const f=s.field,sf=s.status_file||{};
-  $('host').textContent='Panou teren · '+s.hostname;
-  const pill=$('pill');
-  if(f.stopping){pill.className='pill stop';pill.textContent='SE OPREȘTE…'}
-  else if(f.running){pill.className='pill run';pill.textContent='● ÎNREGISTREAZĂ'}
-  else{pill.className='pill off';pill.textContent='OPRIT'}
-  $('bStart').disabled=f.running||f.stopping;$('bStop').disabled=!f.running||f.stopping;
-  const safe=$('safe');
-  if(s.safe_to_power_off){safe.className='note safe';safe.innerHTML='✅ <b>Sigur de oprit.</b> Datele sunt scrise pe disc; poți scoate powerbankul.'+(f.last_stop?' <span class="mut">(oprit la '+f.last_stop+')</span>':'')}
-  else if(f.stopping){safe.className='note wait';safe.innerHTML='⏳ Se salvează fragmentul curent… <b>nu scoate curentul</b>.'}
-  else{safe.className='note wait';safe.innerHTML='🔴 Înregistrare în curs. Apasă <b>OPREȘTE</b> înainte să scoți curentul.'}
-  const fr=(sf.frames||'').match(/^(\d+)\s+fps\(10s\):\s*([\d.,]+)/);
-  $('frames').textContent=fr?fr[1]:(sf.frames||'–');$('fps').textContent=f.running&&fr?fr[2].replace(',','.'):'–';
-  $('alerts').textContent=s.current_run?s.current_run.alerts:'–';
-  const fx=s.fix;const g=fx&&fx.status;
-  $('gps').innerHTML=g==='valid'?'<span class="ok">FIX</span>':(g?'<span class="warn">'+g+'</span>':'<span class="mut">–</span>');
-  $('coords').innerHTML=fx&&fx.lat?'<a class="lnk" target="_blank" href="https://www.google.com/maps?q='+fx.lat+','+fx.lon+'">'+fx.lat.toFixed(6)+', '+fx.lon.toFixed(6)+' ↗</a>':'–';
-  $('dets').textContent=fx&&fx.detections&&fx.detections.length?fx.detections.join(' · '):((sf.last_det||'').replace(/^det=\[|\]$/g,'').replace(/,/g,' · ')||'–');
-  const d=s.disk;$('ssd').textContent=d.ssd?d.ssd.free_gb+' GB':'lipsă';$('root').innerHTML=d.root.free_gb<3?'<span class="warn">'+d.root.free_gb+' GB</span>':d.root.free_gb+' GB';
-  const t=s.temps;$('temp').innerHTML=(t.cpu??'–')+'° / '+(t.gpu??'–')+'°';
-  $('pmode').textContent=s.power_mode;$('uptime').textContent=fmtUp(s.uptime_s);
-  $('mem').textContent=s.mem.used_gb+'/'+s.mem.total_gb+' GB · '+s.load.toFixed(1);
-  $('run').textContent=s.current_run?s.current_run.name+(sf.time?'  ·  stare la '+sf.time.slice(11):''):'–';
-  const e=(sf.last_error||'').trim();$('errBox').style.display=f.running&&e?'':'none';$('err').textContent=e;
-  setSw($('swAuto'),s.autostart_field);setSw($('swVision'),s.vision==='active');
-  $('seg').innerHTML=s.models.map(m=>'<button class="'+(m===s.model?'on':'')+'" '+(f.running?'disabled':'')+' onclick="act(\'/api/model\',{version:\''+m+'\'})">'+m+'</button>').join('');
-  $('pwrNote').textContent=s.can_power_off==='yes'?'Oprește Jetsonul direct din panou.':(s.safe_to_power_off?'Poți scoate curentul în siguranță acum (sau sudo poweroff din SSH).':'Oprește întâi modul teren.');
-  $('upd').textContent='actualizat '+s.time.slice(11);requestAnimationFrame(()=>document.body.classList.add('ready'));
-}
-let lastFrame='';
-async function frame(){try{const r=await fetch('/api/frame.jpg?'+Date.now());if(!r.ok)return;const n=r.headers.get('X-Frame');if(n===lastFrame)return;lastFrame=n;
-  const b=URL.createObjectURL(await r.blob());$('frame').innerHTML='<img src="'+b+'" alt="">';$('frameName').textContent=n}catch(e){}}
+const camImg={usb:false,csi:false};
+function camView(k,c,owner){const o=$('o'+k[0].toUpperCase()+k.slice(1)),img=$('img'+k[0].toUpperCase()+k.slice(1)),d=$('d'+k[0].toUpperCase()+k.slice(1)),f=$('f'+k[0].toUpperCase()+k.slice(1));
+  const live=c.state==='live';f.textContent=live?`${Math.min(c.fps,30).toFixed(0)} fps · ${c.width||''}×${c.height||''}`:'';d.style.background=live?'var(--ok)':c.state==='error'||c.state==='missing'?'var(--bad)':'var(--warn)';
+  let msg='';if(c.state==='blocked'||owner!=='panel')msg=(owner==='vision'?t('camBlockedVision'):t('camBlockedRec'))+(owner==='vision'?`<button class="btnsm" onclick="act('/api/vision',{on:false})">${t('takeCams')}</button>`:'');
+  else if(c.state==='missing')msg=t('camMissing');else if(c.state==='error')msg=t('camError')+'<br><small>'+(c.error||'')+'</small>';else if(!live)msg=t('camOff');
+  o.innerHTML=msg;o.classList.toggle('hide',!msg);
+  if(owner==='panel'&&!camImg[k]){img.src='/stream/'+k+'.mjpg';camImg[k]=true}
+  if(owner!=='panel'&&camImg[k]){img.removeAttribute('src');camImg[k]=false}}
+function render(s){S=s;const c=s.collection,g=s.gps,sy=s.system;
+  $('host').textContent=s.hostname+' · '+s.time.slice(11);
+  if(c.stopping){pill('pRec','warn');$('pRecT').textContent=t('stopping')}else if(c.running){pill('pRec','rec');$('pRecT').textContent=t('recording')}else{pill('pRec','');$('pRecT').textContent=t('idle')}
+  pill('pGps',g.mode>=3?'ok':g.mode===2?'warn':'bad');$('pGpsT').textContent=g.mode>=2?g.fix:'–';
+  const camsLive=['usb','csi'].filter(k=>s.cameras[k].state==='live').length;pill('pCam',s.camera_owner!=='panel'?'warn':camsLive?'ok':'');
+  $('bStart').disabled=c.running||c.stopping;$('bStop').disabled=!c.running||c.stopping;
+  const sf=$('safe');if(c.safe_to_power_off){sf.className='safe ok';sf.innerHTML='✅ '+t('safeOk')+(c.last_stop?` <span class="mut">(${c.last_stop})</span>`:'')}
+  else if(c.stopping){sf.className='safe wait';sf.innerHTML='⏳ '+t('safeStop')}else{sf.className='safe rec';sf.innerHTML='🔴 '+(c.waiting?t('waiting'):t('safeRec'))}
+  $('runName').textContent=c.run?c.run.replace('field-',''):'';
+  $('cElapsed').textContent=c.running?fmtDur(c.elapsed_s):'–';$('cFrames').textContent=c.run_frames??'–';$('cFps').textContent=c.running?c.fps.toFixed(1):'–';
+  $('cSize').textContent=c.run_size_mb!=null?c.run_size_mb+' MB':'–';$('cAlerts').textContent=c.run_alerts??'–';
+  const dk=sy.disk.ssd||sy.disk.root;$('cDisk').textContent=dk?dk.free_gb+' GB':'–';$('cDets').textContent=c.last_detections&&c.last_detections.length?c.last_detections.join(' · '):'–';
+  setSw($('swAuto'),c.autostart);setSw($('swVision'),s.vision);
+  $('seg').innerHTML=c.models.map(m=>`<button class="${m===c.model?'on':''}" ${c.running?'disabled':''} onclick="act('/api/model',{version:'${m}'})">${m}</button>`).join('');
+  $('camOwner').textContent=s.camera_owner==='panel'?t('ownerPanel'):s.camera_owner==='vision'?t('ownerVision'):t('ownerRec');
+  camView('usb',s.cameras.usb,s.camera_owner);camView('csi',s.cameras.csi,s.camera_owner);
+  const fx=$('gFix');fx.className='fixbadge '+(g.mode>=3?'f3':g.mode===2?'f2':'f0');fx.textContent=!g.connected?t('gpsdDown'):g.mode>=3?t('fix3'):g.mode===2?t('fix2'):t('fix0');
+  $('gSats').textContent=g.sats_used!=null?`${g.sats_used} / ${g.sats_seen??'–'}`:'–';$('gHdop').textContent=g.hdop!=null?g.hdop.toFixed(1):'–';
+  $('gAge').textContent=g.fix_age_s!=null?(g.fix_age_s<2?'<2 s':fmtDur(g.fix_age_s)):'–';
+  $('gPos').innerHTML=g.lat!=null?`<a class="lnk" target="_blank" href="https://www.google.com/maps?q=${g.lat},${g.lon}">${g.lat.toFixed(6)}, ${g.lon.toFixed(6)} ↗</a>`:'–';
+  $('gAlt').textContent=g.alt_m!=null?g.alt_m.toFixed(0)+' m':'–';$('gSpd').textContent=g.speed_ms!=null?(g.speed_ms*3.6).toFixed(1)+' km/h':'–';$('gTrk').textContent=g.track_deg!=null&&g.speed_ms>0.5?Math.round(g.track_deg)+'°':'–';
+  const te=sy.temps;$('sTemp').textContent=`${te.cpu??'–'}° / ${te.gpu??'–'}°`;$('sPow').textContent=sy.power_mode;$('sMem').textContent=`${sy.mem.used_gb}/${sy.mem.total_gb} GB`;$('sUp').textContent=fmtUp(sy.uptime_s);
+  $('sSsd').textContent=sy.disk.ssd?sy.disk.ssd.free_gb+' GB':'–';$('sRoot').innerHTML=sy.disk.root.free_gb<3?`<span class="warn">${sy.disk.root.free_gb} GB</span>`:sy.disk.root.free_gb+' GB';
+  $('pwrNote').textContent=sy.can_power_off==='yes'?t('pwrDirect'):c.safe_to_power_off?t('pwrSafe'):t('pwrStop');
+  $('upd').textContent=t('updated')+' '+s.time.slice(11);requestAnimationFrame(()=>document.body.classList.add('ready'))}
+async function refresh(){try{const r=await fetch('/api/state',{cache:'no-store'});render(await r.json())}catch(e){pill('pRec','bad');$('pRecT').textContent=t('offline')}}
 async function lists(){try{
-  const a=await (await fetch('/api/alerts')).json();
-  $('alertList').innerHTML=a.length?a.map(x=>'<div class="item"><span class="chip r">'+x.class.replace('_',' ')+'</span><div class="t"><div>'+x.lat.toFixed(6)+', '+x.lon.toFixed(6)+'</div><small>'+lt(x.timestamp)+' · '+x.frames+' cadre · conf '+x.max_conf+'</small></div><a class="lnk" target="_blank" href="'+x.maps+'">Hartă ↗</a></div>').join(''):'<div class="mut">Nicio alertă confirmată.</div>';
-  const r=await (await fetch('/api/runs')).json();
-  $('runList').innerHTML=r.length?r.map(x=>'<div class="item"><div class="t"><div>'+x.name.replace('field-','')+'</div><small>'+x.size_mb+' MB · '+x.frames+' cadre · '+x.alerts+' alerte</small></div><a class="lnk" href="#" onclick="dl(\''+x.name+'\');return false">⬇ .tar.gz</a></div>').join(''):'<div class="mut">Nicio rulare încă.</div>';
+  const a=await(await fetch('/api/alerts')).json();
+  $('alertList').innerHTML=a.length?a.map(x=>`<div class="item"><span class="chip">${x.class.replace('_',' ')}</span><div class="t"><div>${x.lat.toFixed(6)}, ${x.lon.toFixed(6)}</div><small>${lt(x.timestamp)} · ${x.frames} ${t('framesW')} · conf ${x.max_conf}</small></div><a class="lnk" target="_blank" href="${x.maps}">${t('map')} ↗</a></div>`).join(''):`<div class="mut">${t('noAlerts')}</div>`;
+  const r=await(await fetch('/api/runs')).json();
+  $('runList').innerHTML=r.length?r.slice(0,12).map(x=>`<div class="item"><div class="t"><div>${x.name.replace('field-','')}</div><small>${x.size_mb} MB · ${x.frames} ${t('framesW')} · ${x.alerts} ${t('alertsW')}</small></div><a class="lnk" href="/api/download/${x.name}.tar.gz">⬇ .tar.gz</a></div>`).join(''):`<div class="mut">${t('noRuns')}</div>`;
 }catch(e){}}
-async function dl(n){const p=await getPin();if(p)location.href='/api/download/'+n+'.tar.gz?pin='+encodeURIComponent(p)}
-async function refresh(){try{const r=await fetch('/api/status');render(await r.json())}catch(e){$('pill').className='pill off';$('pill').textContent='FĂRĂ LEGĂTURĂ'}}
-refresh();frame();lists();setInterval(refresh,2500);setInterval(frame,5000);setInterval(lists,15000);
+// ---------------- radar ----------------
+const COL=['#2fd27a','#52a8ff','#ffad42'],RMAX=6000,FOV=60;let R=null,rLast=0,trails=[[],[],[]],sweep=0;
+function radarConnect(){const es=new EventSource('/radar/events');
+  es.onmessage=e=>{try{R=JSON.parse(e.data);rLast=performance.now();R.targets.forEach((g,i)=>{if(g){trails[i].push([g.x,g.y]);if(trails[i].length>40)trails[i].shift()}else trails[i]=[]})}catch(_){}};
+  es.addEventListener('offline',()=>{R={service:false};rLast=performance.now()});es.onerror=()=>{}}
+function radarDraw(){const cv=$('rad'),x=cv.getContext('2d'),W=cv.width,H=cv.height,cx=W/2,cy=H-18,rr=Math.min(H-34,W/2/Math.sin(FOV*Math.PI/180)-10);
+  x.clearRect(0,0,W,H);const a0=-Math.PI/2-FOV*Math.PI/180,a1=-Math.PI/2+FOV*Math.PI/180;
+  const grd=x.createRadialGradient(cx,cy,0,cx,cy,rr);grd.addColorStop(0,'#0f2a1d');grd.addColorStop(1,'#0b1612');
+  x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,rr,a0,a1);x.closePath();x.fillStyle=grd;x.fill();x.strokeStyle='#1e4a33';x.lineWidth=2;x.stroke();
+  x.font='20px system-ui';x.fillStyle='#4f7d63';x.lineWidth=1;
+  for(let m=1;m<=6;m++){const r=rr*m*1000/RMAX;x.beginPath();x.arc(cx,cy,r,a0,a1);x.strokeStyle=m%2?'#173a28':'#1f4d35';x.stroke();x.fillText(m+' m',cx+r*Math.cos(a1)+6,cy+r*Math.sin(a1)+4)}
+  for(const d of[-60,-30,0,30,60]){const a=-Math.PI/2+d*Math.PI/180;x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+rr*Math.cos(a),cy+rr*Math.sin(a));x.strokeStyle='#173a28';x.stroke()}
+  sweep=(sweep+0.025)%2;const sa=a0+(a1-a0)*(sweep<1?sweep:2-sweep);const sg=x.createLinearGradient(cx,cy,cx+rr*Math.cos(sa),cy+rr*Math.sin(sa));
+  x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,rr,sa-0.12,sa+0.12);x.closePath();x.fillStyle='rgba(47,210,122,.10)';x.fill();
+  x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+rr*Math.cos(sa),cy+rr*Math.sin(sa));x.strokeStyle='rgba(47,210,122,.55)';x.lineWidth=2;x.stroke();
+  const P=(gx,gy)=>[cx+gx/RMAX*rr,cy-gy/RMAX*rr];
+  const fresh=R&&R.connected&&performance.now()-rLast<2000;
+  if(fresh)R.targets.forEach((g,i)=>{const tr=trails[i];if(tr.length>1){x.beginPath();tr.forEach((p,j)=>{const[q,w]=P(p[0],p[1]);j?x.lineTo(q,w):x.moveTo(q,w)});x.strokeStyle=COL[i]+'66';x.lineWidth=3;x.stroke()}
+    if(!g)return;const[px,py]=P(g.x,g.y);const gl=x.createRadialGradient(px,py,0,px,py,26);gl.addColorStop(0,COL[i]+'cc');gl.addColorStop(1,COL[i]+'00');x.fillStyle=gl;x.beginPath();x.arc(px,py,26,0,7);x.fill();
+    x.fillStyle=COL[i];x.beginPath();x.arc(px,py,9,0,7);x.fill();x.fillStyle='#fff';x.font='bold 20px system-ui';x.fillText('T'+(i+1),px+13,py-11)});
+  x.fillStyle='#f5c518';x.beginPath();x.arc(cx,cy,7,0,7);x.fill();
+  if(!fresh){x.fillStyle='#000a';x.fillRect(0,0,W,H);x.fillStyle='#ff9a9d';x.font='bold 28px system-ui';x.textAlign='center';
+    x.fillText(!R||R.service===false?t('radarOffline'):(R.connected===false?'LD2450 '+t('radarDisc'):t('radarNoData')),cx,H/2);x.textAlign='left'}
+  requestAnimationFrame(radarDraw)}
+function radarPanel(){const fresh=R&&R.connected&&performance.now()-rLast<2000;
+  pill('pRad',!R||R.service===false?'bad':fresh?'ok':'warn');
+  $('rStat').innerHTML=!R||R.service===false?`<span class="bad">${t('radarOffline')}</span>`:fresh?`<span class="ok">● ${t('radarConn')}</span>`:`<span class="warn">${t('radarDisc')}</span>`;
+  const tg=(R&&R.targets)||[null,null,null];
+  $('tgts').innerHTML=tg.map((g,i)=>{if(!g||!fresh)return`<div class="tg off" style="border-top-color:${COL[i]}">T${i+1}<b>–</b><span class="mut">${t('noTarget')}</span></div>`;
+    const d=Math.hypot(g.x,g.y)/1000,a=Math.atan2(g.x,g.y)*180/Math.PI,v=g.v/100,mv=Math.abs(g.v)<5?t('still'):(g.v>0?t('away'):t('closer'));
+    return`<div class="tg" style="border-top-color:${COL[i]}">T${i+1}<b>${d.toFixed(2)} m</b>${a>=0?'+':''}${a.toFixed(0)}° · ${v.toFixed(2)} m/s<br><span class="mut">${mv}</span></div>`}).join('');
+  $('rInfo').innerHTML=R&&R.service!==false?[`${R.port||'–'}`,`${(R.fps??0).toFixed(1)} fps`,`${t('frames').toLowerCase()} ${R.frames??'–'}`,`bad ${R.bad??0}`,`firmware ${R.firmware??t('readonly')}`,`mode ${R.mode??t('readonly')}`,R.demo?`<span class="warn">${t('demo')}</span>`:'',R.error?`<span class="warn">${R.error}</span>`:''].filter(Boolean).map(v=>`<span>${v}</span>`).join(''):''}
+setLang(L);refresh();radarConnect();radarDraw();setInterval(refresh,1500);setInterval(radarPanel,300);setInterval(lists,15000);
 </script>
 </body>
 </html>
