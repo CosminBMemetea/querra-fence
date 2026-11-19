@@ -56,3 +56,10 @@ python3 -s jetson-launch.py run --source sim:Cosmins-MacBook-Air.local:5601 \
 
 The raw field frames are the next training data: real grass, real light and real wire, labelled and added on top of
 the synthetic set.
+
+## Field control panel
+
+`http://mmx-desktop.local:8080` (or the Jetson's IP) is a phone-friendly page in Romanian. It starts and stops field
+mode, shows live status and the latest annotated frame, switches autostart, querra-vision and the detector engine, lists
+past runs with downloads and confirmed alerts with map links, and offers a safe shutdown. Actions need a PIN. The code
+is in [`jetson/panel/`](../jetson/panel/), a snapshot of `~/querra-scout-20261107/panel/` on the Jetson.

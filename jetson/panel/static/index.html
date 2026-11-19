@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<title>QUERRA · Panou teren</title>
+<style>
+:root{--bg:#0b0f14;--card:#121922;--card2:#18212c;--line:#223041;--txt:#e6edf3;--mut:#8b9bb0;--acc:#f5c518;--ok:#2ecc71;--bad:#ff4d4f;--warn:#ffa940;--blue:#4da3ff}
+*{box-sizing:border-box}main>*,.grid>*,.big>*,.row .t{min-width:0}html,body{overflow-x:hidden;margin:0;background:var(--bg);color:var(--txt);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:rgba(11,15,20,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:12px 16px calc(12px);display:flex;align-items:center;gap:12px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.18em;font-size:18px}
+.logo svg{width:28px;height:28px}
+.logo small{display:block;font-weight:500;letter-spacing:.02em;font-size:11px;color:var(--mut)}
+.pill{margin-left:auto;padding:6px 12px;border-radius:999px;font-weight:700;font-size:13px;background:var(--card2);border:1px solid var(--line);white-space:nowrap}
+.pill.run{background:rgba(46,204,113,.15);border-color:var(--ok);color:var(--ok)}
+.pill.stop{background:rgba(255,169,64,.12);border-color:var(--warn);color:var(--warn)}
+.pill.off{color:var(--mut)}
+main{max-width:1100px;margin:0 auto;padding:14px;display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:900px){main{grid-template-columns:1.1fr .9fr}.span2{grid-column:1/-1}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.card h2{margin:0 0 10px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);font-weight:700}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{font:inherit;color:inherit;cursor:pointer;border:0}
+.btn{border-radius:14px;padding:18px 8px;font-size:18px;font-weight:800;letter-spacing:.02em;display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .08s,opacity .2s}
+.btn:active{transform:scale(.97)}.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn small{font-size:12px;font-weight:500;opacity:.85}
+.start{background:linear-gradient(180deg,#27c267,#1a9a50);color:#04140a}
+.stopb{background:linear-gradient(180deg,#ff5f61,#d9363e);color:#fff}
+.note{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--card2);font-size:14px}
+.note.safe{border-left:4px solid var(--ok)}.note.wait{border-left:4px solid var(--warn)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(min-width:520px){.grid{grid-template-columns:repeat(3,1fr)}}
+.kv{background:var(--card2);border-radius:12px;padding:10px}
+.kv b{display:block;font-size:20px;font-weight:750;margin-top:2px;word-break:break-word}
+.kv>span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.kv.wide{grid-column:1/-1}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}.mut{color:var(--mut)}
+.frame{width:100%;aspect-ratio:16/9;border-radius:12px;background:#000 center/contain no-repeat;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--mut);overflow:hidden}
+.frame img{width:100%;height:100%;object-fit:contain}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .t{flex:1}.row .t div{font-weight:650}.row .t small{color:var(--mut)}
+.sw{position:relative;width:54px;height:32px;border-radius:999px;background:#2a3646;flex:none}.ready .sw,.ready .sw::after{transition:.2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#cfd8e3}
+.sw.on{background:var(--ok)}.sw.on::after{left:25px;background:#fff}
+.seg{display:flex;background:#2a3646;border-radius:10px;padding:3px;flex:none}
+.seg button{background:none;padding:8px 14px;border-radius:8px;font-weight:700;color:var(--mut)}
+.seg button.on{background:var(--acc);color:#111}
+.list{display:flex;flex-direction:column;gap:8px;max-height:420px;overflow:auto}
+.item{background:var(--card2);border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center}
+.item .t{flex:1;min-width:0}.item .t div{font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.item .t small{color:var(--mut)}
+.chip{font-size:12px;padding:3px 8px;border-radius:999px;background:#2a3646;white-space:nowrap}
+.chip.r{background:rgba(255,77,79,.18);color:#ff8a8c}
+a.lnk{color:var(--blue);text-decoration:none;font-weight:650;white-space:nowrap}
+.pwr{width:100%;background:#2a1416;border:1px solid #5a2427;color:#ff8a8c;padding:14px;border-radius:12px;font-weight:750}
+code{background:#0006;padding:2px 6px;border-radius:6px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(120px);background:#1f2a37;border:1px solid var(--line);padding:12px 16px;border-radius:12px;max-width:92vw;transition:.25s;z-index:20;box-shadow:0 8px 30px #0008}
+#toast.show{transform:translateX(-50%) translateY(0)}
+.modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:30;padding:20px}
+.modal.show{display:flex}
+.modal .box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;width:100%;max-width:340px;text-align:center}
+.modal input{width:100%;font-size:28px;letter-spacing:.4em;text-align:center;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--txt);margin:12px 0}
+.modal .acts{display:flex;gap:10px}.modal .acts button{flex:1;padding:12px;border-radius:12px;font-weight:750;background:#2a3646}
+.modal .acts .pri{background:var(--acc);color:#111}
+footer{text-align:center;color:var(--mut);font-size:12px;padding:6px 0 24px}
+.lockbtn{background:none;color:var(--mut);font-size:12px;text-decoration:underline}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 32 32" fill="none"><path d="M4 24V9M12 24V9M20 24V9M28 24V9" stroke="#8b9bb0" stroke-width="2" stroke-linecap="round"/><path d="M4 13h24M4 19h24" stroke="#f5c518" stroke-width="2"/><path d="M18 3l-4 8h4l-3 7" stroke="#f5c518" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+    <div>QUERRA<small id="host">Panou teren · Jetson</small></div>
+  </div>
+  <div id="pill" class="pill off">…</div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Mod teren</h2>
+    <div class="big">
+      <button class="btn start" id="bStart" onclick="act('/api/field/start')">▶ PORNEȘTE<small>cameră + GPS + detector</small></button>
+      <button class="btn stopb" id="bStop" onclick="act('/api/field/stop')">■ OPREȘTE<small>salvează și închide</small></button>
+    </div>
+    <div id="safe" class="note">…</div>
+  </section>
+
+  <section class="card">
+    <h2>Ultimul cadru adnotat</h2>
+    <div class="frame" id="frame">fără cadre încă</div>
+    <div class="mut" style="font-size:12px;margin-top:6px" id="frameName"></div>
+  </section>
+
+  <section class="card span2">
+    <h2>Stare live</h2>
+    <div class="grid">
+      <div class="kv"><span>Cadre</span><b id="frames">–</b></div>
+      <div class="kv"><span>FPS</span><b id="fps">–</b></div>
+      <div class="kv"><span>Alerte confirmate</span><b id="alerts">–</b></div>
+      <div class="kv"><span>GPS</span><b id="gps">–</b></div>
+      <div class="kv wide"><span>Poziție</span><b id="coords">–</b></div>
+      <div class="kv wide"><span>Ultimele detecții</span><b id="dets" style="font-size:16px">–</b></div>
+      <div class="kv"><span>SSD liber</span><b id="ssd">–</b></div>
+      <div class="kv"><span>Disc sistem liber</span><b id="root">–</b></div>
+      <div class="kv"><span>Temp. CPU / GPU</span><b id="temp">–</b></div>
+      <div class="kv"><span>Mod putere</span><b id="pmode">–</b></div>
+      <div class="kv"><span>Funcționează de</span><b id="uptime">–</b></div>
+      <div class="kv"><span>RAM / încărcare</span><b id="mem">–</b></div>
+      <div class="kv wide"><span>Rulare curentă</span><b id="run" style="font-size:14px">–</b></div>
+      <div class="kv wide" id="errBox" style="display:none"><span>Ultima eroare</span><b id="err" style="font-size:13px" class="warn"></b></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Setări</h2>
+    <div class="row"><div class="t"><div>Pornire automată la boot</div><small>Modul teren pornește singur după ce Jetsonul primește curent</small></div><button class="sw" id="swAuto" onclick="toggle('auto')"></button></div>
+    <div class="row"><div class="t"><div>querra-vision</div><small>Demo cu două camere; ocupă camera USB</small></div><button class="sw" id="swVision" onclick="toggle('vision')"></button></div>
+    <div class="row"><div class="t"><div>Model detector</div><small>Se schimbă doar cu modul teren oprit</small></div><div class="seg" id="seg"></div></div>
+  </section>
+
+  <section class="card">
+    <h2>Alerte recente</h2>
+    <div class="list" id="alertList"><div class="mut">Nicio alertă confirmată.</div></div>
+  </section>
+
+  <section class="card span2">
+    <h2>Rulări salvate</h2>
+    <div class="list" id="runList"><div class="mut">…</div></div>
+  </section>
+
+  <section class="card span2">
+    <h2>Oprire</h2>
+    <button class="pwr" onclick="powerOff()">⏻ Oprire sigură Jetson</button>
+    <div id="pwrNote" class="mut" style="margin-top:8px;font-size:13px"></div>
+  </section>
+</main>
+<footer><span id="upd">–</span> · <button class="lockbtn" onclick="forget()">uită PIN-ul</button></footer>
+
+<div id="toast"></div>
+<div class="modal" id="pinModal"><div class="box">
+  <div style="font-weight:800;font-size:18px">PIN QUERRA</div>
+  <div class="mut" style="font-size:13px">Necesar pentru comenzi</div>
+  <input id="pinIn" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code">
+  <div class="acts"><button onclick="pinDone(null)">Anulează</button><button class="pri" onclick="pinDone(document.getElementById('pinIn').value)">OK</button></div>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+let S=null, pinResolve=null, busy=false;
+const lt=z=>z?new Date(z).toLocaleString('ro-RO',{hour12:false}):'';
+const fmtUp=s=>{const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return (d?d+'z ':'')+h+'h '+m+'m'};
+function toast(m,bad){const t=$('toast');t.textContent=m;t.style.borderColor=bad?'#ff4d4f':'#223041';t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3500)}
+function askPin(){return new Promise(r=>{pinResolve=r;$('pinIn').value='';$('pinModal').classList.add('show');setTimeout(()=>$('pinIn').focus(),50)})}
+function pinDone(v){$('pinModal').classList.remove('show');pinResolve&&pinResolve(v);pinResolve=null}
+$('pinIn').addEventListener('keydown',e=>{if(e.key==='Enter')pinDone(e.target.value)});
+function forget(){localStorage.removeItem('qpin');toast('PIN-ul a fost uitat pe acest dispozitiv')}
+async function getPin(){let p=localStorage.getItem('qpin');if(p)return p;p=await askPin();if(!p)return null;
+  const r=await fetch('/api/login',{method:'POST',headers:{'X-Pin':p}});if(r.ok){localStorage.setItem('qpin',p);return p}
+  toast((await r.json()).msg||'PIN greșit',true);return null}
+async function post(url,body){const p=await getPin();if(!p)return null;
+  const r=await fetch(url,{method:'POST',headers:{'X-Pin':p,'Content-Type':'application/json'},body:JSON.stringify(body||{})});
+  const j=await r.json().catch(()=>({msg:'eroare'}));if(r.status===401)localStorage.removeItem('qpin');
+  toast(j.msg||(r.ok?'OK':'Eroare'),!r.ok||j.ok===false);return j}
+async function act(url,body){if(busy)return;busy=true;try{await post(url,body)}finally{busy=false;refresh()}}
+function toggle(k){if(!S)return;if(k==='auto'){if(!S.autostart_field&&!confirm('Activezi pornirea automată a modului teren la fiecare pornire a Jetsonului?'))return;act('/api/autostart',{on:!S.autostart_field})}
+  else act('/api/vision',{on:S.vision!=='active'})}
+async function powerOff(){const j=await post('/api/poweroff',{});if(!j)return;
+  if(j.needs_sudo){$('pwrNote').innerHTML='Oprirea cere parola de administrator. Din terminal (SSH): <code>sudo poweroff</code>, sau ține apăsat butonul de pornire. Datele sunt deja scrise pe disc când scrie „Sigur de oprit”.';return}
+  if(j.ok===false&&j.msg==='confirmare lipsă'){if(confirm('Sigur oprești Jetsonul?'))act('/api/poweroff',{confirm:'OPRESTE'})}}
+function setSw(el,on){el.classList.toggle('on',!!on)}
+function render(s){S=s;const f=s.field,sf=s.status_file||{};
+  $('host').textContent='Panou teren · '+s.hostname;
+  const pill=$('pill');
+  if(f.stopping){pill.className='pill stop';pill.textContent='SE OPREȘTE…'}
+  else if(f.running){pill.className='pill run';pill.textContent='● ÎNREGISTREAZĂ'}
+  else{pill.className='pill off';pill.textContent='OPRIT'}
+  $('bStart').disabled=f.running||f.stopping;$('bStop').disabled=!f.running||f.stopping;
+  const safe=$('safe');
+  if(s.safe_to_power_off){safe.className='note safe';safe.innerHTML='✅ <b>Sigur de oprit.</b> Datele sunt scrise pe disc; poți scoate powerbankul.'+(f.last_stop?' <span class="mut">(oprit la '+f.last_stop+')</span>':'')}
+  else if(f.stopping){safe.className='note wait';safe.innerHTML='⏳ Se salvează fragmentul curent… <b>nu scoate curentul</b>.'}
+  else{safe.className='note wait';safe.innerHTML='🔴 Înregistrare în curs. Apasă <b>OPREȘTE</b> înainte să scoți curentul.'}
+  const fr=(sf.frames||'').match(/^(\d+)\s+fps\(10s\):\s*([\d.,]+)/);
+  $('frames').textContent=fr?fr[1]:(sf.frames||'–');$('fps').textContent=f.running&&fr?fr[2].replace(',','.'):'–';
+  $('alerts').textContent=s.current_run?s.current_run.alerts:'–';
+  const fx=s.fix;const g=fx&&fx.status;
+  $('gps').innerHTML=g==='valid'?'<span class="ok">FIX</span>':(g?'<span class="warn">'+g+'</span>':'<span class="mut">–</span>');
+  $('coords').innerHTML=fx&&fx.lat?'<a class="lnk" target="_blank" href="https://www.google.com/maps?q='+fx.lat+','+fx.lon+'">'+fx.lat.toFixed(6)+', '+fx.lon.toFixed(6)+' ↗</a>':'–';
+  $('dets').textContent=fx&&fx.detections&&fx.detections.length?fx.detections.join(' · '):((sf.last_det||'').replace(/^det=\[|\]$/g,'').replace(/,/g,' · ')||'–');
+  const d=s.disk;$('ssd').textContent=d.ssd?d.ssd.free_gb+' GB':'lipsă';$('root').innerHTML=d.root.free_gb<3?'<span class="warn">'+d.root.free_gb+' GB</span>':d.root.free_gb+' GB';
+  const t=s.temps;$('temp').innerHTML=(t.cpu??'–')+'° / '+(t.gpu??'–')+'°';
+  $('pmode').textContent=s.power_mode;$('uptime').textContent=fmtUp(s.uptime_s);
+  $('mem').textContent=s.mem.used_gb+'/'+s.mem.total_gb+' GB · '+s.load.toFixed(1);
+  $('run').textContent=s.current_run?s.current_run.name+(sf.time?'  ·  stare la '+sf.time.slice(11):''):'–';
+  const e=(sf.last_error||'').trim();$('errBox').style.display=f.running&&e?'':'none';$('err').textContent=e;
+  setSw($('swAuto'),s.autostart_field);setSw($('swVision'),s.vision==='active');
+  $('seg').innerHTML=s.models.map(m=>'<button class="'+(m===s.model?'on':'')+'" '+(f.running?'disabled':'')+' onclick="act(\'/api/model\',{version:\''+m+'\'})">'+m+'</button>').join('');
+  $('pwrNote').textContent=s.can_power_off==='yes'?'Oprește Jetsonul direct din panou.':(s.safe_to_power_off?'Poți scoate curentul în siguranță acum (sau sudo poweroff din SSH).':'Oprește întâi modul teren.');
+  $('upd').textContent='actualizat '+s.time.slice(11);requestAnimationFrame(()=>document.body.classList.add('ready'));
+}
+let lastFrame='';
+async function frame(){try{const r=await fetch('/api/frame.jpg?'+Date.now());if(!r.ok)return;const n=r.headers.get('X-Frame');if(n===lastFrame)return;lastFrame=n;
+  const b=URL.createObjectURL(await r.blob());$('frame').innerHTML='<img src="'+b+'" alt="">';$('frameName').textContent=n}catch(e){}}
+async function lists(){try{
+  const a=await (await fetch('/api/alerts')).json();
+  $('alertList').innerHTML=a.length?a.map(x=>'<div class="item"><span class="chip r">'+x.class.replace('_',' ')+'</span><div class="t"><div>'+x.lat.toFixed(6)+', '+x.lon.toFixed(6)+'</div><small>'+lt(x.timestamp)+' · '+x.frames+' cadre · conf '+x.max_conf+'</small></div><a class="lnk" target="_blank" href="'+x.maps+'">Hartă ↗</a></div>').join(''):'<div class="mut">Nicio alertă confirmată.</div>';
+  const r=await (await fetch('/api/runs')).json();
+  $('runList').innerHTML=r.length?r.map(x=>'<div class="item"><div class="t"><div>'+x.name.replace('field-','')+'</div><small>'+x.size_mb+' MB · '+x.frames+' cadre · '+x.alerts+' alerte</small></div><a class="lnk" href="#" onclick="dl(\''+x.name+'\');return false">⬇ .tar.gz</a></div>').join(''):'<div class="mut">Nicio rulare încă.</div>';
+}catch(e){}}
+async function dl(n){const p=await getPin();if(p)location.href='/api/download/'+n+'.tar.gz?pin='+encodeURIComponent(p)}
+async function refresh(){try{const r=await fetch('/api/status');render(await r.json())}catch(e){$('pill').className='pill off';$('pill').textContent='FĂRĂ LEGĂTURĂ'}}
+refresh();frame();lists();setInterval(refresh,2500);setInterval(frame,5000);setInterval(lists,15000);
+</script>
+</body>
+</html>
