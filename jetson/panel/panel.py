@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""QUERRA field control panel for the Jetson: one page to start and stop field mode from a phone or a laptop.
+"""QUERRA Fence panel v2 for the Jetson: live cameras, GPS, radar and field data collection on one page.
 
-    python3 panel.py            # http://<jetson>:8080  (standard library only)
+    python3 panel.py            # http://<jetson>:8080
 
-Reading status is open. Every action needs the PIN from config.json (header X-Pin, or ?pin= for downloads).
-It never starts field capture on its own. Autostart at boot is a user crontab line tagged "# querra-field" and stays
-off unless someone turns it on here.
+The panel process is also the device hub (hub.py): the only owner of both cameras; it reads GPS through gpsd and
+the radar through the ld2450-radar service. Field mode takes its USB frames and GPS fix from the hub's local QFC1
+stream (127.0.0.1:5602), so live view keeps working while data is collected.
+PIN protection is off by default ("require_pin" in config.json). The panel never starts field capture by itself.
 """
 import hmac, json, os, re, secrets, shutil, signal, subprocess, tarfile, threading, time, urllib.parse
+import hub
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -25,11 +27,18 @@ FIELD_CRON = (f"@reboot sleep 60 && export XDG_RUNTIME_DIR=/run/user/{UID}; syst
 CONFIG = os.path.join(HERE, "config.json")
 
 
+DEFAULTS = {"port": 8080, "require_pin": False, "live_fps": 10, "csi_white_balance": "gray", "field_feed_port": 5602}
+
+
 def load_config():
-    if not os.path.exists(CONFIG):
-        json.dump({"pin": "%06d" % secrets.randbelow(10 ** 6), "port": 8080}, open(CONFIG, "w"), indent=1)
-        os.chmod(CONFIG, 0o600)
-    return json.load(open(CONFIG))
+    cfg = json.load(open(CONFIG)) if os.path.exists(CONFIG) else {}
+    changed = False
+    for k, v in dict(DEFAULTS, pin="%06d" % secrets.randbelow(10 ** 6)).items():
+        if k not in cfg:
+            cfg[k] = v; changed = True
+    if changed:
+        json.dump(cfg, open(CONFIG, "w"), indent=1); os.chmod(CONFIG, 0o600)
+    return cfg
 
 
 CFG = load_config()
@@ -71,9 +80,25 @@ def field_running():
     for _, a in procs():
         if len(a) >= 2 and a[0].endswith("bash") and a[1].endswith("field.sh"):
             sh = True
-        if len(a) >= 5 and a[0] == "python3" and a[2] == "jetson-launch.py" and a[3] == "run" and a[5:6] and a[5].startswith("usb:"):
+        if len(a) >= 6 and a[0] == "python3" and a[2] == "jetson-launch.py" and a[3] == "run" and \
+                (a[5].startswith("usb:") or a[5] == f"sim:127.0.0.1:{CFG.get('field_feed_port', 5602)}"):
             cap = True
     return sh, cap
+
+
+def field_pid():
+    for pid, a in procs():
+        if len(a) >= 2 and a[0].endswith("bash") and a[1].endswith("field.sh"):
+            return pid
+    return None
+
+
+def proc_age(pid):
+    try:
+        start = int(open(f"/proc/{pid}/stat").read().rsplit(")", 1)[1].split()[19]) / os.sysconf("SC_CLK_TCK")
+        return float(open("/proc/uptime").read().split()[0]) - start
+    except (OSError, ValueError, IndexError):
+        return None
 
 
 def runs_base():
@@ -190,36 +215,98 @@ def latest_fix(d):
     return None
 
 
-def status():
+
+# ---------------- device hub ----------------
+def vision_active():
+    return cached("vision", 2, lambda: run("systemctl --user is-active querra-vision")[1]) == "active"
+
+
+def recorder_state():
+    def get():
+        try:
+            import urllib.request
+            req = urllib.request.Request("http://127.0.0.1:5196/api/status", headers={"Host": "127.0.0.1:5196"})
+            with urllib.request.urlopen(req, timeout=0.8) as r:
+                return json.loads(r.read()).get("state", "?")
+        except Exception:  # noqa: BLE001
+            return "not running"
+    return cached("recorder", 3, get)
+
+
+def cameras_allowed():
+    if vision_active():
+        return False, "vision"
+    if recorder_state() in ("recording", "starting"):
+        return False, "recorder"
+    return True, ""
+
+
+USB = hub.UsbCamera(live_fps=CFG["live_fps"], allowed=cameras_allowed)
+CSI = hub.CsiCamera(wb=CFG["csi_white_balance"], live_fps=CFG["live_fps"], allowed=cameras_allowed)
+CAMS = {"usb": USB, "csi": CSI}
+GPS = hub.Gps()
+RADAR = hub.Radar()
+FEED = hub.FieldFeed(USB, GPS, port=CFG["field_feed_port"])
+_rate = {"n": None, "t": None, "fps": 0.0}
+
+
+def dir_size_mb(d):
+    def calc():
+        size = 0
+        for root, _, files in os.walk(d):
+            for f in files:
+                try: size += os.path.getsize(os.path.join(root, f))
+                except OSError: pass
+        return round(size / 2**20, 1)
+    return cached(("size", d), 5, calc)
+
+
+def collection():
     sh, cap = field_running()
     dirs = run_dirs()
     cur = dirs[0] if dirs else None
+    pid = field_pid()
+    frames = None
+    if cur:
+        line = next((l for l in reversed(tail_lines(cur + ".console.log", 3)) if re.match(r"^\d{5} ", l)), None)
+        frames = int(line[:5]) + 1 if line else 0
+    now = time.monotonic()
+    if sh or cap:
+        if _rate["n"] is not None and frames is not None and frames >= _rate["n"] and now - _rate["t"] >= 1.5:
+            _rate["fps"] = round((frames - _rate["n"]) / (now - _rate["t"]), 1); _rate["n"], _rate["t"] = frames, now
+        elif _rate["n"] is None or (frames or 0) < _rate["n"]:
+            _rate["n"], _rate["t"] = frames, now
+    else:
+        _rate.update(n=None, t=None, fps=0.0)
+    sf = field_status_file()
+    return {"running": sh or cap, "script": sh, "capture": cap, "stopping": STATE["stopping"],
+            "last_stop": STATE["last_stop"], "safe_to_power_off": not (sh or cap) and not STATE["stopping"],
+            "run": os.path.basename(cur) if cur else None, "run_frames": frames, "fps": _rate["fps"] if (sh or cap) else 0,
+            "run_size_mb": dir_size_mb(cur) if cur else None, "run_alerts": count_lines(os.path.join(cur, "alerts.jsonl")) if cur else 0,
+            "elapsed_s": round(proc_age(pid)) if pid else None, "via_hub": FEED.clients > 0,
+            "waiting": (sf.get("raw", "").startswith("WAITING") or sf.get("raw", "").startswith("ERROR")) and (sh or cap),
+            "status_line": sf.get("raw", "").splitlines()[0] if sf.get("raw") else "",
+            "last_detections": (latest_fix(cur) or {}).get("detections", []) if cur else [],
+            "autostart": "# querra-field" in crontab(), "model": current_model(), "models": list(ENGINES)}
+
+
+def state():
     up = float(open("/proc/uptime").read().split()[0])
     mem = {l.split(":")[0]: int(l.split()[1]) for l in open("/proc/meminfo") if l.split(":")[0] in ("MemTotal", "MemAvailable")}
-    cron = crontab()
-    st = {
-        "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "field": {"running": sh or cap, "script": sh, "capture": cap, "stopping": STATE["stopping"],
-                  "last_stop": STATE["last_stop"], "last_stop_msg": STATE["last_stop_msg"]},
-        "safe_to_power_off": not (sh or cap) and not STATE["stopping"],
-        "status_file": field_status_file(),
-        "current_run": run_summary(cur) if cur else None,
-        "fix": latest_fix(cur) if cur else None,
-        "autostart_field": "# querra-field" in cron,
-        "autostart_panel": "# querra-panel" in cron,
-        "vision": cached("vision", 3, lambda: run("systemctl --user is-active querra-vision")[1]),
-        "model": current_model(),
-        "models": list(ENGINES),
-        "disk": {"ssd": disk("/ssd") if os.path.ismount("/ssd") else None, "root": disk("/")},
-        "temps": temps(),
-        "power_mode": cached("nvp", 120, lambda: (run("nvpmodel -q")[1].splitlines() or ["?"])[0].replace("NV Power Mode:", "").strip()),
-        "uptime_s": int(up),
-        "load": os.getloadavg()[0],
-        "mem": {"used_gb": round((mem["MemTotal"] - mem["MemAvailable"]) / 2**20, 1), "total_gb": round(mem["MemTotal"] / 2**20, 1)},
-        "can_power_off": cached("cpo", 300, lambda: run("busctl call org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager CanPowerOff")[1].split()[-1].strip('"')),
-        "hostname": os.uname().nodename,
+    ok, why = cameras_allowed()
+    return {
+        "time": time.strftime("%Y-%m-%d %H:%M:%S"), "hostname": os.uname().nodename,
+        "collection": collection(),
+        "cameras": {k: c.status() for k, c in CAMS.items()}, "camera_owner": "panel" if ok else why,
+        "vision": vision_active(), "recorder": recorder_state(),
+        "gps": GPS.state(),
+        "system": {"disk": {"ssd": disk("/ssd") if os.path.ismount("/ssd") else None, "root": disk("/")}, "temps": temps(),
+                   "power_mode": cached("nvp", 120, lambda: (run("nvpmodel -q")[1].splitlines() or ["?"])[0].replace("NV Power Mode:", "").strip()),
+                   "uptime_s": int(up), "load": round(os.getloadavg()[0], 2),
+                   "mem": {"used_gb": round((mem["MemTotal"] - mem["MemAvailable"]) / 2**20, 1), "total_gb": round(mem["MemTotal"] / 2**20, 1)},
+                   "can_power_off": cached("cpo", 300, lambda: run("busctl call org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager CanPowerOff")[1].split()[-1].strip('"'))},
+        "require_pin": bool(CFG.get("require_pin")),
     }
-    return st
 
 
 def alerts(limit=30):
@@ -248,6 +335,7 @@ def latest_frame():
     return None
 
 
+
 # ---------------- actions ----------------
 def _default_signals():
     # The panel is often started with "nohup ... &", which leaves SIGINT ignored; children would inherit that and
@@ -258,76 +346,78 @@ def _default_signals():
 def act_start():
     sh, cap = field_running()
     if sh or cap:
-        return 409, {"ok": False, "msg": "Modul teren rulează deja."}
+        return 409, {"ok": False, "code": "already_running"}
     if STATE["stopping"]:
-        return 409, {"ok": False, "msg": "Se oprește, așteaptă câteva secunde."}
-    run("systemctl --user stop querra-vision", 20)
+        return 409, {"ok": False, "code": "stopping"}
+    if vision_active():
+        run("systemctl --user stop querra-vision", 20); _cache.pop("vision", None)
     subprocess.Popen(["bash", "./field.sh"], cwd=SCOUT, env=ENV, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                      stderr=subprocess.DEVNULL, start_new_session=True, preexec_fn=_default_signals)
-    return 200, {"ok": True, "msg": "Modul teren pornește (camera + GPS + detector)."}
+    return 200, {"ok": True, "code": "started"}
 
 
 def act_stop():
     if STATE["stopping"]:
-        return 409, {"ok": False, "msg": "Oprirea e deja în curs."}
+        return 409, {"ok": False, "code": "stopping"}
     STATE["stopping"] = True
     def worker():
         rc, out = run(["bash", FIELD_STOP], 90)
         STATE.update(stopping=False, last_stop=time.strftime("%H:%M:%S"), last_stop_msg=out.splitlines()[-1] if out else f"rc={rc}")
     threading.Thread(target=worker, daemon=True).start()
-    return 200, {"ok": True, "msg": "Se oprește: se închide fragmentul curent și se scriu datele pe disc."}
+    return 200, {"ok": True, "code": "stopping"}
 
 
 def act_autostart(on):
     if not set_cron("querra-field", FIELD_CRON, bool(on)):
-        return 500, {"ok": False, "msg": "crontab a eșuat"}
-    return 200, {"ok": True, "msg": "Pornire automată la boot: " + ("ACTIVĂ" if on else "oprită")}
+        return 500, {"ok": False, "code": "error", "msg": "crontab failed"}
+    return 200, {"ok": True, "code": "autostart_on" if on else "autostart_off"}
 
 
 def act_model(v):
     if v not in ENGINES:
-        return 400, {"ok": False, "msg": "model necunoscut"}
+        return 400, {"ok": False, "code": "error", "msg": "unknown model"}
     sh, cap = field_running()
     if sh or cap:
-        return 409, {"ok": False, "msg": "Oprește întâi modul teren."}
+        return 409, {"ok": False, "code": "stop_first"}
     if not os.path.exists(os.path.join(SCOUT, ENGINES[v])):
-        return 404, {"ok": False, "msg": "engine lipsă: " + ENGINES[v]}
+        return 404, {"ok": False, "code": "error", "msg": "engine missing: " + ENGINES[v]}
     s = open(FIELD_SH).read()
     new = re.sub(r"--detector \S+", "--detector " + ENGINES[v], s, count=1)
     if new != s:
         shutil.copy2(FIELD_SH, FIELD_SH + ".bak-panel-" + time.strftime("%Y%m%d-%H%M%S"))
         tmp = FIELD_SH + ".tmp"; open(tmp, "w").write(new); shutil.copymode(FIELD_SH, tmp); os.replace(tmp, FIELD_SH)
-    return 200, {"ok": True, "msg": f"Modelul pentru teren: {v}"}
+    return 200, {"ok": True, "code": "model_set", "msg": v}
 
 
 def act_vision(on):
+    """querra-vision demo owns both cameras while it runs; live view and field mode pause."""
     sh, cap = field_running()
     if on and (sh or cap):
-        return 409, {"ok": False, "msg": "Camera e folosită de modul teren. Oprește-l întâi."}
+        return 409, {"ok": False, "code": "stop_first"}
     rc, out = run(f"systemctl --user {'start' if on else 'stop'} querra-vision", 30)
     _cache.pop("vision", None)
-    return (200 if rc == 0 else 500), {"ok": rc == 0, "msg": ("querra-vision pornit" if on else "querra-vision oprit") if rc == 0 else out[-200:]}
+    return (200 if rc == 0 else 500), {"ok": rc == 0, "code": ("vision_on" if on else "vision_off") if rc == 0 else "error", "msg": out[-200:]}
 
 
 def act_poweroff(confirm):
     sh, cap = field_running()
     if sh or cap or STATE["stopping"]:
-        return 409, {"ok": False, "msg": "Oprește întâi modul teren (datele trebuie scrise pe disc)."}
+        return 409, {"ok": False, "code": "stop_first"}
     can = run("busctl call org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager CanPowerOff")[1]
     if '"yes"' not in can:
-        return 200, {"ok": False, "needs_sudo": True, "msg": "Oprirea cere parola. Rulează în terminal (SSH): sudo poweroff",
-                     "command": "sudo poweroff"}
-    if confirm != "OPRESTE":
-        return 400, {"ok": False, "msg": "confirmare lipsă"}
+        return 200, {"ok": False, "needs_sudo": True, "code": "needs_sudo", "command": "sudo poweroff"}
+    if confirm != "POWEROFF":
+        return 400, {"ok": False, "code": "confirm"}
     run("sync"); subprocess.Popen(["systemctl", "poweroff"], env=ENV, start_new_session=True)
-    return 200, {"ok": True, "msg": "Jetsonul se oprește. Așteaptă ca LED-ul să se stingă."}
+    return 200, {"ok": True, "code": "powering_off"}
 
 
 class H(BaseHTTPRequestHandler):
-    server_version = "QuerraPanel/1"
+    server_version = "QuerraPanel/2"
+    protocol_version = "HTTP/1.1"
 
     def log_message(self, fmt, *a):
-        if not self.path.startswith("/api/status"):
+        if not re.match(r"^/(api/(state|radar|frame)|stream/)", self.path):
             super().log_message(fmt, *a)
 
     def send(self, code, body, ctype="application/json; charset=utf-8", extra=None):
@@ -341,15 +431,60 @@ class H(BaseHTTPRequestHandler):
         self.end_headers(); self.wfile.write(body)
 
     def authed(self, q=None):
+        if not CFG.get("require_pin"):
+            return True
         if time.time() < STATE["locked_until"]:
-            self.send(429, {"ok": False, "msg": "Prea multe încercări greșite. Așteaptă un minut."}); return False
+            self.send(429, {"ok": False, "code": "locked"}); return False
         pin = self.headers.get("X-Pin") or (q or {}).get("pin", [""])[0]
         if hmac.compare_digest(str(pin), str(CFG["pin"])):
             STATE["fails"] = 0; return True
         STATE["fails"] += 1
         if STATE["fails"] >= 5:
             STATE["fails"] = 0; STATE["locked_until"] = time.time() + 60
-        self.send(401, {"ok": False, "msg": "PIN greșit"}); return False
+        self.send(401, {"ok": False, "code": "bad_pin"}); return False
+
+    def stream(self, cam):
+        self.send_response(200)
+        self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=qframe")
+        self.send_header("Cache-Control", "no-store"); self.send_header("Connection", "close"); self.end_headers()
+        self.close_connection = True
+        seq, end = -1, time.monotonic() + 3600
+        try:
+            while time.monotonic() < end:
+                cam.want_view()
+                with cam.cond:
+                    cam.cond.wait_for(lambda: cam.live_seq != seq, timeout=1.0)
+                    jpeg, s2 = cam.live, cam.live_seq
+                if jpeg is None or s2 == seq:
+                    continue
+                seq = s2
+                self.wfile.write(b"--qframe\r\nContent-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n" % len(jpeg) + jpeg + b"\r\n")
+                self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError, OSError):
+            pass
+
+    def radar_events(self):
+        """Relays the ld2450-radar SSE stream (it owns /dev/ttyUSB0; it sends no CORS headers) to the page."""
+        import urllib.request
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream"); self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Accel-Buffering", "no"); self.send_header("Connection", "close"); self.end_headers()
+        self.close_connection = True
+        while True:
+            try:
+                with urllib.request.urlopen("http://127.0.0.1:8077/events", timeout=20) as up:
+                    for line in up:
+                        self.wfile.write(line)
+                        if line in (b"\n", b"\r\n"):
+                            self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError):
+                return
+            except Exception as e:  # noqa: BLE001  upstream down: tell the page, retry
+                try:
+                    self.wfile.write(b"event: offline\ndata: " + json.dumps({"error": str(e)[:120]}).encode() + b"\n\n"); self.wfile.flush()
+                except OSError:
+                    return
+                time.sleep(3)
 
     def do_GET(self):
         u = urllib.parse.urlparse(self.path); q = urllib.parse.parse_qs(u.query); p = u.path
@@ -360,8 +495,28 @@ class H(BaseHTTPRequestHandler):
             if os.path.isfile(f):
                 ct = {"svg": "image/svg+xml", "png": "image/png", "json": "application/json"}.get(f.rsplit(".", 1)[-1], "application/octet-stream")
                 return self.send(200, open(f, "rb").read(), ct)
-        if p == "/api/status":
-            return self.send(200, status())
+        if p in ("/api/state", "/api/status"):
+            return self.send(200, state())
+        if p == "/api/gps":
+            return self.send(200, GPS.state())
+        if p == "/api/radar":
+            return self.send(200, RADAR.state())
+        if p == "/radar/events":
+            return self.radar_events()
+        m = re.fullmatch(r"/stream/(usb|csi)\.mjpg", p)
+        if m:
+            return self.stream(CAMS[m.group(1)])
+        m = re.fullmatch(r"/api/snap/(usb|csi)\.jpg", p)
+        if m:
+            cam = CAMS[m.group(1)]
+            for _ in range(60):
+                cam.want_view()
+                if cam.live is not None and time.time() - cam.live_t < 2:
+                    break
+                time.sleep(0.1)
+            if cam.live is None:
+                return self.send(503, {"ok": False, "state": cam.status()})
+            return self.send(200, cam.live, "image/jpeg")
         if p == "/api/runs":
             return self.send(200, [run_summary(d, full=True) for d in run_dirs()[:50]])
         if p == "/api/alerts":
@@ -371,15 +526,13 @@ class H(BaseHTTPRequestHandler):
             if not f:
                 return self.send(404, {"ok": False})
             return self.send(200, open(f, "rb").read(), "image/jpeg", {"X-Frame": os.path.basename(f)})
-        if p == "/api/ping":
-            return self.send(200, {"ok": True})
         m = re.fullmatch(r"/api/download/(field-[\w-]+)\.tar\.gz", p)
         if m:
             if not self.authed(q):
                 return
             d = next((x for x in run_dirs() if os.path.basename(x) == m.group(1)), None)
             if not d:
-                return self.send(404, {"ok": False, "msg": "rulare inexistentă"})
+                return self.send(404, {"ok": False, "code": "error", "msg": "no such run"})
             self.send_response(200)
             self.send_header("Content-Type", "application/gzip")
             self.send_header("Content-Disposition", f'attachment; filename="{m.group(1)}.tar.gz"')
@@ -403,13 +556,13 @@ class H(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(n) or b"{}") if n else {}
         except ValueError:
             body = {}
+        actions = {"/api/field/start": lambda: act_start(), "/api/field/stop": lambda: act_stop(),
+                   "/api/autostart": lambda: act_autostart(body.get("on")), "/api/model": lambda: act_model(body.get("version")),
+                   "/api/vision": lambda: act_vision(body.get("on")), "/api/poweroff": lambda: act_poweroff(body.get("confirm"))}
         if p == "/api/login":
             if self.authed():
                 self.send(200, {"ok": True})
             return
-        actions = {"/api/field/start": lambda: act_start(), "/api/field/stop": lambda: act_stop(),
-                   "/api/autostart": lambda: act_autostart(body.get("on")), "/api/model": lambda: act_model(body.get("version")),
-                   "/api/vision": lambda: act_vision(body.get("on")), "/api/poweroff": lambda: act_poweroff(body.get("confirm"))}
         if p not in actions:
             return self.send(404, {"ok": False, "msg": "not found"})
         if not self.authed():
@@ -423,5 +576,13 @@ if __name__ == "__main__":
     port = int(CFG.get("port", 8080))
     srv = ThreadingHTTPServer(("0.0.0.0", port), H)
     srv.daemon_threads = True
-    print(f"QUERRA panel on http://0.0.0.0:{port}", flush=True)
-    srv.serve_forever()
+
+    def _term(*_):
+        raise SystemExit(0)
+    signal.signal(signal.SIGTERM, _term)
+    print(f"QUERRA Fence panel v2 on http://0.0.0.0:{port}", flush=True)
+    try:
+        srv.serve_forever()
+    finally:
+        for c in CAMS.values():
+            c._stop("off")
