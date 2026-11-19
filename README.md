@@ -174,9 +174,9 @@ a TensorRT FP16 engine on a Jetson Orin Nano. The Jetson reads the simulated dro
 |---|---|---|---|
 | v0.1 · epoch-2 checkpoint | 0.72 | F1 broken wire found (0.78); weak on the fallen post | `model-v0.1` |
 | v0.2 · 25 epochs | 0.921 | 13.3 fps; F1, F2, F3 all found (0.94 / 0.96 / 0.84); 385 false broken-wire frames | `model-v0.2` |
-| v0.3 · in progress | | Fixes the false broken wire with targeted data and multi-frame GPS confirmation | |
+| v0.3 · fine-tuned on targeted data | 0.916 (held-out test 0.912) | `wire_break` test mAP50 0.58 → 0.68; with 5-of-8 GPS confirmation, false alerts 33 → 6, all faults found | `model-v0.3` |
 
-![v0.2 on the Jetson: broken wire, fallen post, branch, and the false broken wire that v0.3 fixes](docs/img/v0.2-jetson-faults.jpg)
+![v0.2 on the Jetson: broken wire, fallen post, branch, and the false broken wire that v0.3 reduces](docs/img/v0.2-jetson-faults.jpg)
 
 - [Retraining log](docs/retraining-log.md): what each version missed and what changed.
 - [Model card](docs/model-card.md): data, metrics, limits and how to reproduce.

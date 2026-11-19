@@ -103,16 +103,81 @@ A higher confidence threshold trades false alarms for missed detections. It is n
 | 0.7 | 192 | 46 |
 | 0.8 | 89 | 16 |
 
-## v0.3 · planned fix (in progress)
+## v0.3 · targeted data for the false broken wire (`model-v0.3`)
 
-1. **More of the confusing data.** New farms with 3–4 breaks each, so long stretches of fence have a dead strand. The
-   dead strand is drawn in random colours (grey, the live yellow, dull or dark) and always labelled `wire`. Breaks take
-   three shapes (ends hanging, snapped wire on the grass, one end still tied), and more poses imitate the inspection
-   flight.
-2. **Fine-tune from v0.2** on the old and new data together.
-3. **Evaluate honestly** on the 2 held-out validation farms, on a separate **test set of new farm seeds never used for
-   training or validation**, and on frames from the real `fence.json` pasture.
-4. **Confirm before alerting.** On the Jetson, raise an alert only when N of the last M frames agree within about 5 m
-   (GPS), instead of reacting to single frames.
+**What we changed.**
 
-Results will be added here when v0.3 is released.
+1. **More of the confusing data** (`tools/make_dataset.py --style v2`). 8 new training farms (2,400 frames) with 3–4
+   breaks each, so long stretches of fence carry a dead strand. The dead strand is drawn in random colours (grey, the
+   live yellow, dull or dark) and is always labelled `wire`. Breaks come in three shapes (ends hanging, snapped wire on
+   the grass, one end still tied), and 60% of the poses imitate the inspection flight.
+2. **Fine-tuned from v0.2** for 10 epochs on 4,800 frames: the 2,400 new frames plus 2,400 random v0.2 training frames,
+   so the model keeps what it knew. CPU, AdamW (lr 0.0009), mosaic off for the last 3 epochs. Best epoch: 9.
+3. **Evaluated on data never used for training:**
+   - the 2 old validation farms (700 frames)
+   - 2 new validation farms in the v2 style (600 frames)
+   - a **test set of 3 new farm seeds** (140–142, 750 frames), never used for training or model selection
+   - 400 frames rendered from the mission pasture itself (`fence.json`)
+4. **Multi-frame GPS confirmation** (`tools/confirm.py`). Every fault box is placed on the ground using GPS, altitude,
+   heading and the camera angle. An alert is raised only when N of the last M frames put the same fault class within
+   5 m. One spot gives one alert.
+
+![v2 training frames: dead strands in other colours labelled wire (yellow), breaks in red](img/v0.3-dataset-v2.jpg)
+
+### Scores, v0.2 → v0.3 (mAP50)
+
+| Set | All classes | `wire_break` | `wire_break` precision / recall |
+|---|---|---|---|
+| Old validation farms (700) | 0.921 → 0.916 | 0.818 → 0.778 | 0.86 / 0.73 → 0.77 / 0.74 |
+| New validation farms, v2 style (600) | 0.913 → **0.932** | 0.556 → **0.681** | 0.67 / 0.46 → 0.71 / 0.60 |
+| **Held-out test, new seeds (750)** | 0.897 → **0.912** | 0.577 → **0.684** | 0.80 / 0.42 → 0.70 / 0.61 |
+| Mission pasture frames (400) | 0.956 → 0.958 | 0.805 → 0.775 | 0.79 / 0.79 → 0.66 / 0.81 |
+
+The other classes stayed within ±0.02. v0.2 had only been tested on farms like its training data. On the new farms with
+many dead strands it found fewer than half the breaks (recall 0.42), and v0.3 raises that to 0.61. The cost is
+precision: v0.3 calls `wire_break` more readily, which shows on the old farms and the mission pasture.
+
+### The simulated mission, v0.2 → v0.3
+
+The same recorded flight (`tools/cam_record.py`: 1,986 frames at 12 m) was replayed through both models with
+`tools/eval_mission.py`. This was PyTorch on CPU, not the Jetson, so the absolute counts differ from the 385 measured on
+the Jetson for v0.2. Compare the two columns with each other.
+
+| | v0.2 | v0.3 |
+|---|---|---|
+| F1 broken wire: frames that saw it (of 249 nearby) | 130 | 121 |
+| F2 fallen post (of 242) | 67 | 65 |
+| F3 branch (of 242) | 66 | 66 |
+| False `wire_break` frames (> 45 m from F1), conf ≥ 0.5 | 485 | 413 (−15%) |
+| False `wire_break` frames, conf ≥ 0.7 | 242 | 153 (−37%) |
+| False `fallen_post` / `branch` frames, conf ≥ 0.5 | 2 / 0 | 1 / 0 |
+
+**Alerts** (one per spot on the ground) are what the farmer sees. All settings below still alert on all three real
+faults.
+
+| Confirmation | v0.2 false alerts | v0.3 false alerts |
+|---|---|---|
+| None (every frame, conf ≥ 0.5) | 33 | 31 |
+| 3 of 5 frames within 5 m, conf ≥ 0.5 | 27 | 21 |
+| 3 of 5 frames, conf ≥ 0.7 | 20 | 9 |
+| **5 of 8 frames, conf ≥ 0.7** | 11 | **6** |
+
+Better data alone removed few false frames, and confirmation alone removed few alerts. Combined, false alerts fell from
+33 to 6 (−82%), and all three faults were still found. 5 of 8 frames at conf ≥ 0.7 is now the default in `tools/confirm.py` and on the Jetson.
+
+### What v0.3 still misses
+
+![Remaining false broken wires in the mission pasture](img/v0.3-remaining-false-wire-break.jpg)
+
+The remaining false `wire_break` boxes in the mission pasture sit where the yellow live strand and the thin grey dead
+strand of the same fence run side by side, or swap at a post. From 12 m that looks like a strand ending. The random v2
+farms taught the general case (validation and test improved a lot). They did not cover this exact look: mission
+lighting and a dead strand running for hundreds of metres.
+
+## v0.4 · planned
+
+- **Hard negatives from flights.** Record missions over new farm seeds (never the test seeds). Add every confident
+  false `wire_break` frame to the training data with its true labels.
+- **Live and dead strands side by side** for long runs, and more lighting set-ups.
+- **Real frames.** Fine-tune on photos from the field mode recorder (`field.sh`). Reality matters more than any
+  simulation artefact.
