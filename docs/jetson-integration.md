@@ -34,6 +34,16 @@ python3 -s jetson-launch.py run --source sim:Cosmins-MacBook-Air.local:5601 \
   --annotate-interval 2 --material synthetic --output runs/<name>
 ```
 
+## Confirmed alerts
+
+- **`querra_scout/confirm.py`**: the same file as `tools/confirm.py` in this repo.
+- **Runtime options:** `--confirm-n 5 --confirm-m 8 --confirm-radius 5 --confirm-conf 0.7` (the defaults).
+- **What happens per frame:** every fault box is placed on the ground (GPS, altitude, heading, 55° camera). A fault
+  becomes an alert only when N of the last M frames agree within the radius.
+- **Output:** each alert is printed as `ALERT ...` and appended to `alerts.jsonl`. `detections.jsonl` now records
+  `heading_deg` too.
+- **Without heading** (a real GPS with no compass) the alert falls back to the drone's own position.
+
 ## Field mode
 
 - **`field.sh`**: runs the USB Arducam (1280×720 MJPG) with the u-blox 7 GPS and the fence detector (confidence 0.4).
