@@ -1,0 +1,13 @@
+#!/bin/sh
+# Open the LD2450 radar in its own maximised app window (no browser toolbars).
+URL="${1:-http://localhost:8077}"
+FLAGS="--app=$URL --class=ld2450-radar --new-window --start-maximized"
+# Snap Chromium cannot initialise the GPU on Jetson; the radar is 2D canvas, so software rendering is fine.
+[ -e /etc/nv_tegra_release ] && FLAGS="$FLAGS --disable-gpu"
+for b in chromium chromium-browser brave brave-browser google-chrome; do
+  if command -v "$b" >/dev/null 2>&1; then
+    # shellcheck disable=SC2086
+    exec "$b" $FLAGS
+  fi
+done
+exec xdg-open "$URL"

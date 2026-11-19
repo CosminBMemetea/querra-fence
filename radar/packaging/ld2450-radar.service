@@ -1,0 +1,20 @@
+[Unit]
+Description=LD2450 live radar (web view on port 8077)
+Documentation=file:///usr/share/doc/ld2450-radar/README.md
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/ld2450-radar
+ExecStart=/usr/bin/ld2450-radar $RADAR_ARGS
+DynamicUser=yes
+SupplementaryGroups=dialout
+Restart=always
+RestartSec=2
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

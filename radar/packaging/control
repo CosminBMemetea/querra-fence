@@ -1,0 +1,14 @@
+Package: ld2450-radar
+Version: @VERSION@
+Section: utils
+Priority: optional
+Architecture: all
+Depends: python3 (>= 3.8), python3-serial
+Installed-Size: @SIZE@
+Maintainer: Cosmin B. Memetea <14771785+CosminBMemetea@users.noreply.github.com>
+Homepage: https://github.com/CosminBMemetea/querra-fence
+Description: Live web radar for the HiLink LD2450 24 GHz mmWave sensor
+ Reads the LD2450 through a USB-serial adapter (CH340) and serves a live
+ top-down radar view on port 8077: up to three targets with smooth motion,
+ trails, a heatmap, a 60-second distance chart and an activity feed.
+ Runs as a system service and reconnects when the adapter is replugged.

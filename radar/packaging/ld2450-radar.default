@@ -1,0 +1,8 @@
+# Options for the LD2450 radar service.
+# After editing: sudo systemctl restart ld2450-radar
+#
+#   --serial /dev/ttyUSB0   serial port (default: auto-detect the CH340)
+#   --baud 256000           LD2450 default
+#   --http 8077             web port
+#   --host 0.0.0.0          listen on the network; 127.0.0.1 = this Jetson only
+RADAR_ARGS="--host 0.0.0.0 --http 8077"

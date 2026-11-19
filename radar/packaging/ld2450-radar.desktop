@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=LD2450 Radar
+GenericName=mmWave Radar Viewer
+Comment=Live view of the HiLink LD2450 radar: targets, trails, heatmap
+Exec=ld2450-radar-open
+Icon=ld2450-radar
+Terminal=false
+Categories=Utility;Science;
+Keywords=radar;mmwave;ld2450;sensor;presence;
+StartupWMClass=ld2450-radar
+StartupNotify=true
