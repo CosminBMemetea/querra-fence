@@ -42,8 +42,75 @@ WORLD = "pasture"
 
 
 # ---------------------------------------------------------------- layouts
+STYLE = {"v": "v1", "mission": False}
+DEAD_COLOURS = {"grey": (0.35, 0.33, 0.30), "live": None, "dull": (0.62, 0.58, 0.45), "dark": (0.22, 0.22, 0.22)}
+
+
+def break_rods(a, b, style):
+    """Rods of a broken strand between attach points a and b (the same geometry in the world and the labels)."""
+    def at(p0, p1, t, z):
+        return (p0[0] + (p1[0] - p0[0]) * t, p0[1] + (p1[1] - p0[1]) * t, z)
+    out = []
+    if style == "hang":       # both ends hang down to the ground (v1)
+        for (p0, p1, frac) in ((a, b, 0.32), (b, a, 0.38)):
+            mid = at(p0, p1, 0.12, p0[2] * 0.35)
+            out += [(p0, mid), (mid, at(p0, p1, frac, 0.02))]
+    elif style == "ground":   # snapped wire lying along the fence line on the grass
+        for (p0, p1, frac) in ((a, b, 0.45), (b, a, 0.48)):
+            g = at(p0, p1, 0.06, 0.02)
+            out += [(p0, g), (g, at(p0, p1, frac, 0.02))]
+    else:                     # one_end: still tied at one post, the loose end drags on the ground past mid-span
+        g = at(a, b, 0.7, 0.03)
+        out += [(a, at(a, b, 0.35, a[2] * 0.5)), (at(a, b, 0.35, a[2] * 0.5), g)]
+        out += [(b, at(b, a, 0.08, 0.02))]
+    return out
+
+
+def build_fence_v2(fence, render, gate_open=False):
+    """gen_world.build_fence with a configurable dead-wire colour and break style."""
+    v = gen_world.Visuals()
+    P = fence.posts
+    WIRE, DEAD = gen_world.WIRE, gen_world.WIRE_DEAD
+    if render.get("dead") in DEAD_COLOURS:
+        c = DEAD_COLOURS[render["dead"]]
+        DEAD = WIRE if c is None else gen_world.mat(*c)
+    for i, p in enumerate(P):
+        h = 1.35 if p["corner"] else 1.2
+        r = 0.075 if p["corner"] else 0.05
+        a = p["tilt"]
+        ox, oy = p["out"]
+        top = (p["x"] + ox * math.sin(a) * h, p["y"] + oy * math.sin(a) * h, math.cos(a) * h)
+        v.rod((p["x"], p["y"], 0.0), top, r, gen_world.WOOD if not p["corner"] else gen_world.WOOD_DARK, shadows=True)
+    broken_seg = {seg: st for (seg, st) in fence.broken}
+    styles = render.get("break_styles", {})
+    for k in range(len(P) - 1):
+        for st in range(len(fence.heights)):
+            a, b = fence.attach(k, st), fence.attach(k + 1, st)
+            if broken_seg.get(k) == st:
+                for p0, p1 in break_rods(a, b, styles.get(str(k), "hang")):
+                    v.rod(p0, p1, 0.018, DEAD)
+                continue
+            dead = any(bs == st and k > seg for seg, bs in fence.broken)
+            v.rod(a, b, 0.018, DEAD if dead else WIRE)
+    g, f0 = P[-1], P[0]
+    mat = gen_world.mat
+    v.rod((g["x"], g["y"], 1.0), (f0["x"], f0["y"], 1.0), 0.012, WIRE)
+    v.box((0.25, 0.06, 0.06), ((g["x"] + f0["x"]) / 2, (g["y"] + f0["y"]) / 2, 1.0, 0, 0, math.atan2(f0["y"] - g["y"], f0["x"] - g["x"])), mat(0.08, 0.08, 0.08))
+    ox, oy = f0["out"]
+    ex, ey = f0["x"] + ox * 0.35, f0["y"] + oy * 0.35
+    v.box((0.32, 0.22, 0.38), (ex, ey, 1.05, 0, 0, 0), mat(0.18, 0.2, 0.22))
+    v.sphere(0.04, (ex + ox * 0.12, ey + oy * 0.12, 1.2, 0, 0, 0), mat(1, 0.1, 0.05, emissive=(1, 0.1, 0.05)), shadows=False)
+    s1 = P[2]
+    v.box((0.3, 0.01, 0.16), (s1["x"] + s1["out"][0] * 0.06, s1["y"] + s1["out"][1] * 0.06, 0.8, 0, 0, math.atan2(s1["tan"][1], s1["tan"][0])), mat(0.98, 0.8, 0.05))
+    return v
+
+
 def random_layout(seed):
     rnd = random.Random(seed)
+    if STYLE["mission"]:
+        cfg = copy.deepcopy(BASE_CONFIG())
+        cfg["_render"] = {"dead": "grey", "break_styles": {}}
+        return cfg, None
     base = BASE_CONFIG()
     cfg = copy.deepcopy(base)
     cfg["seed"] = seed
@@ -65,7 +132,7 @@ def random_layout(seed):
                 used.add(k)
                 return k
         return None
-    for i in range(rnd.randint(2, 3)):
+    for i in range(rnd.randint(3, 4) if STYLE["v"] == "v2" else rnd.randint(2, 3)):
         k = pick()
         if k is not None:
             faults.append({"id": "B%d" % i, "type": "wire_break", "segment": k, "strand": rnd.randint(0, 1)})
@@ -78,6 +145,11 @@ def random_layout(seed):
         if k is not None:
             faults.append({"id": "T%d" % i, "type": "branch_short", "segment": k})
     cfg["faults"] = faults
+    if STYLE["v"] == "v2":
+        cfg["_render"] = {"dead": rnd.choice(["grey", "grey", "live", "live", "dull", "dark"]),
+                          "break_styles": {str(f["segment"]): rnd.choice(["hang", "ground", "one_end"]) for f in faults if f["type"] == "wire_break"}}
+    else:
+        cfg["_render"] = {"dead": "grey", "break_styles": {}}
     cfg["herd"] = {"cows": rnd.randint(8, 16), "sheep": rnd.randint(6, 12)}
     cfg["escaped"] = [{"kind": rnd.choice(["cow", "cow", "sheep"]), "near_fault": rnd.choice(faults)["id"],
                        "distance_m": rnd.uniform(3, 18)} for _ in range(rnd.randint(3, 6))]
@@ -90,9 +162,17 @@ def random_layout(seed):
 def write_world(cfg, light, path):
     gen_world.geo.load_config = lambda path=None: cfg
     gen_world.OUT = path
+    gen_world.build_fence = lambda fence, gate_open=False: build_fence_v2(fence, cfg["_render"], gate_open)
     gen_world.main()
     s = open(path).read()
     s = re.sub(r"\s*<include>\s*<uri>model://x500_fence</uri>.*?</include>", "", s, flags=re.S)
+    if light is None:  # mission world: keep the default sun and ground
+        light = dict(elev=None)
+    if light["elev"] is None:
+        s = s.replace("  </world>", CAM_XML + "\n  </world>")
+        with open(path, "w") as f:
+            f.write(s)
+        return
     el, az = math.radians(light["elev"]), math.radians(light["azim"])
     d = (-math.cos(el) * math.cos(az), -math.cos(el) * math.sin(az), -math.sin(el))
     s = s.replace("<intensity>1.1</intensity>", "<intensity>%.2f</intensity>" % light["intensity"])
@@ -102,14 +182,17 @@ def write_world(cfg, light, path):
     g = "%.3f %.3f %.3f 1" % light["ground"]
     s = s.replace("<ambient>0.30 0.45 0.18 1</ambient><diffuse>0.30 0.45 0.18 1</diffuse>",
                   "<ambient>%s</ambient><diffuse>%s</diffuse>" % (g, g))
-    cam = ('<model name="ds_cam"><pose>0 0 12 0 0.96 0</pose><link name="link"><gravity>false</gravity>'
+    cam = CAM_XML
+    s = s.replace("  </world>", cam + "\n  </world>")
+    with open(path, "w") as f:
+        f.write(s)
+
+
+CAM_XML = ('<model name="ds_cam"><pose>0 0 12 0 0.96 0</pose><link name="link"><gravity>false</gravity>'
            '<inertial><mass>1</mass><inertia><ixx>1</ixx><ixy>0</ixy><ixz>0</ixz><iyy>1</iyy><iyz>0</iyz><izz>1</izz></inertia></inertial>'
            '<sensor name="cam" type="camera"><camera><horizontal_fov>%.3f</horizontal_fov><image><width>%d</width><height>%d</height></image>'
            '<clip><near>0.2</near><far>400</far></clip></camera><always_on>1</always_on><update_rate>30</update_rate>'
            '<topic>/ds_cam/image</topic></sensor></link></model>' % (HFOV, W, H))
-    s = s.replace("  </world>", cam + "\n  </world>")
-    with open(path, "w") as f:
-        f.write(s)
 
 
 # ---------------------------------------------------------------- ground truth as 3D point samples
@@ -151,11 +234,8 @@ def ground_truth(cfg):
         for st in range(len(f.heights)):
             a, b = f.attach(k, st), f.attach(k + 1, st)
             if broken.get(k) == st:
-                pts = []
-                for (p0, p1, frac) in ((a, b, 0.32), (b, a, 0.38)):
-                    mid = (p0[0] + (p1[0] - p0[0]) * 0.12, p0[1] + (p1[1] - p0[1]) * 0.12, p0[2] * 0.35)
-                    end = (p0[0] + (p1[0] - p0[0]) * frac, p0[1] + (p1[1] - p0[1]) * frac, 0.02)
-                    pts += [line(p0, mid, 20), line(mid, end, 30)]
+                style = cfg.get("_render", {}).get("break_styles", {}).get(str(k), "hang")
+                pts = [line(p0, p1, 30) for p0, p1 in break_rods(a, b, style)]
                 objs.append(("wire_break", np.vstack(pts), 0.35))
             else:
                 wires.append(line(a, b, 80))
@@ -232,15 +312,19 @@ def labels_for(objs, c, R):
 
 def sample_pose(rnd, f, cfg, animals):
     P = f.posts
-    if rnd.random() < 0.45:  # like the inspection flight: outside the fence, flying along it
+    if STYLE["mission"] or rnd.random() < (0.6 if STYLE["v"] == "v2" else 0.45):  # like the inspection flight: outside the fence, flying along it
         k = rnd.randrange(len(P) - 1)
         a, b = P[k], P[k + 1]
         t = rnd.random()
         x, y = a["x"] + (b["x"] - a["x"]) * t, a["y"] + (b["y"] - a["y"]) * t
         off = rnd.uniform(0.5, 7)
+        if STYLE["mission"]:
+            off = rnd.uniform(1.5, 3.5)
         x, y = x + a["out"][0] * off, y + a["out"][1] * off
         yaw = math.atan2(a["tan"][1], a["tan"][0]) + (math.pi if rnd.random() < 0.5 else 0) + math.radians(rnd.uniform(-20, 20))
         alt, pitch = rnd.uniform(7, 17), math.radians(rnd.uniform(42, 68))
+        if STYLE["mission"]:
+            off, alt, pitch = rnd.uniform(1.5, 3.5), rnd.uniform(11, 13), math.radians(rnd.uniform(52, 58))
     else:  # look at a fault, an animal or a random fence point
         r = rnd.random()
         if r < 0.45 and cfg["faults"]:
@@ -359,7 +443,7 @@ def run_layout(li, seed, n_frames, split, out, args):
         subprocess.run(["pkill", "-f", wpath])
         log.close()
     print("[dataset] layout %d (%s, seed %d): %d frames in %.0f s, faults %s, light elev %.0f, boxes %s" % (
-        li, split, seed, saved, time.time() - t0, [ft["type"] for ft in cfg["faults"]], light["elev"],
+        li, split, seed, saved, time.time() - t0, [ft["type"] for ft in cfg["faults"]], (light or {}).get("elev") or 0,
         dict(zip(CLASSES, counts))), flush=True)
     return counts
 
@@ -373,14 +457,18 @@ def main():
     ap.add_argument("--seed", type=int, default=100)
     ap.add_argument("--start", type=int, default=0)
     ap.add_argument("--settle", type=int, default=3, help="frames to wait after moving the camera")
+    ap.add_argument("--style", choices=("v1", "v2"), default="v1", help="v2: 3-4 breaks, varied dead-wire colour, varied break shapes, more flight-like poses")
+    ap.add_argument("--split", choices=("train", "val", "test"), help="force every layout into this split")
+    ap.add_argument("--mission-world", action="store_true", help="the real fence.json pasture with flight-like poses only (evaluation)")
     args = ap.parse_args()
-    for d in ("images/train", "images/val", "labels/train", "labels/val"):
+    for d in ("images/train", "images/val", "images/test", "labels/train", "labels/val", "labels/test"):
         os.makedirs(os.path.join(args.out, d), exist_ok=True)
     with open(os.path.join(args.out, "data.yaml"), "w") as fh:
-        fh.write("path: %s\ntrain: images/train\nval: images/val\nnames:\n" % args.out +
+        fh.write("path: %s\ntrain: images/train\nval: images/val\ntest: images/test\nnames:\n" % args.out +
                  "".join("  %d: %s\n" % (i, c) for i, c in enumerate(CLASSES)))
     for li in range(args.start, args.layouts):
-        split = "val" if li >= args.layouts - args.val_layouts else "train"
+        split = args.split or ("val" if li >= args.layouts - args.val_layouts else "train")
+        STYLE.update(v=args.style, mission=args.mission_world)
         for attempt in range(3):
             try:
                 run_layout(li, args.seed + li, args.frames, split, args.out, args)
