@@ -33,7 +33,7 @@ main>*{min-width:0}
 @media(min-width:900px){main{grid-template-columns:repeat(2,minmax(0,1fr))}.cams{grid-column:1/-1}}
 @media(min-width:1280px){main{grid-template-columns:repeat(12,minmax(0,1fr))}
  .cams{grid-column:1/9;grid-row:1}.collect{grid-column:9/13;grid-row:1/3}.radar{grid-column:1/5;grid-row:2/4}
- .system{grid-column:5/9;grid-row:2}.gps{grid-column:9/13;grid-row:3}.alerts{grid-column:5/9;grid-row:3}.runs{grid-column:1/-1;grid-row:4}}
+ .system{grid-column:5/9;grid-row:2}.gps{grid-column:9/13;grid-row:3}.alerts{grid-column:5/9;grid-row:3}.ros{grid-column:1/8;grid-row:4}.runs{grid-column:8/13;grid-row:4}.runs .list{grid-template-columns:1fr}}
 .card{background:linear-gradient(180deg,var(--card),#0f151d);border:1px solid var(--line);border-radius:18px;padding:14px;position:relative;box-shadow:0 10px 30px #0005}
 .card h2{margin:0 0 12px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);font-weight:800;display:flex;align-items:center;gap:8px}
 .card h2 .r{margin-left:auto;letter-spacing:.02em;text-transform:none;font-weight:600}
@@ -89,6 +89,15 @@ canvas#rad{width:100%;aspect-ratio:2/1.25;display:block}
 code{background:#0007;padding:2px 6px;border-radius:6px}
 #toast{visibility:hidden;position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(140px);background:#1c2633;border:1px solid var(--line);padding:12px 16px;border-radius:12px;max-width:92vw;transition:.25s;z-index:20;box-shadow:0 8px 30px #000a}
 #toast.show{visibility:visible;transform:translateX(-50%) translateY(0)}
+.minibtn{padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--line);font-size:12px;font-weight:750;color:var(--mut)}
+.minibtn.on{background:rgba(245,197,24,.15);border-color:var(--acc);color:var(--acc)}
+.rosbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.rosbar .btnm{padding:10px 16px;border-radius:12px;font-weight:850}.btnm:disabled{opacity:.3}
+.btnm.go{background:linear-gradient(180deg,#31d27c,#1b9d55);color:#03140a}.btnm.halt{background:linear-gradient(180deg,#ff6669,#d8363c);color:#fff}.btnm.rec{background:var(--card2);border:1px solid var(--line)}
+.topics{display:grid;grid-template-columns:1fr auto;gap:2px 12px;margin-top:10px;font-size:13px;font-family:ui-monospace,Menlo,monospace}
+.topics span:nth-child(2n){text-align:right;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.chips span{font-size:11.5px;padding:3px 8px;border-radius:999px;background:var(--card2);color:var(--mut);font-family:ui-monospace,Menlo,monospace}
+.fox{margin-top:10px;padding:9px 12px;border-radius:12px;background:var(--card2);font-size:13px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 footer{text-align:center;color:var(--mut);font-size:12px;padding:4px 0 24px}
 </style>
 </head>
@@ -153,7 +162,7 @@ footer{text-align:center;color:var(--mut);font-size:12px;padding:4px 0 24px}
   </section>
 
   <section class="card radar">
-    <h2>Radar · LD2450<span class="r" id="rStat"></span></h2>
+    <h2>Radar · LD2450<span class="r" style="display:flex;gap:6px;align-items:center"><button class="minibtn" id="hmBtn" onclick="hmToggle()" data-i="heatmap">Heatmap</button><button class="minibtn" onclick="hmClear()" data-i="clear">Clear</button><span id="rStat"></span></span></h2>
     <div class="radwrap"><canvas id="rad" width="800" height="500"></canvas></div>
     <div class="tgts" id="tgts"></div>
     <div class="radstat" id="rInfo"></div>
@@ -178,6 +187,22 @@ footer{text-align:center;color:var(--mut);font-size:12px;padding:4px 0 24px}
     <div class="list" id="alertList"></div>
   </section>
 
+  <section class="card ros">
+    <h2>ROS 2 · Humble<span class="r" id="rosStat"></span></h2>
+    <div class="rosbar">
+      <button class="btnm go" id="rosStart" onclick="act('/api/ros/start')">▶ <span data-i="rosStart">Start ROS 2</span></button>
+      <button class="btnm halt" id="rosStop" onclick="act('/api/ros/stop')">■ <span data-i="rosStop">Stop</span></button>
+      <span class="mut" style="margin-left:6px" data-i="recordBag">Record bag</span>
+      <button class="btnm rec" onclick="rosRec(10)">10 s</button><button class="btnm rec" onclick="rosRec(30)">30 s</button><button class="btnm rec" onclick="rosRec(60)">60 s</button>
+      <span id="rosRecT" class="warn"></span>
+    </div>
+    <div class="fox"><b>Foxglove</b><code id="foxUrl"></code><a class="lnk" id="foxLink" target="_blank" data-i="openFox">Open in Foxglove ↗</a><span class="mut" data-i="foxNote">(Foxglove app or app.foxglove.dev; the web app needs internet)</span></div>
+    <div class="topics" id="rosTopics"></div>
+    <div class="chips" id="rosNodes"></div>
+    <div class="row" style="margin-top:8px"><div class="t"><div data-i="rosAuto">Start ROS 2 at boot</div><small data-i="rosAutoSub">Runs the ROS 2 container when the Jetson powers on</small></div><button class="sw" id="swRos" onclick="act('/api/ros/autostart',{on:!S.ros.autostart})"></button></div>
+    <div class="list" id="bagList" style="margin-top:8px"></div>
+  </section>
+
   <section class="card runs">
     <h2 data-i="runs">Recent runs</h2>
     <div class="list" id="runList"></div>
@@ -187,7 +212,7 @@ footer{text-align:center;color:var(--mut);font-size:12px;padding:4px 0 24px}
 <div id="toast"></div>
 
 <script>
-const T={en:{radar:"Radar",cams:"Cameras",live:"Live cameras",collection:"Data collection",start:"START",startSub:"camera + GPS + detector",stop:"STOP",stopSub:"save and close",
+const T={en:{heatmap:"Heatmap",clear:"Clear",rosStart:"Start ROS 2",rosStop:"Stop",recordBag:"Record bag",openFox:"Open in Foxglove ↗",foxNote:"(Foxglove app or app.foxglove.dev; the web app needs internet)",rosAuto:"Start ROS 2 at boot",rosAutoSub:"Runs the ROS 2 container when the Jetson powers on",rosRunning:"running",rosStopped:"stopped",rosStartingT:"starting…",rosStoppingT:"stopping…",rosRecT:"recording… {s} s left",noBags:"No bags yet.",rosNoStats:"waiting for topic rates…",msgs:"msgs",ros_starting:"ROS 2 is starting (about 20 s).",ros_stopping:"Stopping ROS 2.",ros_recording:"Recording a bag.",ros_busy:"ROS 2 is busy, try again in a moment.",ros_not_running:"Start ROS 2 first.",ros_autostart_on:"ROS 2 at boot: ON",ros_autostart_off:"ROS 2 at boot: off",radar:"Radar",cams:"Cameras",live:"Live cameras",collection:"Data collection",start:"START",startSub:"camera + GPS + detector",stop:"STOP",stopSub:"save and close",
 elapsed:"Elapsed",frames:"Frames",size:"Run size",alertsShort:"Alerts",diskLeft:"Disk left",lastDet:"Last detections",autostart:"Start at boot",autostartSub:"Collection starts by itself when the Jetson powers on",
 model:"Detector model",modelSub:"Change only while collection is stopped",vision:"Vision demo",visionSub:"Uses both cameras; live view pauses while it runs",sats:"Satellites",sinceFix:"Since fix",position:"Position",altitude:"Altitude",speed:"Speed",heading:"Heading",
 system:"System",power:"Power mode",uptime:"Uptime",ssd:"SSD free",root:"System disk free",shutdown:"Safe Jetson shutdown",alerts:"Confirmed alerts",runs:"Recent runs",
@@ -202,7 +227,7 @@ ok_started:"Collection is starting (camera + GPS + detector).",ok_stopping:"Stop
 autostart_on:"Start at boot: ON",autostart_off:"Start at boot: off",model_set:"Field model:",vision_on:"Vision demo started; live view paused.",vision_off:"Vision demo stopped; cameras back in the panel.",
 needs_sudo:"Shutdown needs the admin password. In a terminal: <code>sudo poweroff</code>, or hold the power button once it says Safe to power off.",confirmOff:"Power off the Jetson now?",confirmAuto:"Start data collection automatically every time the Jetson powers on?",
 pwrDirect:"Shuts the Jetson down from here.",pwrSafe:"Safe to unplug now (or sudo poweroff over SSH).",pwrStop:"Stop data collection first.",updated:"updated",error:"Error",offline:"NO CONNECTION"},
-pl:{radar:"Radar",cams:"Kamery",live:"Kamery na żywo",collection:"Zbieranie danych",start:"START",startSub:"kamera + GPS + detektor",stop:"STOP",stopSub:"zapisz i zamknij",
+pl:{heatmap:"Mapa ciepła",clear:"Wyczyść",rosStart:"Uruchom ROS 2",rosStop:"Zatrzymaj",recordBag:"Nagraj bag",openFox:"Otwórz w Foxglove ↗",foxNote:"(aplikacja Foxglove lub app.foxglove.dev; wersja web wymaga internetu)",rosAuto:"ROS 2 przy uruchomieniu",rosAutoSub:"Uruchamia kontener ROS 2 po włączeniu Jetsona",rosRunning:"działa",rosStopped:"zatrzymany",rosStartingT:"uruchamianie…",rosStoppingT:"zatrzymywanie…",rosRecT:"nagrywanie… zostało {s} s",noBags:"Brak nagrań.",rosNoStats:"czekam na częstotliwości tematów…",msgs:"wiad.",ros_starting:"ROS 2 się uruchamia (ok. 20 s).",ros_stopping:"Zatrzymuję ROS 2.",ros_recording:"Nagrywam bag.",ros_busy:"ROS 2 jest zajęty, spróbuj za chwilę.",ros_not_running:"Najpierw uruchom ROS 2.",ros_autostart_on:"ROS 2 przy uruchomieniu: WŁ.",ros_autostart_off:"ROS 2 przy uruchomieniu: wył.",radar:"Radar",cams:"Kamery",live:"Kamery na żywo",collection:"Zbieranie danych",start:"START",startSub:"kamera + GPS + detektor",stop:"STOP",stopSub:"zapisz i zamknij",
 elapsed:"Czas",frames:"Klatki",size:"Rozmiar",alertsShort:"Alarmy",diskLeft:"Wolne miejsce",lastDet:"Ostatnie wykrycia",autostart:"Start przy uruchomieniu",autostartSub:"Zbieranie rusza samo po włączeniu Jetsona",
 model:"Model detektora",modelSub:"Zmiana tylko przy zatrzymanym zbieraniu",vision:"Demo Vision",visionSub:"Zajmuje obie kamery; podgląd na żywo jest wstrzymany",sats:"Satelity",sinceFix:"Od pozycji",position:"Pozycja",altitude:"Wysokość",speed:"Prędkość",heading:"Kurs",
 system:"System",power:"Tryb zasilania",uptime:"Czas pracy",ssd:"Wolne na SSD",root:"Wolne na dysku systemowym",shutdown:"Bezpieczne wyłączenie Jetsona",alerts:"Potwierdzone alarmy",runs:"Ostatnie sesje",
@@ -268,9 +293,22 @@ function render(s){S=s;const c=s.collection,g=s.gps,sy=s.system;
   const te=sy.temps;$('sTemp').textContent=`${te.cpu??'–'}° / ${te.gpu??'–'}°`;$('sPow').textContent=sy.power_mode;$('sMem').textContent=`${sy.mem.used_gb}/${sy.mem.total_gb} GB`;$('sUp').textContent=fmtUp(sy.uptime_s);
   $('sSsd').textContent=sy.disk.ssd?sy.disk.ssd.free_gb+' GB':'–';$('sRoot').innerHTML=sy.disk.root.free_gb<3?`<span class="warn">${sy.disk.root.free_gb} GB</span>`:sy.disk.root.free_gb+' GB';
   $('pwrNote').textContent=sy.can_power_off==='yes'?t('pwrDirect'):c.safe_to_power_off?t('pwrSafe'):t('pwrStop');
+  renderRos(s.ros);
   $('upd').textContent=t('updated')+' '+s.time.slice(11);requestAnimationFrame(()=>document.body.classList.add('ready'))}
 async function refresh(){try{const r=await fetch('/api/state',{cache:'no-store'});render(await r.json())}catch(e){pill('pRec','bad');$('pRecT').textContent=t('offline')}}
-async function lists(){try{
+function renderRos(r){if(!r)return;const st=$('rosStat');
+  st.innerHTML=r.busy==='start'?`<span class="warn">${t('rosStartingT')}</span>`:r.busy==='stop'?`<span class="warn">${t('rosStoppingT')}</span>`:r.running?`<span class="ok">● ${t('rosRunning')}</span>`:`<span class="mut">${t('rosStopped')}</span>`;
+  $('rosStart').disabled=r.running||!!r.busy;$('rosStop').disabled=!r.running||!!r.busy;setSw($('swRos'),r.autostart);
+  $('rosRecT').textContent=r.busy==='record'?t('rosRecT').replace('{s}',r.recording_s):'';
+  const fu=`ws://${location.hostname}:${r.foxglove_port}`;$('foxUrl').textContent=fu;$('foxLink').href='https://app.foxglove.dev/~/view?ds=foxglove-websocket&ds.url='+encodeURIComponent(fu);
+  const tp=Object.entries(r.topics||{});
+  $('rosTopics').innerHTML=!r.running?'':tp.length?tp.map(([k,v])=>`<span>${k}</span><span class="${v.hz>0.5?'ok':v.age_s!=null&&v.age_s<10?'warn':'mut'}">${v.hz.toFixed(1)} Hz</span>`).join(''):`<span class="mut">${t('rosNoStats')}</span><span></span>`;
+  $('rosNodes').innerHTML=r.running?(r.nodes||[]).map(n=>`<span>${n}</span>`).join(''):'';
+  if(r.busy!==renderRos.lastBusy){renderRos.lastBusy=r.busy;bags()}}
+async function bags(){try{const b=await(await fetch('/api/ros/bags')).json();
+  $('bagList').innerHTML=b.length?b.slice(0,8).map(x=>`<div class="item"><div class="t"><div>${x.name}</div><small>${x.duration_s!=null?x.duration_s+' s · ':''}${x.size_mb} MB${x.messages!=null?' · '+x.messages+' '+t('msgs'):''}</small></div><a class="lnk" href="/api/ros/bag/${x.name}.tar">⬇ .tar</a></div>`).join(''):`<div class="mut">${t('noBags')}</div>`}catch(e){}}
+function rosRec(n){act('/api/ros/record',{secs:n})}
+async function lists(){bags();try{
   const a=await(await fetch('/api/alerts')).json();
   $('alertList').innerHTML=a.length?a.map(x=>`<div class="item"><span class="chip">${x.class.replace('_',' ')}</span><div class="t"><div>${x.lat.toFixed(6)}, ${x.lon.toFixed(6)}</div><small>${lt(x.timestamp)} · ${x.frames} ${t('framesW')} · conf ${x.max_conf}</small></div><a class="lnk" target="_blank" href="${x.maps}">${t('map')} ↗</a></div>`).join(''):`<div class="mut">${t('noAlerts')}</div>`;
   const r=await(await fetch('/api/runs')).json();
@@ -278,8 +316,19 @@ async function lists(){try{
 }catch(e){}}
 // ---------------- radar ----------------
 const COL=['#2fd27a','#52a8ff','#ffad42'],RMAX=6000,FOV=60;let R=null,rLast=0,trails=[[],[],[]],sweep=0;
+// Occupancy heatmap: 10 cm grid over x -6..6 m, y 0..6 m; each target adds a small gaussian, everything fades (tau 20 s).
+const HW=120,HH=60,HTAU=20;const heat=new Float32Array(HW*HH);let hmOn=localStorage.getItem('qheat')!=='0',hmLast=performance.now();
+const hcv=document.createElement('canvas');hcv.width=HW;hcv.height=HH;const hctx=hcv.getContext('2d');const himg=hctx.createImageData(HW,HH);
+function hmSplat(xm,ym){const cx=(xm+6)*10,cy=(6-ym)*10;for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){const gx=Math.round(cx+dx),gy=Math.round(cy+dy);
+  if(gx<0||gy<0||gx>=HW||gy>=HH)continue;const w=Math.exp(-(dx*dx+dy*dy)/4.5)*0.06;heat[gy*HW+gx]=Math.min(1,heat[gy*HW+gx]+w)}}
+function hmToggle(){hmOn=!hmOn;localStorage.setItem('qheat',hmOn?'1':'0');$('hmBtn').classList.toggle('on',hmOn)}
+function hmClear(){heat.fill(0)}
+function hmRender(){const now=performance.now(),k=Math.exp(-(now-hmLast)/1000/HTAU);hmLast=now;const d=himg.data;
+  for(let i=0;i<heat.length;i++){let v=heat[i]*=k;if(v<0.004){heat[i]=0;d[i*4+3]=0;continue}
+    v=Math.min(1,v*1.6);const r=v<0.5?40+v*2*215:255,g=v<0.5?200+v*2*20:220-(v-0.5)*2*170,b=v<0.5?90-v*2*60:30;
+    d[i*4]=r;d[i*4+1]=g;d[i*4+2]=b;d[i*4+3]=Math.min(230,40+v*220)}hctx.putImageData(himg,0,0)}
 function radarConnect(){const es=new EventSource('/radar/events');
-  es.onmessage=e=>{try{R=JSON.parse(e.data);rLast=performance.now();R.targets.forEach((g,i)=>{if(g){trails[i].push([g.x,g.y]);if(trails[i].length>40)trails[i].shift()}else trails[i]=[]})}catch(_){}};
+  es.onmessage=e=>{try{R=JSON.parse(e.data);rLast=performance.now();R.targets.forEach((g,i)=>{if(g){hmSplat(g.x/1000,g.y/1000);trails[i].push([g.x,g.y]);if(trails[i].length>40)trails[i].shift()}else trails[i]=[]})}catch(_){}};
   es.addEventListener('offline',()=>{R={service:false};rLast=performance.now()});es.onerror=()=>{}}
 function radarDraw(){const cv=$('rad'),x=cv.getContext('2d'),W=cv.width,H=cv.height,cx=W/2,cy=H-18,rr=Math.min(H-34,W/2/Math.sin(FOV*Math.PI/180)-10);
   x.clearRect(0,0,W,H);const a0=-Math.PI/2-FOV*Math.PI/180,a1=-Math.PI/2+FOV*Math.PI/180;
@@ -288,6 +337,8 @@ function radarDraw(){const cv=$('rad'),x=cv.getContext('2d'),W=cv.width,H=cv.hei
   x.font='20px system-ui';x.fillStyle='#4f7d63';x.lineWidth=1;
   for(let m=1;m<=6;m++){const r=rr*m*1000/RMAX;x.beginPath();x.arc(cx,cy,r,a0,a1);x.strokeStyle=m%2?'#173a28':'#1f4d35';x.stroke();x.fillText(m+' m',cx+r*Math.cos(a1)+6,cy+r*Math.sin(a1)+4)}
   for(const d of[-60,-30,0,30,60]){const a=-Math.PI/2+d*Math.PI/180;x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+rr*Math.cos(a),cy+rr*Math.sin(a));x.strokeStyle='#173a28';x.stroke()}
+  hmRender();if(hmOn){x.save();x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,rr,a0,a1);x.closePath();x.clip();x.imageSmoothingEnabled=true;x.globalCompositeOperation='lighter';
+    x.drawImage(hcv,cx-rr,cy-rr,2*rr,rr);x.restore()}
   sweep=(sweep+0.025)%2;const sa=a0+(a1-a0)*(sweep<1?sweep:2-sweep);const sg=x.createLinearGradient(cx,cy,cx+rr*Math.cos(sa),cy+rr*Math.sin(sa));
   x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,rr,sa-0.12,sa+0.12);x.closePath();x.fillStyle='rgba(47,210,122,.10)';x.fill();
   x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+rr*Math.cos(sa),cy+rr*Math.sin(sa));x.strokeStyle='rgba(47,210,122,.55)';x.lineWidth=2;x.stroke();
@@ -308,7 +359,7 @@ function radarPanel(){const fresh=R&&R.connected&&performance.now()-rLast<2000;
     const d=Math.hypot(g.x,g.y)/1000,a=Math.atan2(g.x,g.y)*180/Math.PI,v=g.v/100,mv=Math.abs(g.v)<5?t('still'):(g.v>0?t('away'):t('closer'));
     return`<div class="tg" style="border-top-color:${COL[i]}">T${i+1}<b>${d.toFixed(2)} m</b>${a>=0?'+':''}${a.toFixed(0)}° · ${v.toFixed(2)} m/s<br><span class="mut">${mv}</span></div>`}).join('');
   $('rInfo').innerHTML=R&&R.service!==false?[`${R.port||'–'}`,`${(R.fps??0).toFixed(1)} fps`,`${t('frames').toLowerCase()} ${R.frames??'–'}`,`bad ${R.bad??0}`,`firmware ${R.firmware??t('readonly')}`,`mode ${R.mode??t('readonly')}`,R.demo?`<span class="warn">${t('demo')}</span>`:'',R.error?`<span class="warn">${R.error}</span>`:''].filter(Boolean).map(v=>`<span>${v}</span>`).join(''):''}
-setLang(L);refresh();radarConnect();radarDraw();setInterval(refresh,1500);setInterval(radarPanel,300);setInterval(lists,15000);
+setLang(L);$('hmBtn').classList.toggle('on',hmOn);refresh();radarConnect();radarDraw();setInterval(refresh,1500);setInterval(radarPanel,300);setInterval(lists,15000);
 </script>
 </body>
 </html>

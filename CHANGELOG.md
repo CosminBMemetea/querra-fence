@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.4.0 · 2026-11-19 · ROS 2 phase 1 + radar heatmap
+
+- `ros2/`: ROS 2 Humble in Docker on the SSD, with nodes for both cameras (from the panel hub), GPS (gpsd) and the
+  LD2450 radar (ld2450-radar SSE), static TFs, foxglove_bridge on :8765 and MCAP recording to `/ssd/querra/bags`
+- `querra_stats` node: topic rates and node list for the panel
+- `ros2/ros.sh`: `start`, `stop`, `status`, `record N`, `bags`, `doctor`, `logs`, `shell` and `build`
+- Panel: a ROS 2 card (start and stop, rates, record and download bags, Foxglove address, start at boot, off by
+  default) and a decaying radar occupancy heatmap with on/off and Clear, in EN and PL
+- Architecture diagram (mermaid) in the README and `docs/ros2.md`
+
 ## model-v0.3 · 2026-11-19 · fence detector
 
 - `tools/make_dataset.py --style v2`: farms with many breaks and dead strands in random colours; `--split test`, `--mission-world`

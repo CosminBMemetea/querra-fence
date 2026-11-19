@@ -17,10 +17,65 @@ with GPS coordinates for every finding.
 The Jetson runs a web dashboard on port 8080 (`http://mmx-desktop.local:8080`) for a phone on the hotspot or a laptop.
 It shows both cameras live, the LD2450 radar targets and the GPS fix, and starts and stops data collection with the
 v0.3 fence detector. It works offline, in English or Polish. Code and architecture are in
-[`jetson/panel/`](jetson/panel/).
+[`jetson/panel/`](jetson/panel/). The radar card has a decaying occupancy heatmap (on/off and Clear), and the ROS 2 card
+starts and stops ROS 2, shows topic rates and records bags.
 
-<p>
-</p>
+## ROS 2 (phase 1)
+
+The Jetson's sensors are also ROS 2 Humble topics. The nodes run in Docker on the SSD and are clients of the services
+that own the hardware: cameras from the panel hub, GPS from gpsd, radar from the ld2450-radar service. They publish
+`sensor_msgs` images, `NavSatFix`, radar targets, `PointCloud2` and markers. Recordings are rosbag2 MCAP files, and
+Foxglove connects to `ws://<jetson>:8765`. Use the panel's ROS 2 card or `ros2/ros.sh`. See
+[docs/ros2.md](docs/ros2.md) for the details and the phase 2 and 3 plans.
+
+```mermaid
+flowchart LR
+  subgraph HW["Sensors on the Jetson"]
+    USB["USB Arducam"]
+    CSI["CSI IMX219"]
+    GNSS["u-blox GPS"]
+    LD["LD2450 radar<br/>/dev/ttyUSB0"]
+  end
+  subgraph OWN["Device owners (host)"]
+    HUB["QUERRA panel + hub<br/>:8080 MJPEG · :5602 QFC1"]
+    GPSD["gpsd :2947"]
+    RAD["ld2450-radar :8077<br/>SSE /events"]
+  end
+  subgraph ROS["ROS 2 Humble · Docker querra-ros (host network, /ssd)"]
+    CAM["hub_camera ×2"]
+    GPSN["gpsd_gps"]
+    LDN["ld2450"]
+    TF["static TFs"]
+    ST["querra_stats"]
+    DET["fence_detector<br/>(phase 2)"]
+    CONF["alert_confirm<br/>(phase 2)"]
+    XRCE["MicroXRCEAgent<br/>(phase 3)"]
+  end
+  subgraph TOP["Topics"]
+    T1["/camera/{usb,csi}/image_raw[/compressed]"]
+    T2["/gps/fix · /gps/info"]
+    T3["/radar/targets · /radar/points · /radar/markers"]
+    T4["/fence/detections · /fence/alerts"]
+    T5["/fmu/out/* · /fmu/in/*"]
+  end
+  USB --> HUB
+  CSI --> HUB
+  GNSS --> GPSD
+  LD --> RAD
+  HUB --> CAM --> T1
+  GPSD --> GPSN --> T2
+  RAD --> LDN --> T3
+  HUB -. "field.sh (QFC1)" .-> FIELD["field mode<br/>querra-scout"]
+  T1 --> DET --> T4
+  T2 --> CONF
+  DET --> CONF
+  PX4["PX4 flight controller<br/>(TELEM / SITL UDP 8888)"] <--> XRCE <--> T5
+  T5 --> CONF
+  T1 & T2 & T3 & T4 --> BAG["rosbag2 MCAP<br/>/ssd/querra/bags"]
+  T1 & T2 & T3 & T4 --> FOX["foxglove_bridge<br/>ws://jetson:8765"]
+  ST -. "stats.json" .-> HUB
+```
+
 
 ## What one flight does
 
