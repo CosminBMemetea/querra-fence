@@ -1,5 +1,14 @@
 # Changelog
 
+## model-v0.2 · 2026-11-19 · fence detector
+
+- `tools/cam_stream.py`: streams the drone camera to the Jetson (TCP, JPEG and JSON telemetry per frame)
+- `tools/make_dataset.py`: auto-labelled YOLO dataset from Gazebo ground truth (random farms, 7 classes)
+- `tools/train_yolo.py`: YOLO11n training and ONNX export (416×640) for TensorRT
+- Model v0.1 (epoch-2 checkpoint, val mAP50 0.72) and v0.2 (25 epochs, val mAP50 0.921) as GitHub releases
+- Jetson end to end: 13.3 fps, all three faults found in the simulated mission. Known issue: false `wire_break`
+  on dead (grey) wire, fix planned for v0.3. See `docs/retraining-log.md`.
+
 ## v0.2.0 · 2026-11-19
 
 ### LD2450 radar on the Jetson (first real sensor)

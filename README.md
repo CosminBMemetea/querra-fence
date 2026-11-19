@@ -163,13 +163,32 @@ Everything about the scenario lives in `fence.json`. Change it and start again; 
 
 Coordinates are local metres (x east, y north) around `origin`, which sets the GPS position of the pasture.
 
+## Fence detector on the Jetson (YOLO11n)
+
+The simulation now trains the drone's real perception. `tools/make_dataset.py` renders random farms in Gazebo and
+labels every frame from the known 3D geometry: 7 classes, no hand labelling. A YOLO11n trained on those frames runs as
+a TensorRT FP16 engine on a Jetson Orin Nano. The Jetson reads the simulated drone camera over the LAN
+(`tools/cam_stream.py`) while PX4 flies the mission, and logs every detection with GPS.
+
+| Model | Val mAP50 | On the Jetson (simulated mission) | Release |
+|---|---|---|---|
+| v0.1 · epoch-2 checkpoint | 0.72 | F1 broken wire found (0.78); weak on the fallen post | `model-v0.1` |
+| v0.2 · 25 epochs | 0.921 | 13.3 fps; F1, F2, F3 all found (0.94 / 0.96 / 0.84); 385 false broken-wire frames | `model-v0.2` |
+| v0.3 · in progress | | Fixes the false broken wire with targeted data and multi-frame GPS confirmation | |
+
+![v0.2 on the Jetson: broken wire, fallen post, branch, and the false broken wire that v0.3 fixes](docs/img/v0.2-jetson-faults.jpg)
+
+- [Retraining log](docs/retraining-log.md): what each version missed and what changed.
+- [Model card](docs/model-card.md): data, metrics, limits and how to reproduce.
+- [Jetson integration](docs/jetson-integration.md): the `sim:` camera source, the detector and field mode in querra-scout.
+
 ## Simulated versus real
 
 The flight is real PX4 code: the same mission, parameters and MAVLink commands would drive a physical X500.
 The sensing is not real yet, and the boxes in the demo images say so:
 
-- **Detection** uses the true positions from Gazebo to show what the camera would report. On the drone it is replaced
-  by a vision model running on the camera frames (the `Detector` class in `sim/mission.py`).
+- **Detection** in `sim/mission.py` still uses the true positions from Gazebo to show what the camera would report.
+  The vision model that replaces it runs on the Jetson today (see [Fence detector](#fence-detector-on-the-jetson-yolo11n)).
 - **Fence voltage** comes from a simple circuit model along the fence. A real version needs a sensor that picks up
   the energizer pulses from the air, or fixed voltage monitors on the fence.
 - **Coverage**: at 12 m the camera sees about 10 to 15 m to each side. Counting the whole herd needs an extra grid flight.
