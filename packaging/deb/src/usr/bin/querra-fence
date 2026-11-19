@@ -1,0 +1,56 @@
+#!/bin/bash
+# Querra Fence launcher: makes sure the panel is running, then opens it in an app window.
+#   querra-fence             open the panel (start it first if it is not running)
+#   querra-fence --ros-demo  also start the ROS 2 phase 2 demo (ros.sh demo)
+#   querra-fence --foxglove  show the Foxglove address
+#   querra-fence --check     only start the panel if needed, no window (exit 0 when it answers)
+# Settings (optional) in ~/.config/querra-fence.conf: PANEL_DIR, PANEL_PORT, ROS_DIR
+set -u
+PANEL_USER=mmx
+PANEL_DIR=/home/$PANEL_USER/querra-scout-20261107/panel
+PANEL_PORT=8080
+ROS_DIR=/ssd/querra/ros2
+[ -r "$HOME/.config/querra-fence.conf" ] && . "$HOME/.config/querra-fence.conf"
+URL="http://localhost:$PANEL_PORT/"
+
+note() { command -v notify-send >/dev/null && notify-send -i querra-fence "Querra Fence" "$1"; echo "querra-fence: $1" >&2; }
+up() { curl -fsS -m 2 -o /dev/null "${URL}api/status" 2>/dev/null; }
+
+start_panel() {
+  up && return 0
+  [ -f "$PANEL_DIR/panel.py" ] || { note "panel not found in $PANEL_DIR"; return 1; }
+  note "Starting the panel…"
+  # Same command as the '# querra-panel' crontab @reboot line, as the panel's user.
+  local cmd="cd '$PANEL_DIR' && setsid nohup /usr/bin/python3 panel.py >> panel.log 2>&1 < /dev/null &"
+  if [ "$(id -un)" = "$PANEL_USER" ]; then bash -c "$cmd"
+  elif [ "$(id -u)" = 0 ]; then runuser -u "$PANEL_USER" -- bash -c "$cmd"
+  else note "run as $PANEL_USER to start the panel"; return 1; fi
+  for _ in $(seq 1 40); do up && return 0; sleep 0.5; done
+  note "the panel did not answer on $URL (see $PANEL_DIR/panel.log)"; return 1
+}
+
+open_window() {
+  local data="$HOME/snap/chromium/common/querra-fence-app"   # own profile: separate window class, no tabs
+  if command -v chromium-browser >/dev/null || command -v chromium >/dev/null; then
+    local b; b=$(command -v chromium-browser || command -v chromium)
+    mkdir -p "$data" 2>/dev/null
+    exec "$b" --app="$URL" --class=QuerraFence --user-data-dir="$data" --no-first-run --no-default-browser-check \
+      --window-size=1280,860 >/dev/null 2>&1
+  elif command -v firefox >/dev/null; then exec firefox --new-window "$URL"
+  else exec xdg-open "$URL"; fi
+}
+
+case "${1:-}" in
+  --check) start_panel ;;
+  --foxglove)
+    ip=$(hostname -I | awk '{print $1}')
+    msg="Foxglove: open ws://$ip:8765 (layout: ros2/foxglove/querra-layout.json). ROS 2 must be running."
+    command -v zenity >/dev/null && zenity --info --title="Querra Fence" --text="$msg" 2>/dev/null || note "$msg" ;;
+  --ros-demo)
+    start_panel || exit 1
+    curl -fsS -m 5 -X POST -H 'Content-Type: application/json' -d '{}' "${URL}api/ros/demo" >/dev/null \
+      && note "ROS 2 demo starting (about 20 s)" || note "could not start the ROS 2 demo"
+    open_window ;;
+  -h|--help) sed -n '2,7p' "$0" ;;
+  *) start_panel || exit 1; open_window ;;
+esac

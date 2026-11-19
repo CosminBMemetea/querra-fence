@@ -26,6 +26,9 @@ starts and stops ROS 2, shows topic rates and records bags.
 
 GPS coordinates are blurred in these captures.
 
+Desktop launcher: `sudo apt install ./querra-fence-panel_0.5.1_arm64.deb` adds a **Querra Fence** icon to the Jetson's
+dock that reopens the panel (and starts it if needed). See [packaging/deb/](packaging/deb/).
+
 ## ROS 2 (phases 1 and 2)
 
 The Jetson's sensors are also ROS 2 Humble topics. The nodes run in Docker on the SSD and are clients of the services
