@@ -12,6 +12,18 @@ with GPS coordinates for every finding.
   <img src="docs/media/takeoff.gif" width="49%" alt="X500 taking off from its pad next to the fence">
 </p>
 
+## Field control panel
+
+The Jetson runs a web dashboard on port 8080 (`http://mmx-desktop.local:8080`) for a phone on the hotspot or a laptop.
+It shows both cameras live, the LD2450 radar targets and the GPS fix, and starts and stops data collection with the
+v0.3 fence detector. It works offline, in English or Polish. Code and architecture are in
+[`jetson/panel/`](jetson/panel/).
+
+<p>
+  <img src="docs/img/panel-demo.gif" width="74%" alt="QUERRA Fence panel: live cameras, radar, GPS, start and stop data collection, EN to PL switch">
+  <img src="docs/img/panel-demo-phone.gif" width="24%" alt="The same panel on a phone">
+</p>
+
 ## What one flight does
 
 | Step | What happens |
