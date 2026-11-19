@@ -102,6 +102,26 @@ and speaks the answer (Piper). Setup and run sheet: [docs/jetson-brain.md](docs/
 
 ![Simulated ground-station streams](docs/media/ground-cameras.png)
 
+## Real sensor: LD2450 radar on the Jetson
+
+The first real hardware on the ground station is a HiLink LD2450, a 24 GHz mmWave radar that tracks up to 3 targets.
+It connects to the Jetson through a CH340 USB-serial adapter.
+`radar/` reads it and serves a live radar page:
+- targets on a ±60° fan, with smooth motion, trails and a heatmap;
+- distance, angle, speed and motion for each target;
+- a 60-second distance chart and an activity feed.
+
+It is packaged as a Debian package that runs as a system service and adds an app icon to the desktop:
+
+```bash
+sudo apt install ./ld2450-radar_1.0.1_all.deb     # from the release page
+# then open "LD2450 Radar", or http://<jetson>:8077 from any device on the network
+```
+
+Details, wiring and the JSON/SSE API are in [radar/README.md](radar/README.md).
+
+![LD2450 radar running on the Jetson](docs/media/ld2450-radar.png)
+
 ## How it works
 
 ```mermaid
@@ -126,7 +146,9 @@ flowchart LR
 | `sim/geo.py` | Shared geometry: posts, fault anchors, outward route, point-in-polygon, local ⇄ GPS, voltage model |
 | `sim/report.py` | HTML report with an SVG map, the voltage profile and an EN \| RO switch |
 | `sim/i18n.py` | Every message a person reads, in English and Romanian |
-| `tools/` | Demo capture, media builder, Desktop launcher |
+| `tools/` | Demo capture, media builder, scenario recorder, Desktop launcher |
+| `ground/`, `brain/` | Simulated ground station node; the Jetson brain that answers questions about what it sees |
+| `radar/` | LD2450 mmWave radar on the Jetson: live web view and its Debian package |
 
 ## Configuration
 
@@ -159,7 +181,8 @@ The sensing is not real yet, and the boxes in the demo images say so:
 3. Gimbal and thermal camera for night inspections
 4. Grid flight for full herd counts
 5. Alerts to a phone and a map view of open faults
-6. Hardware: X500 V2, Pixhawk, Raspberry Pi 5 or Jetson companion computer, same MAVLink mission code
+6. The LD2450 radar as the real gate counter in guard mode, in place of the simulated iToF sensor
+7. Hardware: X500 V2, Pixhawk, Raspberry Pi 5 or Jetson companion computer, same MAVLink mission code
 
 ## Notes
 

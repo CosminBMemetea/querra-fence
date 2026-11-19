@@ -1,6 +1,21 @@
 # Changelog
 
-## Unreleased
+## v0.2.0 · 2026-11-19
+
+### LD2450 radar on the Jetson (first real sensor)
+- `radar/server.py`: reads a HiLink LD2450 (24 GHz mmWave, up to 3 targets) through a CH340 USB-serial adapter
+  at 256000 baud, decodes the 30-byte frames (about 11 per second), and survives the adapter being unplugged and replugged
+- `radar/index.html`: live radar page
+  - a ±60° fan with smooth target motion, trails, a heatmap and a 3 / 6 / 8 m range;
+  - target cards with distance, angle, offsets, speed, motion, tracked time and closest point;
+  - a 60-second distance chart and an activity feed.
+- Streams to the browser with Server-Sent Events; `/state` gives the latest frame as JSON
+- Reads the firmware version and switches single/multi-target mode when the sensor's RX is wired; read-only otherwise
+- `ld2450-radar` Debian package (`radar/build_deb.sh`):
+  - a systemd service that starts at boot;
+  - an app icon and launcher that open a maximised app window;
+  - settings in `/etc/default/ld2450-radar`.
+- `--demo` mode with synthetic targets, for working without the sensor
 
 ### Ground station + drone (`./start.sh guard`)
 - Ground station on a pole at the gate: RGB and thermal cameras on the mast, iToF depth sensor on the gate post
@@ -17,6 +32,13 @@
 - `brain/server.py` + `brain/index.html`: chat page on the Jetson; answers typed questions out loud from the RTSP frames
   and live facts with a local vision model (Ollama), facts-only fallback, Piper voice (or `say` / the browser)
 - `docs/jetson-brain.md`: Jetson setup, direct-cable network, sharing sound in Zoom/Teams/Meet, scenario timeline
+- Replay for demos:
+  - `tools/record_scenario.py` records the three streams and the state timeline of a guard run;
+  - `brain/server.py --replay` analyses the recording live on the Jetson, with a **Restart scenario** button.
+
+### Reliability
+- `start.sh` restarts PX4 when it hangs at startup (rare in SITL); stale state files are cleared before each run
+- The state API drops ground-station data older than 5 s, so a stopped run never looks live
 
 ## v0.1.0 · 2026-11-14
 
