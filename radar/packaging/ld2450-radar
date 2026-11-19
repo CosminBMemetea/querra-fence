@@ -1,0 +1,3 @@
+#!/bin/sh
+# LD2450 radar web server (normally run by systemd: ld2450-radar.service)
+exec /usr/bin/python3 /opt/ld2450-radar/server.py "$@"
