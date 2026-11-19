@@ -165,6 +165,25 @@ faults.
 Better data alone removed few false frames, and confirmation alone removed few alerts. Combined, false alerts fell from
 33 to 6 (−82%), and all three faults were still found. 5 of 8 frames at conf ≥ 0.7 is now the default in `tools/confirm.py` and on the Jetson.
 
+### On the Jetson (TensorRT FP16, live confirmation)
+
+v0.3 was built into an FP16 engine on the Jetson Orin Nano (GPU time 4.9 ms per frame). It ran live on the simulated
+mission with confirmation switched on in querra-scout (`alerts.jsonl`, 5 of 8 frames). The v0.2 numbers come from the
+same mission flown earlier the same day with the same analysis, so this is the comparison with the 385.
+
+| Jetson, simulated mission | v0.2 | v0.3 |
+|---|---|---|
+| False `wire_break` frames (> 45 m from F1), conf ≥ 0.5 | **385** | **341** (−11%) |
+| conf ≥ 0.6 / 0.7 / 0.8 | 292 / 192 / 89 | 236 / 139 / 49 |
+| F1 frames with `wire_break` (< 30 m), conf ≥ 0.5 / 0.7 / 0.8 | 85 / 46 / 16 | 100 / 69 / 47 |
+| False `fallen_post` / `branch` frames | 0 / 0 | 0 / 0 |
+| Confirmed alerts | no confirmation | 13: all 3 faults (5 spots) + 8 false `wire_break` spots |
+| Detector time per frame (p50 / p95) | 20.8 / 29.4 ms | 18.6 / 26.1 ms |
+
+At a strict threshold the gain is clear. At conf ≥ 0.8, v0.3 sees F1 in 47 frames against 49 false frames; v0.2 saw it
+in 16 against 89. Alerts that used to need a person to look at hundreds of frames now come down to 13 spots on the
+map, including the 3 real faults.
+
 ### What v0.3 still misses
 
 ![Remaining false broken wires in the mission pasture](img/v0.3-remaining-false-wire-break.jpg)
