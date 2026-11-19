@@ -20,13 +20,25 @@ v0.3 fence detector. It works offline, in English or Polish. Code and architectu
 [`jetson/panel/`](jetson/panel/). The radar card has a decaying occupancy heatmap (on/off and Clear), and the ROS 2 card
 starts and stops ROS 2, shows topic rates and records bags.
 
-## ROS 2 (phase 1)
+<img src="docs/img/panel-demo.gif" width="960" alt="QUERRA panel: live cameras, radar heatmap, GPS (position blurred), data collection start and stop, ROS 2 card, English to Polish">
+
+<img src="docs/img/panel-demo-phone.gif" width="300" alt="QUERRA panel on a phone"> <img src="docs/img/panel-desktop.png" width="560" alt="QUERRA panel, desktop">
+
+GPS coordinates are blurred in these captures.
+
+## ROS 2 (phases 1 and 2)
 
 The Jetson's sensors are also ROS 2 Humble topics. The nodes run in Docker on the SSD and are clients of the services
 that own the hardware: cameras from the panel hub, GPS from gpsd, radar from the ld2450-radar service. They publish
 `sensor_msgs` images, `NavSatFix`, radar targets, `PointCloud2` and markers. Recordings are rosbag2 MCAP files, and
 Foxglove connects to `ws://<jetson>:8765`. Use the panel's ROS 2 card or `ros2/ros.sh`. See
-[docs/ros2.md](docs/ros2.md) for the details and the phase 2 and 3 plans.
+[docs/ros2.md](docs/ros2.md) for the details and the phase 3 plan.
+
+Phase 2 runs the fence detector on ROS 2: `fence_detector` runs the YOLO11n model-v0.3 TensorRT FP16 engine on the
+Jetson GPU (about 15 Hz, 20–30 ms per frame from JPEG to boxes) and publishes `vision_msgs/Detection2DArray` plus an
+annotated image. `alert_confirm` turns detections into `/fence/alerts` only when 5 of the last 8 frames agree within 5 m
+on the ground. `./ros.sh demo` (or **Demo** in the panel) replays a recorded Gazebo mission through the whole chain;
+`./ros.sh demo tcp://<mac>:5601` uses the live simulation. Foxglove layout: [`ros2/foxglove/querra-layout.json`](ros2/foxglove/querra-layout.json).
 
 ```mermaid
 flowchart LR
@@ -35,6 +47,10 @@ flowchart LR
     CSI["CSI IMX219"]
     GNSS["u-blox GPS"]
     LD["LD2450 radar<br/>/dev/ttyUSB0"]
+  end
+  subgraph SIM["Simulation (Mac)"]
+    GZ["PX4 SITL + Gazebo<br/>cam_stream.py :5601"]
+    REC["recorded mission<br/>/ssd/querra/sim/m1"]
   end
   subgraph OWN["Device owners (host)"]
     HUB["QUERRA panel + hub<br/>:8080 MJPEG · :5602 QFC1"]
@@ -45,18 +61,20 @@ flowchart LR
     CAM["hub_camera ×2"]
     GPSN["gpsd_gps"]
     LDN["ld2450"]
-    TF["static TFs"]
+    SIMC["sim_camera"]
+    DET["fence_detector<br/>YOLO11n v0.3 TensorRT FP16"]
+    CONF["alert_confirm<br/>5 of 8 frames · 5 m · conf 0.7"]
     ST["querra_stats"]
-    DET["fence_detector<br/>(phase 2)"]
-    CONF["alert_confirm<br/>(phase 2)"]
     XRCE["MicroXRCEAgent<br/>(phase 3)"]
   end
   subgraph TOP["Topics"]
     T1["/camera/{usb,csi}/image_raw[/compressed]"]
     T2["/gps/fix · /gps/info"]
     T3["/radar/targets · /radar/points · /radar/markers"]
-    T4["/fence/detections · /fence/alerts"]
-    T5["/fmu/out/* · /fmu/in/*"]
+    TS["/sim/camera/image_raw/compressed<br/>/sim/telemetry · /sim/gps/fix"]
+    T4["/detections · /detections/image<br/>/detections/latency_ms"]
+    T5["/fence/alerts · /fence/alerts/fix<br/>/fence/alerts/count"]
+    T6["/fmu/out/* · /fmu/in/*"]
   end
   USB --> HUB
   CSI --> HUB
@@ -65,14 +83,18 @@ flowchart LR
   HUB --> CAM --> T1
   GPSD --> GPSN --> T2
   RAD --> LDN --> T3
-  HUB -. "field.sh (QFC1)" .-> FIELD["field mode<br/>querra-scout"]
-  T1 --> DET --> T4
-  T2 --> CONF
-  DET --> CONF
-  PX4["PX4 flight controller<br/>(TELEM / SITL UDP 8888)"] <--> XRCE <--> T5
-  T5 --> CONF
-  T1 & T2 & T3 & T4 --> BAG["rosbag2 MCAP<br/>/ssd/querra/bags"]
-  T1 & T2 & T3 & T4 --> FOX["foxglove_bridge<br/>ws://jetson:8765"]
+  GZ -- "QFC1 JPEG + telemetry" --> SIMC
+  REC --> SIMC
+  SIMC --> TS
+  TS -- "detector:=sim" --> DET
+  T1 -. "detector:=usb" .-> DET
+  DET --> T4 --> CONF
+  TS -- "telemetry" --> CONF
+  CONF --> T5
+  PX4["PX4 flight controller<br/>(TELEM / SITL UDP 8888)"] <--> XRCE <--> T6
+  T6 -. "phase 3: pose" .-> CONF
+  T1 & T2 & T3 & TS & T4 & T5 --> BAG["rosbag2 MCAP<br/>/ssd/querra/bags"]
+  T1 & T2 & T3 & TS & T4 & T5 --> FOX["foxglove_bridge<br/>ws://jetson:8765"]
   ST -. "stats.json" .-> HUB
 ```
 

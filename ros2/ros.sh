@@ -2,6 +2,8 @@
 # QUERRA Fence ROS 2 (Humble in Docker; image, workspace and bags on /ssd). The QUERRA panel has the same controls.
 #
 #   ./ros.sh start [launch args]   start all nodes in the background, e.g. ./ros.sh start foxglove:=false
+#   ./ros.sh demo [tcp://MAC:5601] phase 2 demo: sensors + recorded (or live) Gazebo mission -> TensorRT detector
+#                                  -> 5-of-8 alert confirmation, Foxglove on :8765 (layout: foxglove/querra-layout.json)
 #   ./ros.sh stop                  stop and remove the container
 #   ./ros.sh status                container state, nodes and topic rates (from the stats node)
 #   ./ros.sh record [SECONDS]      MCAP bag of all QUERRA topics to /ssd/querra/bags (no SECONDS: until Ctrl-C)
@@ -17,8 +19,16 @@ set -euo pipefail
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 NAME=querra-ros IMAGE=querra-ros:humble BAGS=/ssd/querra/bags
 WS=${QUERRA_ROS_WS:-$HERE}
-TOPICS="/camera/usb/image_raw/compressed /camera/csi/image_raw/compressed /gps/fix /gps/info /radar/targets /radar/points /radar/markers /tf_static"
+TOPICS="/camera/usb/image_raw/compressed /camera/csi/image_raw/compressed /gps/fix /gps/info /radar/targets /radar/points /radar/markers /tf_static /sim/camera/image_raw/compressed /sim/telemetry /sim/gps/fix /detections /detections/image /detections/latency_ms /fence/alerts /fence/alerts/fix /fence/alerts/count"
 running() { [ "$(docker inspect -f '{{.State.Running}}' "$NAME" 2>/dev/null)" = true ]; }
+# Phase 2 detector: JetPack's TensorRT 10 + CUDA 12.6, querra_scout's YOLODetector and the engines, all read-only from
+# the host (nothing is copied to the root disk). /sim holds recorded Gazebo missions for the demo.
+L=/usr/lib/aarch64-linux-gnu Q=${QUERRA_SCOUT:-/home/mmx/querra-scout-20261107}
+TRT=(-v /usr/local/cuda-12.6:/usr/local/cuda-12.6:ro -v /usr/lib/python3.10/dist-packages/tensorrt:/usr/lib/python3/dist-packages/tensorrt:ro
+     -v "$Q/querra_scout:/opt/querra_scout/querra_scout:ro" -v "$Q/models/fence-yolo:/models:ro" -v /ssd/querra/sim:/sim:ro
+     -e NVIDIA_VISIBLE_DEVICES=all -e NVIDIA_DRIVER_CAPABILITIES=all -e PYTHONPATH=/opt/querra_scout
+     -e LD_LIBRARY_PATH=/usr/local/cuda-12.6/targets/aarch64-linux/lib:/usr/lib/aarch64-linux-gnu/nvidia)
+for f in libnvinfer.so.10 libnvinfer_plugin.so.10 libnvonnxparser.so.10; do [ -e "$L/$f" ] && TRT+=(-v "$(readlink -f "$L/$f"):$L/$f:ro"); done
 ex() { docker exec "$NAME" bash -lc "source /ws/install/setup.bash && $*"; }
 need() { running || { echo "ROS 2 is not running: ./ros.sh start"; exit 1; }; }
 case "${1:-help}" in
@@ -26,10 +36,14 @@ case "${1:-help}" in
   start)
     shift; docker rm -f "$NAME" >/dev/null 2>&1 || true; mkdir -p "$BAGS" "$WS/build" "$WS/install" "$WS/log"
     rm -f "$WS/stats.json"
-    docker run -d --name "$NAME" --network host --ipc host --restart no -v "$WS:/ws" -v "$BAGS:/bags" "$IMAGE" \
+    docker run -d --name "$NAME" --network host --ipc host --restart no -v "$WS:/ws" -v "$BAGS:/bags" "${TRT[@]}" "$IMAGE" \
       ros2 launch querra_fence_ros querra.launch.py "$@" >/dev/null
     for _ in $(seq 1 120); do [ -f "$WS/stats.json" ] && break; running || break; sleep 1; done
     if running; then echo "ROS 2 running (foxglove: ws://$(hostname).local:8765)"; else echo "start failed:"; docker logs --tail 30 "$NAME"; exit 1; fi ;;
+  demo)
+    src=${2:-/sim/m1}; "$0" start detector:=sim sim_source:="$src"
+    echo "demo: $src -> /sim/camera -> fence_detector (TensorRT) -> alert_confirm -> /fence/alerts"
+    echo "Foxglove: open ws://$(hostname -I | cut -d' ' -f1):8765 and import ros2/foxglove/querra-layout.json" ;;
   stop) docker rm -f "$NAME" >/dev/null 2>&1 && echo "stopped" || echo "not running"; rm -f "$WS/stats.json" ;;
   status)
     running || { echo "stopped"; exit 0; }
@@ -65,5 +79,5 @@ PY
     s=$(df -BG --output=avail /ssd | tail -1 | tr -dc 0-9); [ "$s" -gt 20 ] && ok "/ssd free ${s} GB" || bad "/ssd free ${s} GB"
     r=$(df -BG --output=avail / | tail -1 | tr -dc 0-9); [ "$r" -gt 2 ] && ok "root disk free ${r} GB (ROS uses none)" || bad "root disk free ${r} GB"
     echo "  bags: $(ls "$BAGS" 2>/dev/null | wc -l) in $BAGS ($(du -sh "$BAGS" 2>/dev/null | cut -f1))" ;;
-  help|-h|--help|*) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//' ;;
+  help|-h|--help|*) sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//' ;;
 esac

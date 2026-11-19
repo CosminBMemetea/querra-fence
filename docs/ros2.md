@@ -11,6 +11,10 @@ flowchart LR
     GNSS["u-blox GPS"]
     LD["LD2450 radar<br/>/dev/ttyUSB0"]
   end
+  subgraph SIM["Simulation (Mac)"]
+    GZ["PX4 SITL + Gazebo<br/>cam_stream.py :5601"]
+    REC["recorded mission<br/>/ssd/querra/sim/m1"]
+  end
   subgraph OWN["Device owners (host)"]
     HUB["QUERRA panel + hub<br/>:8080 MJPEG · :5602 QFC1"]
     GPSD["gpsd :2947"]
@@ -20,18 +24,20 @@ flowchart LR
     CAM["hub_camera ×2"]
     GPSN["gpsd_gps"]
     LDN["ld2450"]
-    TF["static TFs"]
+    SIMC["sim_camera"]
+    DET["fence_detector<br/>YOLO11n v0.3 TensorRT FP16"]
+    CONF["alert_confirm<br/>5 of 8 frames · 5 m · conf 0.7"]
     ST["querra_stats"]
-    DET["fence_detector<br/>(phase 2)"]
-    CONF["alert_confirm<br/>(phase 2)"]
     XRCE["MicroXRCEAgent<br/>(phase 3)"]
   end
   subgraph TOP["Topics"]
     T1["/camera/{usb,csi}/image_raw[/compressed]"]
     T2["/gps/fix · /gps/info"]
     T3["/radar/targets · /radar/points · /radar/markers"]
-    T4["/fence/detections · /fence/alerts"]
-    T5["/fmu/out/* · /fmu/in/*"]
+    TS["/sim/camera/image_raw/compressed<br/>/sim/telemetry · /sim/gps/fix"]
+    T4["/detections · /detections/image<br/>/detections/latency_ms"]
+    T5["/fence/alerts · /fence/alerts/fix<br/>/fence/alerts/count"]
+    T6["/fmu/out/* · /fmu/in/*"]
   end
   USB --> HUB
   CSI --> HUB
@@ -40,14 +46,18 @@ flowchart LR
   HUB --> CAM --> T1
   GPSD --> GPSN --> T2
   RAD --> LDN --> T3
-  HUB -. "field.sh (QFC1)" .-> FIELD["field mode<br/>querra-scout"]
-  T1 --> DET --> T4
-  T2 --> CONF
-  DET --> CONF
-  PX4["PX4 flight controller<br/>(TELEM / SITL UDP 8888)"] <--> XRCE <--> T5
-  T5 --> CONF
-  T1 & T2 & T3 & T4 --> BAG["rosbag2 MCAP<br/>/ssd/querra/bags"]
-  T1 & T2 & T3 & T4 --> FOX["foxglove_bridge<br/>ws://jetson:8765"]
+  GZ -- "QFC1 JPEG + telemetry" --> SIMC
+  REC --> SIMC
+  SIMC --> TS
+  TS -- "detector:=sim" --> DET
+  T1 -. "detector:=usb" .-> DET
+  DET --> T4 --> CONF
+  TS -- "telemetry" --> CONF
+  CONF --> T5
+  PX4["PX4 flight controller<br/>(TELEM / SITL UDP 8888)"] <--> XRCE <--> T6
+  T6 -. "phase 3: pose" .-> CONF
+  T1 & T2 & T3 & TS & T4 & T5 --> BAG["rosbag2 MCAP<br/>/ssd/querra/bags"]
+  T1 & T2 & T3 & TS & T4 & T5 --> FOX["foxglove_bridge<br/>ws://jetson:8765"]
   ST -. "stats.json" .-> HUB
 ```
 
@@ -97,19 +107,48 @@ From a shell on the Jetson, in `/ssd/querra/ros2`:
 ./ros.sh start         # nodes + foxglove_bridge; ./ros.sh start foxglove:=false to skip the bridge
 ./ros.sh status        # nodes and topic rates
 ./ros.sh record 30     # MCAP bag to /ssd/querra/bags
+./ros.sh demo          # phase 2 on the recorded mission; ./ros.sh demo tcp://<mac>:5601 for the live simulation
+./ros.sh start detector:=usb   # detector on the real USB camera
 ./ros.sh bags | logs | shell | stop | build
 ```
 
-## Phase 2: detector and confirmation nodes (next)
+## Phase 2: detector and confirmation nodes (done)
 
-- A `fence_detector` node runs the YOLO11n model-v0.3 TensorRT engine on `/camera/usb/image_raw` and publishes
-  `vision_msgs/Detection2DArray` plus an annotated `CompressedImage`. It needs an L4T base image with TensorRT
-  (`dustynv/ros:humble-*` for JetPack 6) or the host's TensorRT mounted into the container.
-- An `alert_confirm` node ports `tools/confirm.py`. It projects each box to the ground with the GPS fix, heading and
-  camera pitch, needs 5 of the last 8 frames to agree within 5 m, merges alerts within 10 m, and publishes `FenceAlert`
-  with `NavSatFix` and the class.
-- Field mode (`field.sh`) then becomes a launch file plus `ros2 bag record`. The panel keeps its Start and Stop buttons
-  and calls the launch instead of `field.sh`.
+- **`sim_camera`** (namespace `/sim`) publishes the Gazebo inspection camera and the drone telemetry:
+  `/sim/camera/image_raw/compressed`, `/sim/telemetry` (`querra_fence_msgs/Telemetry`) and `/sim/gps/fix`. The source is
+  either the live simulation (`tcp://<mac>:5601` from `tools/cam_stream.sh`, the QFC1 stream with JPEG and telemetry) or a
+  recording made with `tools/cam_record.py`, replayed at real time and looped. The recorded mission `m1` (171 s, 2,535
+  frames, the simulated farm with three faults, no people) is on the Jetson in `/ssd/querra/sim/m1`.
+- **`fence_detector`** runs the YOLO11n model-v0.3 TensorRT FP16 engine (640×416) through `querra_scout`'s
+  `YOLODetector`, the same code as field mode. It always takes the newest frame and drops the rest, so it never builds a
+  queue. It publishes `/detections` (`vision_msgs/Detection2DArray`, same stamp as the image), `/detections/image`
+  (annotated JPEG, only encoded while someone subscribes) and `/detections/latency_ms`. TensorRT 10, CUDA 12.6, the
+  engine and `querra_scout` are mounted read-only from JetPack on the host; the image only adds `vision_msgs` and Pillow.
+- **`alert_confirm`** is `tools/confirm.py` on ROS 2: it projects each box centre to the ground with the position,
+  altitude, heading and camera pitch from `Telemetry`, needs 5 of the last 8 frames to agree within 5 m at conf ≥ 0.7, and
+  merges alerts within 10 m. It publishes `/fence/alerts` (`FenceAlert`: id, class, lat/lon, max conf, frames, sightings,
+  new or update), `/fence/alerts/fix` (`NavSatFix` per new alert, for Foxglove's Map) and `/fence/alerts/count`. All three
+  are transient-local, so a late subscriber (Foxglove, a bag) still gets every alert.
+- **Launch:** `detector:=none` (default, phase 1 only), `detector:=sim` (sim camera → detector → confirmation) or
+  `detector:=usb` (the detector on the real USB camera; no confirmation, since a bench has no fence).
+
+Measured on the Jetson (25 W) with `./ros.sh demo`, the panel and both live cameras running:
+
+| | |
+| --- | --- |
+| `/sim/camera/image_raw/compressed` | 15 Hz (the recording's rate) |
+| `/detections`, `/detections/image` | 15 Hz (99 % of frames) |
+| Detector latency, JPEG decode + TensorRT + post-processing | p50 about 26 ms, max 34 ms |
+| Jetson | CPU about 50 %, GPU up to 86 %, RAM 4.5 of 7.6 GB, about 9 W |
+| Alerts on mission `m1` | 10 confirmed: the three real faults plus 7 false (6 in the offline evaluation of v0.3) |
+
+A 95 s demo bag with only the simulation topics, detections and alerts is 31 MB (8,485 messages).
+
+Foxglove: open `ws://<jetson>:8765` in the Foxglove app and import
+[`ros2/foxglove/querra-layout.json`](../ros2/foxglove/querra-layout.json): annotated detections, map with the drone track
+and alerts, detector latency and alert count, the alert messages, the radar in 3D and both live cameras.
+
+Next: field mode (`field.sh`) becomes a launch file plus `ros2 bag record`, and the panel's Start and Stop call it.
 
 ## Phase 3: PX4 over uXRCE-DDS
 
