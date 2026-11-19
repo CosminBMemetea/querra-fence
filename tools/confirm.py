@@ -7,10 +7,10 @@ with a flat-ground pinhole model: drone GPS + altitude + heading, camera pitched
 sightings only update its count and best confidence.
 
     from querra_scout.confirm import AlertConfirmer
-    c = AlertConfirmer(n=3, m=5, radius_m=5.0)
+    c = AlertConfirmer(n=5, m=8, radius_m=5.0, conf=0.7)
     for alert in c.update(frame_dets, lat, lon, alt_m, heading_deg): ...
 
-Offline: python3 confirm.py detections.jsonl [--n 3 --m 5 --radius 5 --conf 0.5]
+Offline: python3 confirm.py detections.jsonl [--n 5 --m 8 --radius 5 --conf 0.7]
 """
 import argparse, collections, json, math
 
@@ -43,7 +43,7 @@ def dist_m(a, b):
 
 
 class AlertConfirmer:
-    def __init__(self, n=3, m=5, radius_m=5.0, conf=0.5, classes=FAULTS, merge_m=10.0):
+    def __init__(self, n=5, m=8, radius_m=5.0, conf=0.7, classes=FAULTS, merge_m=10.0):
         assert 1 <= n <= m
         self.n, self.m, self.radius, self.conf, self.classes = n, m, radius_m, conf, set(classes)
         self.merge = max(merge_m, radius_m)  # a new sighting this close to an existing alert updates it, no new alert
@@ -83,10 +83,10 @@ class AlertConfirmer:
 def main():
     ap = argparse.ArgumentParser(description="Replay detections.jsonl through the multi-frame confirmation")
     ap.add_argument("jsonl")
-    ap.add_argument("--n", type=int, default=3)
-    ap.add_argument("--m", type=int, default=5)
+    ap.add_argument("--n", type=int, default=5)
+    ap.add_argument("--m", type=int, default=8)
     ap.add_argument("--radius", type=float, default=5.0)
-    ap.add_argument("--conf", type=float, default=0.5)
+    ap.add_argument("--conf", type=float, default=0.7)
     ap.add_argument("--merge", type=float, default=10.0)
     ap.add_argument("--out", help="write alerts.jsonl here")
     a = ap.parse_args()
@@ -96,7 +96,7 @@ def main():
         r = json.loads(line)
         g = r.get("gps") or {}
         tl = r.get("telemetry") or {}
-        for al in c.update(r.get("detections"), g.get("latitude"), g.get("longitude"),
+        for al in c.update(r.get("detections"), g.get("latitude", tl.get("lat")), g.get("longitude", tl.get("lon")),
                            r.get("altitude_m", tl.get("alt_m")), r.get("heading_deg", tl.get("heading_deg")),
                            dict(frame_index=r.get("frame_index"), sim_time_s=r.get("sim_time_s"))):
             if out:

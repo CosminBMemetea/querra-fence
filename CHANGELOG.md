@@ -1,5 +1,13 @@
 # Changelog
 
+## model-v0.3 · 2026-11-19 · fence detector
+
+- `tools/make_dataset.py --style v2`: farms with many breaks and dead strands in random colours; `--split test`, `--mission-world`
+- Held-out test set from new farm seeds; v0.3 test mAP50 0.912 (v0.2: 0.897), `wire_break` 0.684 (v0.2: 0.577)
+- `tools/confirm.py`: an alert needs 5 of the last 8 frames to agree within 5 m on the ground; false alerts in the
+  simulated mission 33 → 6, all three faults still found
+- `tools/cam_record.py` and `tools/eval_mission.py`: record a mission and evaluate models offline
+
 ## model-v0.2 · 2026-11-19 · fence detector
 
 - `tools/cam_stream.py`: streams the drone camera to the Jetson (TCP, JPEG and JSON telemetry per frame)

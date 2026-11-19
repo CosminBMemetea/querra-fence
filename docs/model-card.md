@@ -8,7 +8,7 @@
 | Input | ONNX/TensorRT: 1×3×416×640 RGB, values 0–1, frame letterboxed (padding value 114) |
 | Output | 1×11×5460 (Ultralytics layout: cx, cy, w, h and 7 class scores); class-aware NMS on the host |
 | Target hardware | Jetson Orin Nano Super 8 GB, JetPack R36.4.4, TensorRT 10.3, FP16 engine built with `trtexec` |
-| Releases | `model-v0.1` (preliminary), `model-v0.2` (current); history in [retraining-log.md](retraining-log.md) |
+| Releases | `model-v0.1` (preliminary), `model-v0.2`, `model-v0.3` (current); history in [retraining-log.md](retraining-log.md) |
 
 ## Training data
 
@@ -17,6 +17,8 @@ Everything is synthetic. `tools/make_dataset.py` builds random farms with the sa
 known 3D geometry of posts, wires, faults and animals. Nobody labelled anything by hand.
 
 - v0.1 / v0.2: 4,200 frames from 12 farms (10 training, 2 held-out validation).
+- v0.3: fine-tuned on 4,800 frames: 2,400 new frames from 8 farms full of broken and dead strands, plus 2,400 v0.2
+  training frames. Tested on 3 new farm seeds (750 frames) never used for training.
 - Known label limits:
   - Boxes ignore occlusion; a post hidden under a tree canopy still has its box.
   - `wire` boxes are the bounding box of a whole 5–7 m span, so they are large and diagonal.
@@ -32,15 +34,24 @@ known 3D geometry of posts, wires, faults and animals. Nobody labelled anything 
 - **Simulation only.** Gazebo grass, box-shaped animals and perfect cylinders are not real images. Expect a large
   drop on real footage until the model is fine-tuned on photos from the field. The field recorder on the Jetson saves
   raw frames for exactly that.
-- **False `wire_break` (v0.2).** An intact strand drawn grey (dead) after a break looks like a missing wire. This
-  produced 385 false frames in a simulated mission. Being fixed in v0.3 (see the retraining log).
+- **False `wire_break`.** A dead strand next to a live one looks like a missing wire. v0.2 gave 385 false frames in a
+  simulated mission on the Jetson. v0.3 cuts false frames by 15–37%. With multi-frame GPS confirmation
+  (`tools/confirm.py`, 5 of 8 frames, conf ≥ 0.7) false alerts drop from 33 to 6 with all faults still found. Use
+  confirmed alerts, not single frames.
 - **Indoors and other scenes.** Out-of-domain images produce confident false animals; a person indoors came out as `cow`.
 - **Thin wires.** At 12 m the wire is about 1 px wide. Detection relies on the post-to-post pattern more than the wire itself.
 
-## Metrics (v0.2, 2 held-out farms)
+## Metrics
 
-mAP50 0.921 / mAP50-95 0.750. Per class: post 0.968, wire 0.977, wire_break 0.818, fallen_post 0.916, branch 0.934,
-cow 0.915, sheep 0.922. Jetson end to end: 13.3 fps; detector 20.8 ms per frame (p50), of which 4.7 ms is GPU inference.
+| mAP50 | v0.2 | v0.3 |
+|---|---|---|
+| Old validation farms (700 frames) | 0.921 | 0.916 |
+| v2 validation farms (600) | 0.913 | 0.932 |
+| **Held-out test, new seeds (750)** | 0.897 | **0.912** |
+| `wire_break` on the held-out test | 0.577 | **0.684** |
+
+v0.2 per class (old validation): post 0.968, wire 0.977, wire_break 0.818, fallen_post 0.916, branch 0.934, cow 0.915,
+sheep 0.922. Jetson end to end: 13.3 fps; detector 20.8 ms per frame (p50), of which 4.7 ms is GPU inference.
 
 ## Reproduce
 
