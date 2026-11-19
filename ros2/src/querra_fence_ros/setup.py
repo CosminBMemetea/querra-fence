@@ -12,5 +12,8 @@ setup(
         "gpsd_gps = querra_fence_ros.gpsd_gps:main",
         "ld2450 = querra_fence_ros.ld2450:main",
         "stats = querra_fence_ros.stats:main",
+        "sim_camera = querra_fence_ros.sim_camera:main",
+        "detector = querra_fence_ros.detector:main",
+        "alerts = querra_fence_ros.alerts:main",
     ]},
 )

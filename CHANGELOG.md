@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.5.0 · 2026-11-19 · ROS 2 phase 2: detector + confirmation
+
+- `fence_detector` node: YOLO11n model-v0.3 TensorRT FP16 on the Jetson GPU, `vision_msgs/Detection2DArray`, annotated
+  image and latency topics; 15 Hz, about 26 ms per frame (JPEG decode + TensorRT + post-processing)
+- `alert_confirm` node: 5 of 8 frames within 5 m at conf 0.7 (`tools/confirm.py`), `FenceAlert`, `NavSatFix` per alert
+  and a count, all transient-local
+- `sim_camera` node: the Gazebo camera and telemetry from the live simulation (QFC1) or a recorded mission, looped
+- `querra_fence_msgs`: `Telemetry` and `FenceAlert`
+- Launch argument `detector:=none|sim|usb`; `./ros.sh demo [tcp://mac:5601]`; TensorRT and CUDA mounted read-only from JetPack
+- Panel: **Demo** button and detector frames, boxes, latency and confirmed alerts in the ROS 2 card (EN and PL)
+- Foxglove layout `ros2/foxglove/querra-layout.json`, interview walkthrough `docs/interview-demo.md`
+- New panel demo GIFs (desktop and phone) and screenshot, with GPS coordinates blurred
+
 ## v0.4.0 · 2026-11-19 · ROS 2 phase 1 + radar heatmap
 
 - `ros2/`: ROS 2 Humble in Docker on the SSD, with nodes for both cameras (from the panel hub), GPS (gpsd) and the

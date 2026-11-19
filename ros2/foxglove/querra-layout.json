@@ -1,0 +1,160 @@
+{
+ "configById": {
+  "Image!det": {
+   "imageMode": {
+    "imageTopic": "/detections/image",
+    "calibrationTopic": null
+   },
+   "cameraState": {}
+  },
+  "Image!usb": {
+   "imageMode": {
+    "imageTopic": "/camera/usb/image_raw/compressed"
+   },
+   "cameraState": {}
+  },
+  "Map!map": {
+   "layer": "map",
+   "topicColors": {
+    "/fence/alerts/fix": "#ff4d4d",
+    "/sim/gps/fix": "#4da3ff"
+   },
+   "disabledTopics": [
+    "/gps/fix"
+   ],
+   "followTopic": "/sim/gps/fix",
+   "zoomLevel": 17
+  },
+  "RawMessages!alerts": {
+   "topicPath": "/fence/alerts",
+   "diffEnabled": false,
+   "expansion": "all"
+  },
+  "Plot!lat": {
+   "paths": [
+    {
+     "value": "/detections/latency_ms.data",
+     "enabled": true,
+     "timestampMethod": "receiveTime",
+     "label": "detector latency (ms)"
+    },
+    {
+     "value": "/fence/alerts/count.data",
+     "enabled": true,
+     "timestampMethod": "receiveTime",
+     "label": "confirmed alerts"
+    }
+   ],
+   "showLegend": true,
+   "isSynced": true,
+   "xAxisVal": "timestamp",
+   "followingViewWidth": 60
+  },
+  "3D!radar": {
+   "cameraState": {
+    "distance": 9,
+    "perspective": false,
+    "phi": 0,
+    "thetaOffset": 0,
+    "targetOffset": [
+     3,
+     0,
+     0
+    ],
+    "target": [
+     0,
+     0,
+     0
+    ],
+    "targetOrientation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "fovy": 45,
+    "near": 0.5,
+    "far": 5000
+   },
+   "followMode": "follow-pose",
+   "followTfFrame": "radar",
+   "scene": {},
+   "transforms": {},
+   "topics": {
+    "/radar/markers": {
+     "visible": true
+    },
+    "/radar/points": {
+     "visible": true,
+     "pointSize": 8,
+     "colorField": "v",
+     "colorMode": "colormap"
+    }
+   },
+   "layers": {
+    "grid": {
+     "visible": true,
+     "frameLocked": true,
+     "label": "Grid",
+     "instanceId": "grid",
+     "layerId": "foxglove.Grid",
+     "size": 12,
+     "divisions": 12,
+     "lineWidth": 1,
+     "color": "#248eff40",
+     "position": [
+      0,
+      0,
+      0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  "Image!csi": {
+   "imageMode": {
+    "imageTopic": "/camera/csi/image_raw/compressed"
+   },
+   "cameraState": {}
+  }
+ },
+ "globalVariables": {},
+ "userNodes": {},
+ "playbackConfig": {
+  "speed": 1
+ },
+ "layout": {
+  "direction": "row",
+  "splitPercentage": 58,
+  "first": {
+   "direction": "column",
+   "splitPercentage": 62,
+   "first": "Image!det",
+   "second": {
+    "direction": "row",
+    "first": "Plot!lat",
+    "second": "RawMessages!alerts",
+    "splitPercentage": 55
+   }
+  },
+  "second": {
+   "direction": "column",
+   "splitPercentage": 50,
+   "first": "Map!map",
+   "second": {
+    "first": "3D!radar",
+    "second": {
+     "first": "Image!usb",
+     "second": "Image!csi",
+     "direction": "column"
+    },
+    "direction": "row",
+    "splitPercentage": 50
+   }
+  }
+ }
+}

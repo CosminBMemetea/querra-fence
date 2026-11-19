@@ -1,5 +1,7 @@
 # QUERRA Fence panel v2 (Jetson)
 
+<img src="../../docs/img/panel-demo.gif" width="900" alt="QUERRA panel demo (GPS position blurred)">
+
 A snapshot of `~/querra-scout-20261107/panel/` on the Jetson. querra-scout is not in this repository. One page for the
 field, in English or Polish (EN | PL switch, remembered by the browser), for a phone on the hotspot or a laptop.
 

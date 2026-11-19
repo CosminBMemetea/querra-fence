@@ -456,7 +456,8 @@ def ros_state():
     return {"installed": os.path.exists(ROS_SH), "running": on, "busy": ROS["busy"], "msg": ROS["msg"],
             "recording_s": rec if ROS["busy"] == "record" else 0,
             "autostart": "# querra-ros" in crontab(), "nodes": stats.get("nodes", []), "topics": stats.get("topics", {}),
-            "stale": stats.get("stale", False), "foxglove_port": 8765}
+            "stale": stats.get("stale", False), "foxglove_port": 8765,
+            "phase2": stats.get("phase2") if "/fence_detector" in stats.get("nodes", []) else None}
 
 
 def _ros_bg(kind, cmd, timeout):
@@ -477,6 +478,8 @@ def act_ros(action, body):
         return 409, {"ok": False, "code": "ros_busy"}
     if action == "start":
         _ros_bg("start", ["bash", ROS_SH, "start"], 180); return 200, {"ok": True, "code": "ros_starting"}
+    if action == "demo":
+        _ros_bg("start", ["bash", ROS_SH, "demo"], 180); return 200, {"ok": True, "code": "ros_starting"}
     if action == "stop":
         _ros_bg("stop", ["bash", ROS_SH, "stop"], 60); return 200, {"ok": True, "code": "ros_stopping"}
     if action == "record":
@@ -651,7 +654,7 @@ class H(BaseHTTPRequestHandler):
         actions = {"/api/field/start": lambda: act_start(), "/api/field/stop": lambda: act_stop(),
                    "/api/autostart": lambda: act_autostart(body.get("on")), "/api/model": lambda: act_model(body.get("version")),
                    "/api/vision": lambda: act_vision(body.get("on")), "/api/poweroff": lambda: act_poweroff(body.get("confirm")),
-                   "/api/ros/start": lambda: act_ros("start", body), "/api/ros/stop": lambda: act_ros("stop", body),
+                   "/api/ros/start": lambda: act_ros("start", body), "/api/ros/stop": lambda: act_ros("stop", body), "/api/ros/demo": lambda: act_ros("demo", body),
                    "/api/ros/record": lambda: act_ros("record", body), "/api/ros/autostart": lambda: act_ros("autostart", body)}
         if p == "/api/login":
             if self.authed():
