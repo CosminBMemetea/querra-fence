@@ -3,16 +3,56 @@
 QUERRA Fence moves to ROS 2 Humble in three phases. The services that already own the hardware stay as they are,
 and ROS 2 nodes are their clients. Nothing fights over a camera or a serial port.
 
+```mermaid
+flowchart LR
+  subgraph HW["Sensors on the Jetson"]
+    USB["USB Arducam"]
+    CSI["CSI IMX219"]
+    GNSS["u-blox GPS"]
+    LD["LD2450 radar<br/>/dev/ttyUSB0"]
+  end
+  subgraph OWN["Device owners (host)"]
+    HUB["QUERRA panel + hub<br/>:8080 MJPEG · :5602 QFC1"]
+    GPSD["gpsd :2947"]
+    RAD["ld2450-radar :8077<br/>SSE /events"]
+  end
+  subgraph ROS["ROS 2 Humble · Docker querra-ros (host network, /ssd)"]
+    CAM["hub_camera ×2"]
+    GPSN["gpsd_gps"]
+    LDN["ld2450"]
+    TF["static TFs"]
+    ST["querra_stats"]
+    DET["fence_detector<br/>(phase 2)"]
+    CONF["alert_confirm<br/>(phase 2)"]
+    XRCE["MicroXRCEAgent<br/>(phase 3)"]
+  end
+  subgraph TOP["Topics"]
+    T1["/camera/{usb,csi}/image_raw[/compressed]"]
+    T2["/gps/fix · /gps/info"]
+    T3["/radar/targets · /radar/points · /radar/markers"]
+    T4["/fence/detections · /fence/alerts"]
+    T5["/fmu/out/* · /fmu/in/*"]
+  end
+  USB --> HUB
+  CSI --> HUB
+  GNSS --> GPSD
+  LD --> RAD
+  HUB --> CAM --> T1
+  GPSD --> GPSN --> T2
+  RAD --> LDN --> T3
+  HUB -. "field.sh (QFC1)" .-> FIELD["field mode<br/>querra-scout"]
+  T1 --> DET --> T4
+  T2 --> CONF
+  DET --> CONF
+  PX4["PX4 flight controller<br/>(TELEM / SITL UDP 8888)"] <--> XRCE <--> T5
+  T5 --> CONF
+  T1 & T2 & T3 & T4 --> BAG["rosbag2 MCAP<br/>/ssd/querra/bags"]
+  T1 & T2 & T3 & T4 --> FOX["foxglove_bridge<br/>ws://jetson:8765"]
+  ST -. "stats.json" .-> HUB
 ```
-             owns the device                    ROS 2 node (Docker, host network)     topics
-USB Arducam ─┐
-CSI IMX219  ─┴─ panel hub :8080 (MJPEG) ──────── hub_camera ×2 ──────────────────── /camera/{usb,csi}/image_raw[/compressed], camera_info
-u-blox GPS ──── gpsd :2947 (JSON) ────────────── gpsd_gps ──────────────────────── /gps/fix (NavSatFix), /gps/info
-LD2450 radar ── ld2450-radar :8077 (SSE) ─────── ld2450 ────────────────────────── /radar/targets, /radar/points, /radar/markers
-                                                 static TFs (base_link → sensors)    /tf_static
-                                                 foxglove_bridge ────────────────── ws://<jetson>:8765
-                                                 ros2 bag record (MCAP) ─────────── /ssd/querra/bags
-```
+
+Solid lines run today. Dotted boxes marked phase 2 or 3 are planned. The panel's ROS 2 card reads `querra_stats`
+(nodes and topic rates) and starts, stops and records through `ros2/ros.sh`.
 
 ## Phase 1: sensors on ROS 2 (done)
 
@@ -43,6 +83,22 @@ Measured on the Jetson (Orin Nano Super, 25 W) with the panel running:
 
 A 20 s MCAP bag of all topics is 5.1 MB (888 messages). The container uses about 5 % CPU and 270 MB RAM while no one
 subscribes to raw images.
+
+## Using it
+
+From the panel (`http://mmx-desktop.local:8080`, ROS 2 card): **Start ROS 2** or **Stop**, live node list and topic
+rates, **Record bag** for 10, 30 or 60 s with a list of bags and `.tar` downloads, the Foxglove address
+(`ws://<jetson>:8765`), and **Start ROS 2 at boot** (a user crontab line tagged `# querra-ros`, off by default).
+
+From a shell on the Jetson, in `/ssd/querra/ros2`:
+
+```bash
+./ros.sh doctor        # docker, data-root on /ssd, image, panel hub, gpsd, radar service, ports, disk
+./ros.sh start         # nodes + foxglove_bridge; ./ros.sh start foxglove:=false to skip the bridge
+./ros.sh status        # nodes and topic rates
+./ros.sh record 30     # MCAP bag to /ssd/querra/bags
+./ros.sh bags | logs | shell | stop | build
+```
 
 ## Phase 2: detector and confirmation nodes (next)
 

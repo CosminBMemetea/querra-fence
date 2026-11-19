@@ -306,6 +306,7 @@ def state():
                    "mem": {"used_gb": round((mem["MemTotal"] - mem["MemAvailable"]) / 2**20, 1), "total_gb": round(mem["MemTotal"] / 2**20, 1)},
                    "can_power_off": cached("cpo", 300, lambda: run("busctl call org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager CanPowerOff")[1].split()[-1].strip('"'))},
         "require_pin": bool(CFG.get("require_pin")),
+        "ros": ros_state(),
     }
 
 
@@ -410,6 +411,81 @@ def act_poweroff(confirm):
         return 400, {"ok": False, "code": "confirm"}
     run("sync"); subprocess.Popen(["systemctl", "poweroff"], env=ENV, start_new_session=True)
     return 200, {"ok": True, "code": "powering_off"}
+
+
+# ---------------- ROS 2 (Docker container querra-ros, see ros2/ros.sh) ----------------
+ROS_DIR = "/ssd/querra/ros2"
+ROS_SH = os.path.join(ROS_DIR, "ros.sh")
+BAGS = "/ssd/querra/bags"
+ROS_CRON = f"@reboot sleep 90 && {ROS_SH} start >> {ROS_DIR}/autostart.log 2>&1 # querra-ros"
+ROS = {"busy": None, "record_until": 0.0, "msg": ""}
+
+
+def ros_running():
+    return cached("ros_run", 2, lambda: run(["docker", "inspect", "-f", "{{.State.Running}}", "querra-ros"])[1].strip()) == "true"
+
+
+def ros_bags():
+    out = []
+    if os.path.isdir(BAGS):
+        for b in sorted(os.listdir(BAGS), reverse=True)[:20]:
+            d = os.path.join(BAGS, b)
+            if not os.path.isdir(d):
+                continue
+            info = {"name": b, "size_mb": dir_size_mb(d), "duration_s": None, "messages": None}
+            try:
+                meta = open(os.path.join(d, "metadata.yaml")).read()
+                m = re.search(r"duration:\s*\n\s*nanoseconds:\s*(\d+)", meta); info["duration_s"] = round(int(m.group(1)) / 1e9, 1) if m else None
+                m = re.search(r"message_count:\s*(\d+)", meta); info["messages"] = int(m.group(1)) if m else None
+            except OSError:
+                info["recording"] = True
+            out.append(info)
+    return out
+
+
+def ros_state():
+    on = ros_running()
+    stats = {}
+    if on:
+        try:
+            stats = json.load(open(os.path.join(ROS_DIR, "stats.json")))
+            stats["stale"] = time.time() - stats.get("t", 0) > 8
+        except (OSError, ValueError):
+            stats = {}
+    rec = max(0, round(ROS["record_until"] - time.time()))
+    return {"installed": os.path.exists(ROS_SH), "running": on, "busy": ROS["busy"], "msg": ROS["msg"],
+            "recording_s": rec if ROS["busy"] == "record" else 0,
+            "autostart": "# querra-ros" in crontab(), "nodes": stats.get("nodes", []), "topics": stats.get("topics", {}),
+            "stale": stats.get("stale", False), "foxglove_port": 8765}
+
+
+def _ros_bg(kind, cmd, timeout):
+    def worker():
+        rc, out = run(cmd, timeout)
+        ROS.update(busy=None, msg=(out.strip().splitlines() or [f"rc={rc}"])[-1][:200]); _cache.pop("ros_run", None)
+    ROS.update(busy=kind, msg=""); threading.Thread(target=worker, daemon=True).start()
+
+
+def act_ros(action, body):
+    if not os.path.exists(ROS_SH):
+        return 404, {"ok": False, "code": "error", "msg": "ros.sh not found in " + ROS_DIR}
+    if action == "autostart":
+        on = bool(body.get("on"))
+        return (200, {"ok": True, "code": "ros_autostart_on" if on else "ros_autostart_off"}) if set_cron("querra-ros", ROS_CRON, on) \
+            else (500, {"ok": False, "code": "error", "msg": "crontab failed"})
+    if ROS["busy"]:
+        return 409, {"ok": False, "code": "ros_busy"}
+    if action == "start":
+        _ros_bg("start", ["bash", ROS_SH, "start"], 180); return 200, {"ok": True, "code": "ros_starting"}
+    if action == "stop":
+        _ros_bg("stop", ["bash", ROS_SH, "stop"], 60); return 200, {"ok": True, "code": "ros_stopping"}
+    if action == "record":
+        if not ros_running():
+            return 409, {"ok": False, "code": "ros_not_running"}
+        secs = max(5, min(600, int(body.get("secs") or 20)))
+        ROS["record_until"] = time.time() + secs
+        _ros_bg("record", ["bash", ROS_SH, "record", str(secs)], secs + 60); return 200, {"ok": True, "code": "ros_recording"}
+    return 404, {"ok": False, "code": "error", "msg": "unknown action"}
 
 
 class H(BaseHTTPRequestHandler):
@@ -517,6 +593,22 @@ class H(BaseHTTPRequestHandler):
             if cam.live is None:
                 return self.send(503, {"ok": False, "state": cam.status()})
             return self.send(200, cam.live, "image/jpeg")
+        if p == "/api/ros/bags":
+            return self.send(200, ros_bags())
+        m = re.fullmatch(r"/api/ros/bag/(querra-[\w-]+)\.tar", p)
+        if m:
+            d = os.path.join(BAGS, m.group(1))
+            if not os.path.isdir(d):
+                return self.send(404, {"ok": False, "msg": "no such bag"})
+            self.send_response(200); self.send_header("Content-Type", "application/x-tar")
+            self.send_header("Content-Disposition", f'attachment; filename="{m.group(1)}.tar"'); self.send_header("Connection", "close"); self.end_headers()
+            self.close_connection = True
+            try:
+                with tarfile.open(fileobj=self.wfile, mode="w|") as t:   # MCAP holds JPEGs already: no gzip
+                    t.add(d, arcname=m.group(1))
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+            return
         if p == "/api/runs":
             return self.send(200, [run_summary(d, full=True) for d in run_dirs()[:50]])
         if p == "/api/alerts":
@@ -558,7 +650,9 @@ class H(BaseHTTPRequestHandler):
             body = {}
         actions = {"/api/field/start": lambda: act_start(), "/api/field/stop": lambda: act_stop(),
                    "/api/autostart": lambda: act_autostart(body.get("on")), "/api/model": lambda: act_model(body.get("version")),
-                   "/api/vision": lambda: act_vision(body.get("on")), "/api/poweroff": lambda: act_poweroff(body.get("confirm"))}
+                   "/api/vision": lambda: act_vision(body.get("on")), "/api/poweroff": lambda: act_poweroff(body.get("confirm")),
+                   "/api/ros/start": lambda: act_ros("start", body), "/api/ros/stop": lambda: act_ros("stop", body),
+                   "/api/ros/record": lambda: act_ros("record", body), "/api/ros/autostart": lambda: act_ros("autostart", body)}
         if p == "/api/login":
             if self.authed():
                 self.send(200, {"ok": True})

@@ -45,13 +45,18 @@ field, in English or Polish (EN | PL switch, remembered by the browser), for a p
   fps, frames, bad frames, error and the demo flag. It says "radar service offline" when the service is down.
 - **System:** CPU and GPU temperature, power mode, RAM, uptime, free SSD and system disk, safe shutdown. Without
   passwordless poweroff, the page shows `sudo poweroff` instead.
+- **Radar heatmap:** a decaying occupancy map over the fan, on a 10 cm grid. Each target adds a small gaussian and
+  everything fades with a time constant of 20 s. It has on/off (remembered by the browser) and Clear buttons.
+- **ROS 2:** Start and Stop for the `querra-ros` container (`/ssd/querra/ros2/ros.sh`), nodes and topic rates from
+  the `querra_stats` node (`stats.json`), record a bag for 10, 30 or 60 s, the bag list with `.tar` downloads, the
+  Foxglove address, and start at boot (user crontab `# querra-ros`, off by default). See [docs/ros2.md](../../docs/ros2.md).
 - **Confirmed alerts** with map links, and **recent runs** with a streamed `.tar.gz` download.
 
 ## API
 
 `GET /api/state`, `/api/gps`, `/api/radar`, `/radar/events`, `/stream/{usb,csi}.mjpg`, `/api/snap/{usb,csi}.jpg`,
-`/api/runs`, `/api/alerts`, `/api/download/<run>.tar.gz`. `POST /api/field/start`, `/api/field/stop`,
-`/api/autostart {on}`, `/api/model {version}`, `/api/vision {on}`, `/api/poweroff {confirm:"POWEROFF"}`.
+`/api/runs`, `/api/alerts`, `/api/download/<run>.tar.gz`, `/api/ros/bags`, `/api/ros/bag/<bag>.tar`. `POST /api/field/start`, `/api/field/stop`,
+`/api/autostart {on}`, `/api/ros/{start,stop}`, `/api/ros/record {secs}`, `/api/ros/autostart {on}`, `/api/model {version}`, `/api/vision {on}`, `/api/poweroff {confirm:"POWEROFF"}`.
 
 The panel starts at boot from a user crontab line tagged `# querra-panel`. It never starts data collection by itself.
 

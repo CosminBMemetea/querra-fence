@@ -23,6 +23,7 @@ def generate_launch_description():
         DeclareLaunchArgument("radar", default_value="http://127.0.0.1:8077/events"),
         DeclareLaunchArgument("foxglove", default_value="true"),
         *cams,
+        Node(package="querra_fence_ros", executable="stats", name="querra_stats", output="log"),
         Node(package="querra_fence_ros", executable="gpsd_gps", name="gps", output="screen"),
         Node(package="querra_fence_ros", executable="ld2450", name="ld2450", parameters=[{"url": LaunchConfiguration("radar")}], output="screen"),
         # Mounting offsets are placeholders until the sensors are measured on the airframe.
