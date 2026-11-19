@@ -3,7 +3,6 @@
 A snapshot of `~/querra-scout-20261107/panel/` on the Jetson. querra-scout is not in this repository. One page for the
 field, in English or Polish (EN | PL switch, remembered by the browser), for a phone on the hotspot or a laptop.
 
-![Panel on a laptop](../../docs/img/panel-v2-desktop.png)
 
 - **Stack:** Python standard library `http.server` plus the GStreamer, OpenCV and NumPy that JetPack already ships.
   One HTML file, no CDN, so it works offline on a phone hotspot. Port 8080 on all interfaces.

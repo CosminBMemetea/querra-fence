@@ -66,4 +66,3 @@ a safe shutdown. The panel is the only owner of the cameras. Field mode reads th
 over QFC1 on `127.0.0.1:5602`, so the live view keeps running while data is collected. The code and the device-ownership
 table are in [`jetson/panel/`](../jetson/panel/).
 
-![Panel v2](img/panel-v2-desktop.png)

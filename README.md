@@ -20,8 +20,6 @@ v0.3 fence detector. It works offline, in English or Polish. Code and architectu
 [`jetson/panel/`](jetson/panel/).
 
 <p>
-  <img src="docs/img/panel-demo.gif" width="74%" alt="QUERRA Fence panel: live cameras, radar, GPS, start and stop data collection, EN to PL switch">
-  <img src="docs/img/panel-demo-phone.gif" width="24%" alt="The same panel on a phone">
 </p>
 
 ## What one flight does
