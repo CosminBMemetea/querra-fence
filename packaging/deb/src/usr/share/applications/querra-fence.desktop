@@ -1,0 +1,22 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Querra Fence
+GenericName=Fence inspection panel
+Comment=QUERRA Fence control panel: live cameras, radar, GPS, data collection and ROS 2
+Exec=/usr/bin/querra-fence
+Icon=querra-fence
+Terminal=false
+Categories=System;Monitor;
+Keywords=querra;fence;drone;radar;gps;ros;
+StartupNotify=true
+StartupWMClass=QuerraFence
+Actions=ros-demo;foxglove;
+
+[Desktop Action ros-demo]
+Name=ROS 2 demo (sim + detector)
+Exec=/usr/bin/querra-fence --ros-demo
+
+[Desktop Action foxglove]
+Name=Foxglove connection info
+Exec=/usr/bin/querra-fence --foxglove

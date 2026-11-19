@@ -1,0 +1,16 @@
+Package: querra-fence-panel
+Version: @VERSION@
+Section: utils
+Priority: optional
+Architecture: arm64
+Maintainer: Cosmin B. Memetea <CosminBMemetea@users.noreply.github.com>
+Depends: curl, bash, python3
+Recommends: chromium-browser | chromium | firefox, libnotify-bin, zenity
+Installed-Size: @SIZE@
+Homepage: https://github.com/CosminBMemetea/querra-fence
+Description: Querra Fence panel launcher for the Jetson desktop
+ Adds a "Querra Fence" app to the GNOME dock. One click starts the QUERRA
+ Fence panel if it is not running (same command as its boot crontab line)
+ and opens it in an app window. Desktop actions start the ROS 2 demo and
+ show the Foxglove address. The panel itself is not installed or changed;
+ field-mode autostart is left as it is.

@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+U=mmx
+if [ "$1" = remove ] && id "$U" >/dev/null 2>&1 && command -v gsettings >/dev/null; then
+  BUS=/run/user/$(id -u "$U")/bus
+  if [ -S "$BUS" ]; then
+    CUR=$(runuser -u "$U" -- env DBUS_SESSION_BUS_ADDRESS=unix:path=$BUS gsettings get org.gnome.shell favorite-apps 2>/dev/null || true)
+    case "$CUR" in *querra-fence.desktop*)
+      NEW=$(printf '%s' "$CUR" | sed "s/, 'querra-fence.desktop'//; s/'querra-fence.desktop', //; s/'querra-fence.desktop'//")
+      runuser -u "$U" -- env DBUS_SESSION_BUS_ADDRESS=unix:path=$BUS gsettings set org.gnome.shell favorite-apps "$NEW" || true ;;
+    esac
+  fi
+fi
+exit 0

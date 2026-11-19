@@ -13,3 +13,4 @@ radar/dist/
 *.onnx
 *.engine
 dataset/
+packaging/deb/dist/

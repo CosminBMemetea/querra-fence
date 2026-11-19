@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.1 · 2026-11-19 · desktop launcher
+
+- `querra-fence-panel_0.5.1_arm64.deb`: **Querra Fence** in the GNOME dock; opens the panel in an app window and starts
+  the panel first if it is not running; right-click actions for the ROS 2 demo and the Foxglove address
+- `packaging/deb/` sources and `build.sh`
+
 ## v0.5.0 · 2026-11-19 · ROS 2 phase 2: detector + confirmation
 
 - `fence_detector` node: YOLO11n model-v0.3 TensorRT FP16 on the Jetson GPU, `vision_msgs/Detection2DArray`, annotated
