@@ -5,6 +5,8 @@ got wrong on the Jetson, and what we changed because of it. Model files are atta
 (`model-v0.x`). The model card is in [model-card.md](model-card.md). The model and dataset registries (data, code
 commit, scores, live results and sha256 of every model) and the run records are in [ml/](../ml/README.md).
 
+![Fence detector: how each model scored](img/model-evolution.png)
+
 **Classes:** `post`, `wire`, `wire_break`, `fallen_post`, `branch`, `cow`, `sheep`
 
 **How we test.** The trained model is exported to ONNX and built into a TensorRT FP16 engine on the Jetson Orin Nano.

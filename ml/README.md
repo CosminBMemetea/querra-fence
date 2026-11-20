@@ -10,21 +10,29 @@ trained, how it scored offline and in live flights, and why it is or is not used
 | [models.json](models.json) | **Model registry.** One entry per model: status, data, code commit, training, scores, live results, sha256 of every file |
 | [datasets.json](datasets.json) | **Dataset registry.** Generator command and commit, look, seeds, splits and the role of each split (train / val / test) |
 | [runs/](runs) | **Run records** from model-v0.4 on: training arguments, scores per epoch, data mix, held-out scores, live flights, engine build |
+| [benchmark/](benchmark) | **The shared benchmark** scored for every model: 9 held-out sets ([heldout.json](benchmark/heldout.json)) and the recorded mission replay ([mission_replay.json](benchmark/mission_replay.json)) |
 | [tools/model_registry.py](../tools/model_registry.py) | Validates both registries, writes the table below, checks local files against the hashes |
+| [tools/model_charts.py](../tools/model_charts.py) | Draws the two charts below from `models.json` and the git tags |
+| [docs/release-notes/](../docs/release-notes) | The text of every GitHub release; [tools/release_notes.py](../tools/release_notes.py) checks and publishes it |
+
+![Fence detector: how each model scored](../docs/img/model-evolution.png)
 
 ## Models
 
 <!-- registry:start -->
-| Model | Status | Date | Trained on | Test mAP50 classic / rich | `wire_break` recall classic / rich | Live classic: faults, false alerts | Live rich | Run |
-|---|---|---|---|---|---|---|---|---|
-| **model-v0.4** | live-sim | 2026-11-20 | 7,200 frames, 4 datasets | 0.938 / 0.938 | 0.69 / 0.68 | 3 of 3, 13 | 3 of 3, 6 | [model-v0.4](runs/model-v0.4) |
-| **model-v0.3** | default | 2026-11-19 | 4,800 frames, 2 datasets | 0.911 / 0.71 | 0.61 / 0.14 | 3 of 3, 5 | 1 of 3, 0 | – |
-| **model-v0.2** | retired | 2026-11-19 | 3,500 frames, 1 dataset | 0.897 / – | 0.42 / – | 3 of 3, 385 false frames | – | – |
-| **model-v0.1** | retired | 2026-11-19 | 3,500 frames, 1 dataset | – / – | – / – | 2 of 3 (60 s flight, F3 not reached), 72 false frames | – | – |
+| Model | Status | Date | Trained on | Test mAP50 classic / rich | `wire_break` recall classic / rich | Mission replay: faults, false alerts | Live classic | Live rich | Run |
+|---|---|---|---|---|---|---|---|---|---|
+| **model-v0.4** | live-sim | 2026-11-20 | 7,200 frames, 4 datasets | 0.938 / 0.938 | 0.69 / 0.68 | 3 of 3, 12 | 3 of 3, 13 | 3 of 3, 6 | [model-v0.4](runs/model-v0.4) |
+| **model-v0.3** | default | 2026-11-19 | 4,800 frames, 2 datasets | 0.911 / 0.71 | 0.61 / 0.14 | 3 of 3, 6 | 3 of 3, 5 | 1 of 3, 0 | – |
+| **model-v0.2** | retired | 2026-11-19 | 3,500 frames, 1 dataset | 0.897 / 0.677 | 0.42 / 0.03 | 3 of 3, 11 | 3 of 3, 385 false frames | – | – |
+| **model-v0.1** | retired | 2026-11-19 | 3,500 frames, 1 dataset | 0.693 / 0.638 | 0.18 / 0.16 | 0 of 3, 2 | 2 of 3 (60 s flight, F3 not reached), 72 false frames | – | – |
 <!-- registry:end -->
 
 - **Test:** the held-out farms with seeds 140–142 in each world look. These farms are never used for training or for
   picking an epoch.
+- **Mission replay:** the recorded classic mission flight (1,986 frames from the camera stream) through each model and
+  the live confirmation, 5 of 8 frames at conf ≥ 0.7. It is the same input for every model, so it is the fairest
+  comparison of false alerts. model-v0.1 is scored from its ONNX export, because its `.pt` was not kept.
 - **Live:** one inspection flight over the mission pasture. Gazebo streams the camera to the Jetson, which runs the
   TensorRT engine with 5-of-8 GPS confirmation (conf ≥ 0.7) and places alerts with PX4's own pose. An alert is a real
   fault when its class matches one of F1–F3 within 15 m.
@@ -32,6 +40,30 @@ trained, how it scored offline and in live flights, and why it is or is not used
   - `default`: what the system uses unless told otherwise (the ROS 2 detector, the replay demo, field mode).
   - `live-sim`: used for live Gazebo flights (`ros.sh demo tcp://…`).
   - `retired`: kept for comparison.
+
+## Releases
+
+![Releases: the platform and the fence detector models](../docs/img/release-map.png)
+
+One repository, two release tracks:
+
+| Track | Tag | Title | Notes sections |
+|---|---|---|---|
+| Platform (simulation, Jetson, ROS 2, panel) | `vX.Y.Z` | `vX.Y.Z · <theme>` | **Models:** line, Highlights, (Measured), (Architecture), Install or run, Known limits, (Files) |
+| Fence detector | `model-vX.Y` | `model-vX.Y · <theme>` | Evolution chart, role table, What changed, Scores, In flight on the Jetson, Known limits, Files |
+
+- The release text lives in `docs/release-notes/<tag>.md`. The first line is the title.
+- Images are pinned to a commit, so a release page never changes when `main` does.
+- Files are listed with their SHA-256. Model weights are attached to the model release only; TensorRT engines are
+  built on the Jetson.
+- A platform release says which model it uses. A model release says from which platform release it is used.
+- Tags are never moved. Only titles and notes are edited.
+
+```bash
+python3 tools/release_notes.py              # check every notes file against the rules above
+python3 tools/release_notes.py --apply      # set the title and notes of every GitHub release (gh)
+python3 tools/release_notes.py --verify     # compare GitHub with the files
+```
 
 ## How a model is made
 
@@ -50,9 +82,12 @@ trained, how it scored offline and in live flights, and why it is or is not used
    `./ros.sh demo tcp://MAC:5601 px4:=true refly:=true engine:=/models/<engine>`.
    Offline scores alone are not enough: model-v0.4 scored better offline and still raised more false alerts on the
    classic mission.
-7. **Record and decide.** Copy the run record to `runs/model-vX.Y/`. Add the model to `models.json` with its hashes
-   (`shasum -a 256`) and a status. Run `python3 tools/model_registry.py --write`, update the retraining log and the
-   model card, and attach `.pt`, `.onnx` and `classes.json` to the GitHub release `model-vX.Y`.
+7. **Record and decide.** Copy the run record to `runs/model-vX.Y/`. Score the new model on the shared benchmark and add
+   it to `benchmark/`. Add the model to `models.json` with its hashes (`shasum -a 256`), a status and a one-line
+   `summary`. Run `python3 tools/model_registry.py --write` and `tools/model_charts.py`, and update the retraining log
+   and the model card.
+8. **Release.** Write `docs/release-notes/model-vX.Y.md`, then publish `model-vX.Y` with `.pt`, `.onnx` and
+   `classes.json` attached and `--latest=false`, so the platform release stays "Latest".
 
 ```bash
 python3 tools/model_registry.py                          # validate and print the table
