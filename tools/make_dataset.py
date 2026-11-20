@@ -7,6 +7,7 @@ grabs the rendered frame and projects the known 3D geometry into it to write YOL
 
 Classes: 0 post, 1 wire, 2 wire_break, 3 fallen_post, 4 branch, 5 cow, 6 sheep
 Run with tools/make_dataset.sh (Gazebo Python env). Output: $QF_DATASET (default ~/querra-data/fence_yolo)
+--look rich renders the rich world (sky, textured grass, hills) with a random sun, fill light and grass tint.
 Occlusion is ignored (a post behind a tree keeps its box); boxes come from dense 3D samples.
 """
 import argparse
@@ -29,10 +30,11 @@ sys.path.insert(0, os.path.join(ROOT, "sim"))
 import geo  # noqa: E402
 import gen_world  # noqa: E402
 
-# The detector (model-v0.1..v0.3) was trained on the original flat-green world, and write_world() below edits that
-# world's light and ground XML by exact string. Keep the dataset on the "classic" look; a dataset in the "rich" look
-# needs its own lighting/ground randomisation first.
+# World look (--look, or GARDIAN_DATASET_LOOK). "classic" (default) is the flat-green world model-v0.1..v0.3 were trained
+# on; its light and ground are randomised by exact-string edits of the generated XML, so old datasets stay reproducible.
+# "rich" randomises the sun, the sky fill, the ambient light and the grass tint through gen_world's templates (v0.4).
 gen_world.LOOK = os.environ.get("GARDIAN_DATASET_LOOK", "classic")
+RICH_TEMPLATES = (gen_world.SCENE_RICH, gen_world.SUN_RICH, gen_world.GROUND_TINT, gen_world.GROUND_MESH)
 
 from gz.transport13 import Node  # noqa: E402
 from gz.msgs10.image_pb2 import Image  # noqa: E402
@@ -47,7 +49,7 @@ WORLD = "pasture"
 
 
 # ---------------------------------------------------------------- layouts
-STYLE = {"v": "v1", "mission": False}
+STYLE = {"v": "v1", "mission": False, "refly": 0.2}
 DEAD_COLOURS = {"grey": (0.35, 0.33, 0.30), "live": None, "dull": (0.62, 0.58, 0.45), "dark": (0.22, 0.22, 0.22)}
 
 
@@ -137,7 +139,7 @@ def random_layout(seed):
                 used.add(k)
                 return k
         return None
-    for i in range(rnd.randint(3, 4) if STYLE["v"] == "v2" else rnd.randint(2, 3)):
+    for i in range(rnd.randint(3, 4) if STYLE["v"] in ("v2", "v3") else rnd.randint(2, 3)):
         k = pick()
         if k is not None:
             faults.append({"id": "B%d" % i, "type": "wire_break", "segment": k, "strand": rnd.randint(0, 1)})
@@ -150,7 +152,7 @@ def random_layout(seed):
         if k is not None:
             faults.append({"id": "T%d" % i, "type": "branch_short", "segment": k})
     cfg["faults"] = faults
-    if STYLE["v"] == "v2":
+    if STYLE["v"] in ("v2", "v3"):
         cfg["_render"] = {"dead": rnd.choice(["grey", "grey", "live", "live", "dull", "dark"]),
                           "break_styles": {str(f["segment"]): rnd.choice(["hang", "ground", "one_end"]) for f in faults if f["type"] == "wire_break"}}
     else:
@@ -161,16 +163,48 @@ def random_layout(seed):
     light = dict(elev=rnd.uniform(25, 80), azim=rnd.uniform(0, 360), intensity=rnd.uniform(0.7, 1.35),
                  ambient=rnd.uniform(0.35, 0.7), tint=rnd.uniform(-0.08, 0.08),
                  ground=(rnd.uniform(0.25, 0.42), rnd.uniform(0.38, 0.52), rnd.uniform(0.12, 0.24)))
+    if gen_world.look() == "rich":  # own draws, so classic layouts keep their exact random sequence
+        light.update(elev=rnd.uniform(18, 72), intensity=rnd.uniform(0.9, 1.45), fill=rnd.uniform(0.1, 0.35),
+                     ambient=rnd.uniform(0.36, 0.56), tint=rnd.uniform(-0.06, 0.06),
+                     ground=(rnd.uniform(0.80, 1.0), rnd.uniform(0.85, 1.0), rnd.uniform(0.70, 1.0)))
     return cfg, light
+
+
+def rich_light(light):
+    """Sets gen_world's rich-look sky, sun, fill light and grass tint for one layout (None: the defaults)."""
+    scene, sun, tint, _ = RICH_TEMPLATES
+    if light is not None and light.get("elev") is not None:
+        el, az = math.radians(light["elev"]), math.radians(light["azim"])
+        d = (-math.cos(el) * math.cos(az), -math.cos(el) * math.sin(az), -math.sin(el))
+        fd = (-d[0] * 0.7, -d[1] * 0.7, -0.75)  # the fill comes from the side of the sky opposite the sun
+        a, t = light["ambient"], light["tint"]
+        scene = scene.replace("<ambient>0.46 0.48 0.52 1</ambient>", "<ambient>%.2f %.2f %.2f 1</ambient>" % (a + t, a + 0.02, a + 0.06 - t))
+        sun = sun.replace("<intensity>1.25</intensity>", "<intensity>%.2f</intensity>" % light["intensity"])
+        sun = sun.replace("<direction>0.55 0.42 -0.62</direction>", "<direction>%.3f %.3f %.3f</direction>" % d)
+        sun = sun.replace("<intensity>0.25</intensity>", "<intensity>%.2f</intensity>" % light["fill"])
+        sun = sun.replace("<direction>-0.4 -0.5 -0.75</direction>", "<direction>%.3f %.3f %.3f</direction>" % fd)
+        tint = "%.3f %.3f %.3f 1" % light["ground"]
+        assert scene != RICH_TEMPLATES[0] and sun.count("<intensity>") == 2, "gen_world rich templates changed"
+    gen_world.SCENE_RICH, gen_world.SUN_RICH, gen_world.GROUND_TINT = scene, sun, tint
 
 
 def write_world(cfg, light, path):
     gen_world.geo.load_config = lambda path=None: cfg
     gen_world.OUT = path
     gen_world.build_fence = lambda fence, gate_open=False: build_fence_v2(fence, cfg["_render"], gate_open)
+    rich = gen_world.look() == "rich"
+    if rich:  # every layout gets its own terrain mesh next to its world (the main simulation's mesh is not touched)
+        gen_world.GROUND_MESH = os.path.splitext(path)[0] + "_ground.obj"
+        rich_light(light)
     gen_world.main()
     s = open(path).read()
     s = re.sub(r"\s*<include>\s*<uri>model://x500_fence</uri>.*?</include>", "", s, flags=re.S)
+    if rich:
+        s = s.replace("<uri>model://pasture_ground/meshes/ground.obj</uri>", "<uri>file://%s</uri>" % gen_world.GROUND_MESH)
+        s = s.replace("  </world>", CAM_XML + "\n  </world>")
+        with open(path, "w") as f:
+            f.write(s)
+        return
     if light is None:  # mission world: keep the default sun and ground
         light = dict(elev=None)
     if light["elev"] is None:
@@ -261,9 +295,10 @@ def ground_truth(cfg):
                 u = np.random.default_rng(0).normal(size=(60, 3))
                 pts.append(c + 0.75 * u / np.linalg.norm(u, axis=1)[:, None])
             objs.append(("branch", np.vstack(pts), 0.4))
+    cow_top = 1.45 if gen_world.look() == "rich" else 1.6  # the rich cow has no box-shaped head and horns
     for a in geo.herd_layout(cfg, f):
         if a["kind"] == "cow":
-            pts = box_points(a["x"], a["y"], a["yaw"], (-1.05, 1.55), (-0.4, 0.4), (0, 1.6))
+            pts = box_points(a["x"], a["y"], a["yaw"], (-1.05, 1.55), (-0.4, 0.4), (0, cow_top))
         else:
             pts = box_points(a["x"], a["y"], a["yaw"], (-0.62, 0.8), (-0.36, 0.36), (0, 1.05))
         objs.append((a["kind"], pts, 0.45))
@@ -315,9 +350,38 @@ def labels_for(objs, c, R):
     return out
 
 
+def tree_spots(cfg, f):
+    """Trees next to the fence (gen_world): the tree of each branch fault and the three shade trees in the paddock."""
+    cx = sum(p[0] for p in f.poly) / len(f.poly)
+    cy = sum(p[1] for p in f.poly) / len(f.poly)
+    out = [(cx + 8, cy + 10), (cx + 13, cy + 5), (cx + 4, cy + 15)]
+    for ft in cfg["faults"]:
+        if ft["type"] == "branch_short":
+            ax, ay, _ = f.fault_anchor(ft)
+            ox, oy = f.fault_out(ft)
+            out.append((ax + ox * 4.0, ay + oy * 4.0))
+    return out
+
+
 def sample_pose(rnd, f, cfg, animals):
     P = f.posts
-    if STYLE["mission"] or rnd.random() < (0.6 if STYLE["v"] == "v2" else 0.45):  # like the inspection flight: outside the fence, flying along it
+    if STYLE["v"] == "v3" and not STYLE["mission"] and rnd.random() < STYLE["refly"]:
+        # like the re-fly hover (fence_refly): ~6 m up, stopped alt/tan(55 deg) short of an alert, from any direction
+        if cfg["faults"] and rnd.random() < 0.7:
+            tx, ty, _ = f.fault_anchor(rnd.choice(cfg["faults"]))
+        else:  # the same look at a sound stretch of fence (a false alert being re-checked)
+            p = rnd.choice(P)
+            tx, ty = p["x"], p["y"]
+        trees = tree_spots(cfg, f)
+        for _ in range(20):  # a drone does not hover inside a tree crown
+            x0, y0 = tx + rnd.uniform(-1.5, 1.5), ty + rnd.uniform(-1.5, 1.5)
+            alt, pitch, yaw = rnd.uniform(4.5, 8.0), math.radians(rnd.uniform(48, 62)), rnd.uniform(-math.pi, math.pi)
+            dist = alt / math.tan(pitch)
+            x, y = x0 - dist * math.cos(yaw), y0 - dist * math.sin(yaw)
+            if all(math.hypot(x - a, y - b) > 6.5 for a, b in trees):
+                break
+        return x, y, alt, math.radians(rnd.uniform(-4, 4)), pitch, yaw
+    if STYLE["mission"] or rnd.random() < (0.6 if STYLE["v"] in ("v2", "v3") else 0.45):  # like the inspection flight: outside the fence, flying along it
         k = rnd.randrange(len(P) - 1)
         a, b = P[k], P[k + 1]
         t = rnd.random()
@@ -447,8 +511,8 @@ def run_layout(li, seed, n_frames, split, out, args):
             gz.kill()
         subprocess.run(["pkill", "-f", wpath])
         log.close()
-    print("[dataset] layout %d (%s, seed %d): %d frames in %.0f s, faults %s, light elev %.0f, boxes %s" % (
-        li, split, seed, saved, time.time() - t0, [ft["type"] for ft in cfg["faults"]], (light or {}).get("elev") or 0,
+    print("[dataset] layout %d (%s, %s, seed %d): %d frames in %.0f s, faults %s, light elev %.0f, boxes %s" % (
+        li, split, gen_world.look(), seed, saved, time.time() - t0, [ft["type"] for ft in cfg["faults"]], (light or {}).get("elev") or 0,
         dict(zip(CLASSES, counts))), flush=True)
     return counts
 
@@ -462,10 +526,13 @@ def main():
     ap.add_argument("--seed", type=int, default=100)
     ap.add_argument("--start", type=int, default=0)
     ap.add_argument("--settle", type=int, default=3, help="frames to wait after moving the camera")
-    ap.add_argument("--style", choices=("v1", "v2"), default="v1", help="v2: 3-4 breaks, varied dead-wire colour, varied break shapes, more flight-like poses")
+    ap.add_argument("--style", choices=("v1", "v2", "v3"), default="v1", help="v2: 3-4 breaks, varied dead-wire colour, varied break shapes, more flight-like poses; v3: v2 plus re-fly hover poses (4.5-8 m, see --refly-share)")
+    ap.add_argument("--refly-share", type=float, default=0.2, help="v3: share of re-fly hover poses (1.0 for a re-fly test set)")
+    ap.add_argument("--look", choices=("classic", "rich"), default=gen_world.LOOK, help="world look (default classic, or GARDIAN_DATASET_LOOK)")
     ap.add_argument("--split", choices=("train", "val", "test"), help="force every layout into this split")
     ap.add_argument("--mission-world", action="store_true", help="the real fence.json pasture with flight-like poses only (evaluation)")
     args = ap.parse_args()
+    gen_world.LOOK = args.look
     for d in ("images/train", "images/val", "images/test", "labels/train", "labels/val", "labels/test"):
         os.makedirs(os.path.join(args.out, d), exist_ok=True)
     with open(os.path.join(args.out, "data.yaml"), "w") as fh:
@@ -473,7 +540,7 @@ def main():
                  "".join("  %d: %s\n" % (i, c) for i, c in enumerate(CLASSES)))
     for li in range(args.start, args.layouts):
         split = args.split or ("val" if li >= args.layouts - args.val_layouts else "train")
-        STYLE.update(v=args.style, mission=args.mission_world)
+        STYLE.update(v=args.style, mission=args.mission_world, refly=args.refly_share)
         for attempt in range(3):
             try:
                 run_layout(li, args.seed + li, args.frames, split, args.out, args)

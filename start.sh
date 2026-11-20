@@ -13,7 +13,7 @@
 #   --share               guard mode: publish the RTSP streams on the local network (for the Jetson)
 #   --lang pl             terminal and report language: en (default), ro, pl, pt, de, es, hr, bg, da (or GARDIAN_LANG)
 #   --look classic        the original flat green world instead of the default "rich" look (or GARDIAN_LOOK);
-#                         use it for live detector tests: model-v0.3 was trained on the classic look
+#                         model-v0.4 sees both looks (ros.sh demo tcp:// uses it); model-v0.3 knows only classic
 #
 # Ctrl+C or ./stop.sh stops everything.
 set -u

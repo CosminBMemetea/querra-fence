@@ -1,6 +1,7 @@
 """Trains the fence detector (YOLO11n) on the auto-labelled Gazebo dataset and exports ONNX for the Jetson.
 
     python tools/train_yolo.py [--epochs 25] [--device cpu|mps] [--data ~/querra-data/fence_yolo/data.yaml]
+    python tools/train_yolo.py --resume ~/querra-data/train/<name>/weights/last.pt   (after Ctrl+C / a pause)
     (needs: pip install ultralytics onnx onnxslim)
 
 Output: ~/querra-data/train/<name>/weights/best.pt and best.onnx (input 1x3x416x640, for 640x400 frames).
@@ -22,11 +23,15 @@ ap.add_argument("--cache", default=False, help="ram to cache images (needs ~4 GB
 ap.add_argument("--project", default=os.path.expanduser("~/querra-data/train"))
 ap.add_argument("--name", default="fence-yolo11n")
 ap.add_argument("--export-only", help="path to best.pt: skip training, only validate + export")
+ap.add_argument("--resume", help="path to an interrupted run's weights/last.pt: continue it with its own settings")
 args = ap.parse_args()
 
 project = args.project
 if args.export_only:
     best = args.export_only
+elif args.resume:  # same data, epochs and optimizer state as the interrupted run
+    YOLO(args.resume).train(resume=True)
+    best = os.path.join(os.path.dirname(args.resume), "best.pt")
 else:
     model = YOLO(args.model)
     model.train(data=args.data, epochs=args.epochs, imgsz=args.imgsz, batch=args.batch, device=args.device,
