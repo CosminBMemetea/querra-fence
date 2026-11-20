@@ -85,7 +85,7 @@ Resultatet af eksempelflyvningen i [`docs/sample-report`](docs/sample-report/sam
 
 <p>
   <img src="docs/media/dronecam-F1.jpg" width="49%" alt="Den øverste tråd brudt, set fra dronen">
-  <img src="docs/media/dronecam-V13.jpg" width="49%" alt="Undsluppet ko ved den brudte tråd">
+  <img src="docs/media/dronecam-S10.jpg" width="49%" alt="Væltet pæl og et undsluppet får uden for hegnet">
 </p>
 
 **De tre fejl på jorden.**
@@ -175,20 +175,23 @@ Detaljer, ledningsføring og JSON/SSE-API'et står i [radar/README.md](radar/REA
 | Sti | Rolle |
 |---|---|
 | `fence.json` | Den eneste kilde til sandhed: hegnets polygon, pæle, fejl, flok, undslupne dyr, flyve- og kameraindstillinger |
-| `sim/gen_world.py` | Genererer Gazebo-verdenen: tostrenget hegn med isoleret låge og hegnsapparat, fejl, træer, stald, flok |
+| `sim/gen_world.py` | Genererer Gazebo-verdenen: tostrenget hegn med isoleret låge og hegnsapparat, fejl, træer, gårdsplads, flok; et "rich"-look (himmel, græs med tekstur, bakker) eller det oprindelige "classic" |
 | `models/x500_fence` | PX4's X500 plus et inspektionskamera på 640×400 ved 15 fps, vinklet 55° nedad, lettere end standardkameraet på 1280×960 |
 | `sim/mission.py` | pymavlink: PX4-parametre for blød flyvning, upload af missionen, armering som GCS, detektor, rapport |
 | `sim/director.py` | Gazebo-Python: græssende og vandrende dyr, følgekamera, planlagt rute og detektionsmarkører |
 | `sim/geo.py` | Fælles geometri: pæle, fejlenes placering, ydre rute, punkt i polygon, lokal ⇄ GPS, spændingsmodel |
 | `sim/report.py` | HTML-rapport med SVG-kort, spændingsprofil og en sprogmenu (ni sprog) |
 | `sim/i18n.py` | Hver meddelelse et menneske læser, på ni sprog (EN, RO, PL, PT, DE, ES, HR, BG, DA) |
-| `tools/` | Optagelse af demo, mediegenerator, scenarieoptager, skrivebordsstarter |
+| `tools/` | Optagelse af demo, mediegenerator, scenarieoptager, skrivebordsstarter, græsteksturer (`make_textures.py`), stillbilleder (`snap_world.sh`) |
 | `ground/`, `brain/` | Jordstationens simulerede node; Jetson-hjernen, der svarer på spørgsmål om det, den ser |
 | `radar/` | LD2450 mmWave-radar på Jetsonen: live-webvisning og dens Debian-pakke |
 
 ## Konfiguration
 
 Hele scenariet ligger i `fence.json`. Ret det og start igen; verdenen genereres på ny.
+Standard-looket "rich" tilføjer himmel, lav sol, græs med tekstur, bakker og en gårdsplads, og folden forbliver flad.
+`"look": "classic"` i `fence.json` (eller `GARDIAN_LOOK=classic`) henter den oprindelige flade, grønne verden
+tilbage, som detektorens træningsdata stadig bruger.
 
 {{JSON}}
 
@@ -242,7 +245,6 @@ Rovdyrsovervågning om natten (termisk kamera og radar ved lågen) er planlagt; 
 
 - Simuleringen taler ni sprog (`--lang pl`, `--lang de`, …). Logs er altid på engelsk. I JSON-dataene gemmes tekst, som
   et menneske læser, på alle sprog.
-- Demobillederne i `docs/media` har indtil videre rumænske etiketter; `./start.sh demo` genskaber dem på engelsk.
 - Linux er endnu ikke testet. Scripterne forventer PX4's Gazebo-miljø til macOS (`Tools/setup/macos/.pixi`) og åbner
   rapporten med `open`.
 - Logs fra hver kørsel ligger i `run/`: `mission.log`, `px4.log`, `gz_server.log`, `director.log`.

@@ -193,8 +193,28 @@ strand of the same fence run side by side, or swap at a post. From 12 m that loo
 farms taught the general case (validation and test improved a lot). They did not cover this exact look: mission
 lighting and a dead strand running for hundreds of metres.
 
+### Domain check: the "rich" world (2026-11-20)
+
+The simulation got a nicer default look: sky, a low afternoon sun, textured grass, hills, a farmyard and rounder
+animals. The ground's average colour in the inspection camera was matched to the classic world: about (133, 154, 89)
+against (141, 163, 104). The texture, the normal map and the shadows still differ.
+
+The same live chain (Gazebo → LAN → Jetson TensorRT v0.3 → 5-of-8 confirmation, PX4 pose) was run over one mission in
+each look:
+
+| World | Real faults alerted | False alerts |
+| --- | --- | --- |
+| classic | 3 of 3 (2.4 / 3.0 / 4.2 m) | 5 |
+| rich | 1 of 3 (branch, 4.0 m) | 0 |
+
+The model has never seen texture on the ground. It misses the broken wire and the fallen post, and it stops raising
+the false broken wire. This is a small sim-to-sim version of the sim-to-real gap. The cure is the same: train on
+varied looks.
+
 ## v0.4 · planned
 
+- **Both looks in the training data.** Generate frames in the classic and the rich world (`GARDIAN_DATASET_LOOK=rich`
+  once `write_world()` randomises the rich sun and ground), and keep a held-out set in each look.
 - **Hard negatives from flights.** Record missions over new farm seeds (never the test seeds). Add every confident
   false `wire_break` frame to the training data with its true labels.
 - **Live and dead strands side by side** for long runs, and more lighting set-ups.

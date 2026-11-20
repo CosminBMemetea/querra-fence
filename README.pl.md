@@ -146,7 +146,7 @@ policzone **9 z 24 zwierząt** (przelot po obwodzie widzi tylko 10–15 m w gł�
 
 <p>
   <img src="docs/media/dronecam-F1.jpg" width="49%" alt="Zerwany górny drut widziany z drona">
-  <img src="docs/media/dronecam-V13.jpg" width="49%" alt="Zbiegła krowa obok zerwanego drutu">
+  <img src="docs/media/dronecam-S10.jpg" width="49%" alt="Przewrócony słupek i zbiegła owca poza ogrodzeniem">
 </p>
 
 **Trzy usterki na ziemi.**
@@ -256,20 +256,23 @@ flowchart LR
 | Ścieżka | Rola |
 |---|---|
 | `fence.json` | Jedno źródło prawdy: wielokąt ogrodzenia, słupki, usterki, stado, zbiegłe zwierzęta, ustawienia lotu i kamery |
-| `sim/gen_world.py` | Generuje świat Gazebo: ogrodzenie dwużyłowe z izolowaną bramą i elektryzatorem, usterki, drzewa, stodoła, stado |
+| `sim/gen_world.py` | Generuje świat Gazebo: ogrodzenie dwużyłowe z izolowaną bramą i elektryzatorem, usterki, drzewa, zagroda, stado; wygląd „rich” (niebo, teksturowana trawa, wzgórza) albo pierwotny „classic” |
 | `models/x500_fence` | X500 od PX4 plus kamera inspekcyjna 640×400, 15 kl./s, pochylona 55° w dół; lżejsza niż fabryczna 1280×960 |
 | `sim/mission.py` | pymavlink: parametry PX4 do płynnego lotu, wgranie misji, uzbrajanie jako GCS, detektor, raport |
 | `sim/director.py` | Python dla Gazebo: pasące się i wędrujące zwierzęta, kamera śledząca, zaplanowana trasa i znaczniki wykryć |
 | `sim/geo.py` | Wspólna geometria: słupki, miejsca usterek, trasa na zewnątrz, punkt w wielokącie, lokalne ⇄ GPS, model napięcia |
 | `sim/report.py` | Raport HTML z mapą SVG, profilem napięcia i menu języków (dziewięć języków) |
 | `sim/i18n.py` | Każdy komunikat czytany przez człowieka, w dziewięciu językach (EN, RO, PL, PT, DE, ES, HR, BG, DA) |
-| `tools/` | Nagrywanie demo, generator mediów, rejestrator scenariuszy, skrót na pulpit |
+| `tools/` | Nagrywanie demo, generator mediów, rejestrator scenariuszy, skrót na pulpit, tekstury trawy (`make_textures.py`), zdjęcia sceny (`snap_world.sh`) |
 | `ground/`, `brain/` | Symulowany węzeł stacji naziemnej; „mózg” Jetsona, który odpowiada na pytania o to, co widzi |
 | `radar/` | Radar mmWave LD2450 na Jetsonie: podgląd w przeglądarce i pakiet Debiana |
 
 ## Konfiguracja
 
 Cały scenariusz jest w `fence.json`. Zmień go i uruchom ponownie; świat wygeneruje się od nowa.
+Domyślny wygląd „rich” dodaje niebo, nisko stojące słońce, teksturowaną trawę, wzgórza i zagrodę, a pastwisko
+zostaje płaskie. `"look": "classic"` w `fence.json` (albo `GARDIAN_LOOK=classic`) przywraca pierwotny płaski,
+zielony świat, którego nadal używają dane treningowe detektora.
 
 ```json
 "fence":   { "polygon": [[10, 6], [70, -4], [128, 14], ...], "post_spacing_m": 6.0, "strand_heights_m": [0.55, 1.0] },
@@ -329,7 +332,6 @@ Ochrona przed drapieżnikami w nocy (kamera termowizyjna i radar przy bramie) je
 
 - Symulacja mówi w dziewięciu językach (`--lang pl`, `--lang de`, …). Logi są zawsze po angielsku. W danych JSON
   tekst czytany przez człowieka jest zapisany we wszystkich językach.
-- Obrazy demo w `docs/media` mają obecnie rumuńskie podpisy; `./start.sh demo` generuje je ponownie po angielsku.
 - Linux nie jest jeszcze testowany. Skrypty oczekują środowiska Gazebo od PX4 dla macOS (`Tools/setup/macos/.pixi`)
   i otwierają raport poleceniem `open`.
 - Logi każdego uruchomienia są w `run/`: `mission.log`, `px4.log`, `gz_server.log`, `director.log`.

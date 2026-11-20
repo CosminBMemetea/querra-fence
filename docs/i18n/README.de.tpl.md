@@ -86,7 +86,7 @@ verloren, **9 von 24 Tieren** gezählt (ein Flug entlang des Zauns sieht nur 10 
 
 <p>
   <img src="docs/media/dronecam-F1.jpg" width="49%" alt="Gerissener oberer Draht, von der Drohne aus gesehen">
-  <img src="docs/media/dronecam-V13.jpg" width="49%" alt="Ausgebrochene Kuh neben dem gerissenen Draht">
+  <img src="docs/media/dronecam-S10.jpg" width="49%" alt="Umgefallener Pfahl und ein ausgebrochenes Schaf außerhalb des Zauns">
 </p>
 
 **Die drei Schäden am Boden.**
@@ -177,20 +177,23 @@ Details, Verkabelung und die JSON/SSE-API stehen in [radar/README.md](radar/READ
 | Pfad | Aufgabe |
 |---|---|
 | `fence.json` | Einzige Quelle der Wahrheit: Zaunpolygon, Pfähle, Schäden, Herde, ausgebrochene Tiere, Flug- und Kameraeinstellungen |
-| `sim/gen_world.py` | Erzeugt die Gazebo-Welt: Zweidrahtzaun mit isoliertem Tor und Weidezaungerät, Schäden, Bäume, Stall, Herde |
+| `sim/gen_world.py` | Erzeugt die Gazebo-Welt: Zweidrahtzaun mit isoliertem Tor und Weidezaungerät, Schäden, Bäume, Hof, Herde; Look „rich“ (Himmel, texturiertes Gras, Hügel) oder der ursprüngliche „classic“ |
 | `models/x500_fence` | Die X500 von PX4 plus eine Kontrollkamera mit 640×400 bei 15 fps, 55° nach unten geneigt, leichter als die serienmäßige 1280×960 |
 | `sim/mission.py` | pymavlink: PX4-Parameter für ruhigen Flug, Missions-Upload, Scharfschalten als GCS, Detektor, Bericht |
 | `sim/director.py` | Gazebo-Python: grasende und wandernde Tiere, Verfolgerkamera, geplante Route und Erkennungsmarker |
 | `sim/geo.py` | Gemeinsame Geometrie: Pfähle, Schadensorte, Außenroute, Punkt im Polygon, lokal ⇄ GPS, Spannungsmodell |
 | `sim/report.py` | HTML-Bericht mit SVG-Karte, Spannungsprofil und einem Sprachmenü (neun Sprachen) |
 | `sim/i18n.py` | Jede Meldung, die ein Mensch liest, in neun Sprachen (EN, RO, PL, PT, DE, ES, HR, BG, DA) |
-| `tools/` | Demo-Aufnahme, Medien-Generator, Szenario-Rekorder, Desktop-Starter |
+| `tools/` | Demo-Aufnahme, Medien-Generator, Szenario-Rekorder, Desktop-Starter, Grastexturen (`make_textures.py`), Standbilder (`snap_world.sh`) |
 | `ground/`, `brain/` | Simulierter Knoten der Bodenstation; das Jetson-Gehirn, das Fragen dazu beantwortet, was es sieht |
 | `radar/` | LD2450-mmWave-Radar am Jetson: Live-Webansicht und Debian-Paket |
 
 ## Konfiguration
 
 Das ganze Szenario steht in `fence.json`. Ändern und neu starten; die Welt wird neu erzeugt.
+Der Standard-Look „rich“ bringt Himmel, tiefe Sonne, texturiertes Gras, Hügel und einen Hof; die Koppel bleibt eben.
+`"look": "classic"` in `fence.json` (oder `GARDIAN_LOOK=classic`) holt die ursprüngliche flache, grüne Welt zurück,
+die die Trainingsdaten des Detektors weiter verwenden.
 
 {{JSON}}
 
@@ -244,7 +247,6 @@ Die nächtliche Raubtierwache (Wärmebildkamera und Radar am Tor) ist geplant; s
 
 - Die Simulation spricht neun Sprachen (`--lang pl`, `--lang de`, …). Logs sind immer auf Englisch. In den JSON-Daten
   wird Text, den ein Mensch liest, in allen Sprachen gespeichert.
-- Die Demo-Bilder in `docs/media` haben derzeit rumänische Beschriftungen; `./start.sh demo` erzeugt sie auf Englisch neu.
 - Linux ist noch nicht getestet. Die Skripte erwarten die macOS-Gazebo-Umgebung von PX4 (`Tools/setup/macos/.pixi`) und
   öffnen den Bericht mit `open`.
 - Die Logs jedes Laufs liegen in `run/`: `mission.log`, `px4.log`, `gz_server.log`, `director.log`.

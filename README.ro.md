@@ -144,7 +144,7 @@ Rezultatul zborului de exemplu din [`docs/sample-report`](docs/sample-report/sam
 
 <p>
   <img src="docs/media/dronecam-F1.jpg" width="49%" alt="Sârma de sus ruptă, văzută din dronă">
-  <img src="docs/media/dronecam-V13.jpg" width="49%" alt="Vacă evadată lângă sârma ruptă">
+  <img src="docs/media/dronecam-S10.jpg" width="49%" alt="Stâlp căzut și o oaie evadată în afara gardului">
 </p>
 
 **Cele trei defecte pe sol.**
@@ -254,20 +254,23 @@ flowchart LR
 | Cale | Rol |
 |---|---|
 | `fence.json` | Singura sursă de adevăr: poligonul gardului, stâlpii, defectele, turma, animalele evadate, setările de zbor și de cameră |
-| `sim/gen_world.py` | Generează lumea Gazebo: gard cu două fire, poartă izolată și energizator, defecte, copaci, grajd, turmă |
+| `sim/gen_world.py` | Generează lumea Gazebo: gard cu două fire, poartă izolată și energizator, defecte, copaci, curtea fermei, turmă; aspect „rich” (cer, iarbă texturată, dealuri) sau cel original „classic” |
 | `models/x500_fence` | X500 din PX4 plus o cameră de inspecție de 640×400, 15 fps, înclinată 55° în jos, mai ușoară decât cea standard de 1280×960 |
 | `sim/mission.py` | pymavlink: parametri PX4 pentru zbor lin, încărcarea misiunii, armare ca GCS, detector, raport |
 | `sim/director.py` | Python pentru Gazebo: animale care pasc și se plimbă, cameră care urmărește, traseul planificat și markerii detecțiilor |
 | `sim/geo.py` | Geometrie comună: stâlpi, locurile defectelor, traseul exterior, punct în poligon, local ⇄ GPS, modelul de tensiune |
 | `sim/report.py` | Raport HTML cu hartă SVG, profilul de tensiune și un meniu de limbi (nouă limbi) |
 | `sim/i18n.py` | Fiecare mesaj citit de un om, în nouă limbi (EN, RO, PL, PT, DE, ES, HR, BG, DA) |
-| `tools/` | Captură demo, generator de media, înregistrator de scenarii, lansator pe Desktop |
+| `tools/` | Captură demo, generator de media, înregistrator de scenarii, lansator pe Desktop, texturi de iarbă (`make_textures.py`), imagini statice (`snap_world.sh`) |
 | `ground/`, `brain/` | Nodul simulat al stației de sol; creierul Jetson care răspunde la întrebări despre ce vede |
 | `radar/` | Radarul mmWave LD2450 pe Jetson: pagină live și pachetul Debian |
 
 ## Configurare
 
 Tot scenariul stă în `fence.json`. Modifică-l și pornește din nou; lumea se regenerează.
+Aspectul implicit „rich” adaugă cer, un soare jos, iarbă texturată, dealuri și curtea fermei, iar padocul rămâne plat.
+`"look": "classic"` în `fence.json` (sau `GARDIAN_LOOK=classic`) readuce lumea originală, verde și plată, pe care
+o folosesc în continuare datele de antrenare ale detectorului.
 
 ```json
 "fence":   { "polygon": [[10, 6], [70, -4], [128, 14], ...], "post_spacing_m": 6.0, "strand_heights_m": [0.55, 1.0] },
@@ -326,7 +329,6 @@ Paza de prădători noaptea (cameră termală și radar la poartă) este planifi
 
 - Simularea vorbește nouă limbi (`--lang pl`, `--lang de`, …). Jurnalele sunt mereu în engleză. În datele JSON,
   textul citit de oameni este salvat în toate limbile.
-- Imaginile demo din `docs/media` au deocamdată etichete în română; `./start.sh demo` le regenerează în engleză.
 - Linux nu este încă testat. Scripturile așteaptă mediul Gazebo pentru macOS al PX4 (`Tools/setup/macos/.pixi`) și
   folosesc `open` pentru raport.
 - Jurnalele fiecărei rulări sunt în `run/`: `mission.log`, `px4.log`, `gz_server.log`, `director.log`.
