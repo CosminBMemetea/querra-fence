@@ -4,6 +4,9 @@
 #   ./ros.sh start [launch args]   start all nodes in the background, e.g. ./ros.sh start foxglove:=false
 #   ./ros.sh demo [tcp://MAC:5601] phase 2 demo: sensors + recorded (or live) Gazebo mission -> TensorRT detector
 #                                  -> 5-of-8 alert confirmation, Foxglove on :8765 (layout: foxglove/querra-layout.json)
+#   ./ros.sh demo tcp://MAC:5601 px4:=true
+#                                  phase 3: live simulation, alerts placed with PX4's own pose over uXRCE-DDS
+#                                  (on the Mac: ./start.sh headless, tools/cam_stream.sh, tools/uxrce_relay.py JETSON)
 #   ./ros.sh stop                  stop and remove the container
 #   ./ros.sh status                container state, nodes and topic rates (from the stats node)
 #   ./ros.sh record [SECONDS]      MCAP bag of all QUERRA topics to /ssd/querra/bags (no SECONDS: until Ctrl-C)
@@ -19,7 +22,7 @@ set -euo pipefail
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 NAME=querra-ros IMAGE=querra-ros:humble BAGS=/ssd/querra/bags
 WS=${QUERRA_ROS_WS:-$HERE}
-TOPICS="/camera/usb/image_raw/compressed /camera/csi/image_raw/compressed /gps/fix /gps/info /radar/targets /radar/points /radar/markers /tf_static /sim/camera/image_raw/compressed /sim/telemetry /sim/gps/fix /detections /detections/image /detections/latency_ms /fence/alerts /fence/alerts/updates /fence/alerts/fix /fence/alerts/count"
+TOPICS="/camera/usb/image_raw/compressed /camera/csi/image_raw/compressed /gps/fix /gps/info /radar/targets /radar/points /radar/markers /tf_static /sim/camera/image_raw/compressed /sim/telemetry /sim/gps/fix /detections /detections/image /detections/latency_ms /fence/alerts /fence/alerts/updates /fence/alerts/fix /fence/alerts/count /px4/telemetry /px4/gps/fix /fmu/out/vehicle_global_position /fmu/out/vehicle_local_position_v1 /fmu/out/vehicle_attitude /fmu/out/vehicle_status_v5"
 running() { [ "$(docker inspect -f '{{.State.Running}}' "$NAME" 2>/dev/null)" = true ]; }
 # LAN address for Foxglove: the source address of the default route (hostname -I can list docker0 or l4tbr0 first).
 lan_ip() { ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<NF;i++) if($i=="src"){print $(i+1); exit}}' | grep . || echo "$(hostname).local"; }
@@ -59,7 +62,8 @@ case "${1:-help}" in
       tcp://*) ;;
       /sim/*) [ -s "$SIM/${src#/sim/}/frames.jsonl" ] || { echo "no recording at $SIM/${src#/sim/} (frames.jsonl missing or empty)"; exit 1; } ;;
     esac
-    "$0" start detector:=sim sim_source:="$src"
+    "$0" start detector:=sim sim_source:="$src" "${@:3}"
+    case " ${*:3} " in *" px4:=true "*) echo "phase 3: micro-ROS agent on UDP 8888, alerts use /px4/telemetry (PX4's own pose)";; esac
     echo "demo: $src -> /sim/camera -> fence_detector (TensorRT) -> alert_confirm -> /fence/alerts"
     echo "Foxglove: open ws://$(lan_ip):8765 and import ros2/foxglove/querra-layout.json" ;;
   stop) docker rm -f "$NAME" >/dev/null 2>&1 && echo "stopped" || echo "not running"; rm -f "$WS/stats.json" ;;
@@ -99,6 +103,11 @@ PY
     port 2947 && ok "gpsd :2947" || bad "gpsd not reachable on :2947"
     curl -sf -m2 http://127.0.0.1:8077/health >/dev/null && ok "ld2450-radar service :8077" || bad "ld2450-radar service offline (sudo systemctl status ld2450-radar)"
     running && { port 8765 && ok "foxglove_bridge :8765" || bad "foxglove_bridge not listening"; }
+    docker run --rm --entrypoint test "$IMAGE" -x /opt/uros/install/micro_ros_agent/lib/micro_ros_agent/micro_ros_agent 2>/dev/null \
+      && ok "micro-ROS agent in the image (phase 3)" || bad "no micro-ROS agent in $IMAGE: ./ros.sh build"
+    if running && docker exec "$NAME" pgrep -f micro_ros_agent >/dev/null 2>&1; then
+      ss -lun 2>/dev/null | grep -q ':8888 ' && ok "uXRCE-DDS agent listening on UDP 8888" || bad "micro-ROS agent runs but UDP 8888 is not open"
+    fi
     # '|| true': under set -e/pipefail a failing df would otherwise end doctor before the remaining checks
     if mountpoint -q /ssd; then
       s=$(df -BG --output=avail /ssd 2>/dev/null | tail -1 | tr -dc 0-9) || true

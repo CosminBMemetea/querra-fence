@@ -240,7 +240,7 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
           <li><div class="h"><span data-i18n="in4">HLK-LD2450 radar</span> <span class="chip live" data-i18n="chip_live">live</span></div><small data-i18n="in4s">24 GHz mmWave, up to 3 moving targets, 6 m, ±60°, ~10 Hz</small></li>
           <li><div class="h"><span data-i18n="in5">Drone camera + telemetry</span> <span class="chip sim" data-i18n="chip_sim">sim</span></div><small data-i18n="in5s">X500 inspection camera and GPS, streamed from Gazebo to the Jetson</small></li>
           <li><div class="h"><span data-i18n="in6">Gate RGB, thermal, iToF + fence monitor</span> <span class="chip sim" data-i18n="chip_sim">sim</span></div><small data-i18n="in6s">the ground station's view of the gate and the fence voltage</small></li>
-          <li><div class="h"><span data-i18n="in7">Drone pose from PX4</span> <span class="chip plan" data-i18n="chip_phase3">phase 3</span></div><small data-i18n="in7s">uXRCE-DDS from the flight controller into ROS 2</small></li>
+          <li><div class="h"><span data-i18n="in7">Drone pose from PX4</span> <span class="chip sim" data-i18n="chip_sim">sim</span></div><small data-i18n="in7s">uXRCE-DDS from the flight controller into ROS 2; places every alert</small></li>
         </ul>
       </div>
       <div class="arrow" aria-hidden="true">→</div>
@@ -287,12 +287,13 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
           <li><b data-i18n="d4">Field control panel</b><small data-i18n="d4s">v0.3 · cameras, radar, GPS and data collection on a phone</small></li>
           <li><b data-i18n="d5">ROS 2 phases 1 and 2</b><small data-i18n="d5s">v0.4–v0.5 · sensors as topics, MCAP, Foxglove, detector and alerts in ROS 2</small></li>
           <li><b data-i18n="d6">Safe-fence launcher</b><small data-i18n="d6s">v0.6 · desktop app, new icon, reliability fixes, this page in English and Polish</small></li>
+          <li><b data-i18n="d7">PX4 ↔ ROS 2 (phase 3, part 1)</b><small data-i18n="d7s">v0.7 · PX4 over uXRCE-DDS into ROS 2 on the Jetson; alerts use the drone's own pose: real faults within 2.4–4.2 m</small></li>
         </ul>
       </div>
       <div class="lane next">
         <h3><span data-i18n="rm_next">Next</span> <span class="tag" data-i18n="rm_next_t">NOW</span></h3>
         <ul class="steps">
-          <li><b data-i18n="n1">PX4 ↔ ROS 2 (phase 3)</b><small data-i18n="n1s">uXRCE-DDS: alerts use the drone's own pose, and the Jetson can send it back to re-check a fault from low altitude</small></li>
+          <li><b data-i18n="n1">Re-fly a confirmed fault (phase 3, part 2)</b><small data-i18n="n1s">offboard setpoints over uXRCE-DDS: the Jetson sends the drone back, low over the fault, for a close-up</small></li>
           <li><b data-i18n="n2">Real fence data</b><small data-i18n="n2s">field collection is ready: real photos, labels and retraining to close the gap between simulation and reality</small></li>
           <li><b data-i18n="n3">Calibrated sensors</b><small data-i18n="n3s">camera calibration and the real mounting offsets of every sensor on the airframe</small></li>
         </ul>
@@ -347,7 +348,7 @@ const PL = {
   today_h2: "Od symulowanego lotu do potwierdzonego alertu",
   today_lead: "Wszystko poniżej działa już teraz. Lot to prawdziwy kod PX4 na symulowanej farmie, a mózg to prawdziwy NVIDIA Jetson z prawdziwymi czujnikami na biurku.",
   chip_sim_long: "symulacja", chip_onjetson: "na Jetsonie", chip_real: "prawdziwe czujniki",
-  chip_live: "na żywo", chip_sim: "symulacja", chip_plan: "planowane", chip_phase3: "faza 3",
+  chip_live: "na żywo", chip_sim: "symulacja", chip_plan: "planowane",
   c1_h: "Autonomiczna inspekcja ogrodzenia",
   alt_c1: "Kamera inspekcyjna mija zerwany drut, zbiegłe krowy są zaznaczone ramkami",
   c1_1: "PX4 Holybro X500 startuje, okrąża 414 m ogrodzenia na wysokości 12 m i ląduje, w około 2,5 minuty.",
@@ -380,7 +381,7 @@ const PL = {
   in4: "Radar HLK-LD2450", in4s: "mmWave 24 GHz, do 3 poruszających się celów, 6 m, ±60°, ~10 Hz",
   in5: "Kamera drona + telemetria", in5s: "kamera inspekcyjna X500 i GPS, przesyłane z Gazebo do Jetsona",
   in6: "RGB, termowizja i iToF przy bramie + monitor ogrodzenia", in6s: "widok stacji naziemnej na bramę i napięcie ogrodzenia",
-  in7: "Pozycja drona z PX4", in7s: "uXRCE-DDS z kontrolera lotu do ROS 2",
+  in7: "Pozycja drona z PX4", in7s: "uXRCE-DDS z kontrolera lotu do ROS 2; umieszcza każdy alert",
   br1s: "8 GB, JetPack 6.2, działa na miejscu, bez chmury",
   br2s: "w Dockerze na SSD; sprzętem zarządzają usługi (hub panelu, gpsd, usługa radaru)",
   br3: "Detektor ogrodzenia", br3s: "YOLO11n v0.3, TensorRT FP16, 7 klas: słupek, drut, zerwany drut, przewrócony słupek, gałąź, krowa, owca",
@@ -402,7 +403,8 @@ const PL = {
   d4: "Panel sterowania w terenie", d4s: "v0.3 · kamery, radar, GPS i zbieranie danych na telefonie",
   d5: "ROS 2, fazy 1 i 2", d5s: "v0.4–v0.5 · czujniki jako tematy, MCAP, Foxglove, detektor i alerty w ROS 2",
   d6: "Aplikacja Safe Fence", d6s: "v0.6 · aplikacja na pulpit, nowa ikona, poprawki niezawodności, ta strona po angielsku i po polsku",
-  n1: "PX4 ↔ ROS 2 (faza 3)", n1s: "uXRCE-DDS: alerty korzystają z pozycji samego drona, a Jetson może wysłać go z powrotem, by sprawdził usterkę z niskiej wysokości",
+  d7: "PX4 ↔ ROS 2 (faza 3, część 1)", d7s: "v0.7 · PX4 przez uXRCE-DDS do ROS 2 na Jetsonie; alerty korzystają z własnej pozycji drona: prawdziwe usterki w odległości 2,4–4,2 m",
+  n1: "Ponowny przelot nad potwierdzoną usterką (faza 3, część 2)", n1s: "punkty zadane offboard przez uXRCE-DDS: Jetson wysyła drona z powrotem, nisko nad usterkę, po zdjęcie z bliska",
   n2: "Prawdziwe dane z ogrodzeń", n2s: "zbieranie danych w terenie jest gotowe: prawdziwe zdjęcia, etykiety i ponowne trenowanie, by zmniejszyć różnicę między symulacją a rzeczywistością",
   n3: "Skalibrowane czujniki", n3s: "kalibracja kamery i rzeczywiste przesunięcia montażu każdego czujnika na ramie drona",
   l1: "Nocna ochrona przed drapieżnikami", l1s: "kamera termowizyjna i radar przy bramie; ostrzeżenie dla rolnika przed atakiem",

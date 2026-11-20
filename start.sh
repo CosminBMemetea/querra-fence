@@ -104,6 +104,9 @@ step "Starting the animals, follow camera and markers" "Pornesc animalele, camer
 echo $! > "$RUN/director.pid"; disown
 
 export PX4_SYS_AUTOSTART=4014 PX4_GZ_STANDALONE=1 PX4_GZ_WORLD=pasture PX4_GZ_MODEL_NAME=x500_fence
+# PX4's uXRCE-DDS client takes its DDS domain from ROS_DOMAIN_ID (px4-rc.uxrce_dds): use the Jetson's ROS 2 domain,
+# so /fmu/out/* reaches its nodes through tools/uxrce_relay.py (phase 3). Harmless when no agent listens.
+export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-42}"
 
 if [ "$MODE" = manual ]; then
   step "Starting PX4 (the pxh> console stays here)" "Pornesc PX4 (consola pxh> rămâne aici)"

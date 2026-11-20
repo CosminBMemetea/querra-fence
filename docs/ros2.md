@@ -28,7 +28,8 @@ flowchart LR
     DET["fence_detector<br/>YOLO11n v0.3 TensorRT FP16"]
     CONF["alert_confirm<br/>5 of 8 frames · 5 m · conf 0.7"]
     ST["querra_stats"]
-    XRCE["MicroXRCEAgent<br/>(phase 3)"]
+    XRCE["micro-ROS agent<br/>UDP 8888 (px4:=true)"]
+    PXP["px4_pose"]
   end
   subgraph TOP["Topics"]
     T1["/camera/{usb,csi}/image_raw[/compressed]"]
@@ -55,13 +56,13 @@ flowchart LR
   TS -- "telemetry" --> CONF
   CONF --> T5
   PX4["PX4 flight controller<br/>(TELEM / SITL UDP 8888)"] <--> XRCE <--> T6
-  T6 -. "phase 3: pose" .-> CONF
+  T6 --> PXP -- "/px4/telemetry" --> CONF
   T1 & T2 & T3 & TS & T4 & T5 --> BAG["rosbag2 MCAP<br/>/ssd/querra/bags"]
   T1 & T2 & T3 & TS & T4 & T5 --> FOX["foxglove_bridge<br/>ws://jetson:8765"]
   ST -. "stats.json" .-> HUB
 ```
 
-Solid lines run today. Dotted boxes marked phase 2 or 3 are planned. The panel's ROS 2 card reads `querra_stats`
+Solid lines run today; the PX4 link (micro-ROS agent and `px4_pose`) runs with `px4:=true`. The panel's ROS 2 card reads `querra_stats`
 (nodes and topic rates) and starts, stops and records through `ros2/ros.sh`.
 
 ## Phase 1: sensors on ROS 2 (done)
@@ -154,9 +155,65 @@ Next: field mode (`field.sh`) becomes a launch file plus `ros2 bag record`, and 
 
 ## Phase 3: PX4 over uXRCE-DDS
 
-- Run `MicroXRCEAgent` on the Jetson, connected to the flight controller's TELEM port (serial) or to the SITL
-  simulation (UDP 8888). PX4's `uxrce_dds_client` then publishes `/fmu/out/vehicle_global_position`,
-  `vehicle_attitude` and `vehicle_status` with `px4_msgs`.
-- Alerts use the vehicle's own position and attitude instead of the separate u-blox fix. Offboard setpoints from
-  `/fmu/in/trajectory_setpoint` let the Jetson re-fly a confirmed fault at low altitude for a closer look.
-- Test in Gazebo first with the same launch files, through the existing PX4 SITL setup on the Mac.
+Part 1, the drone's own pose for the alerts, is done in simulation. Part 2, re-flying a confirmed fault, is next.
+
+### How it works
+
+- **The agent.** The image contains the micro-ROS agent: a Micro-XRCE-DDS agent built against Humble's own Fast
+  DDS, so the container has a single DDS version. With `px4:=true` the launch file starts it on UDP 8888.
+  PX4's `uxrce_dds_client` connects to it and publishes `/fmu/out/*`.
+- **The messages.** `src/px4_msgs` is a minimal `px4_msgs` package: eight messages copied unchanged from the PX4
+  tree the simulation runs (v1.18 beta). A versioned message carries its version in the topic name:
+  - `/fmu/out/vehicle_global_position` (v0, no suffix);
+  - `/fmu/out/vehicle_local_position_v1`;
+  - `/fmu/out/vehicle_status_v5`.
+
+  See [src/px4_msgs/README.md](../ros2/src/px4_msgs/README.md). After a PX4 upgrade, copy the files again.
+- **`px4_pose`.** It turns the global position, the local position and the vehicle status into two topics:
+  - `/px4/telemetry` (`Telemetry`, source `px4`): position, altitude above the EKF origin, heading, ground speed and
+    the flight phase from the PX4 mode (takeoff, inspection, return, land, offboard, disarmed);
+  - `/px4/gps/fix` (`NavSatFix`), with the EKF's eph/epv as the covariance.
+
+  With `px4:=true`, `alert_confirm` places detections with `/px4/telemetry` instead of the simulator's
+  `/sim/telemetry`.
+- **SITL on the Mac.**
+  - PX4 SITL's client sends to 127.0.0.1:8888 (`UXRCE_DDS_AG_IP`). Instead of changing PX4 parameters,
+    `tools/uxrce_relay.py <jetson>` forwards those datagrams to the Jetson and the agent's replies back.
+  - PX4 passes `ROS_DOMAIN_ID` to the agent, and `start.sh` exports 42, the Jetson's domain.
+  - Nothing in the PX4 tree is changed.
+
+```bash
+# Mac (three terminals, or one script)
+python3 tools/uxrce_relay.py <jetson-ip>
+./start.sh headless                 # or ./start.sh with the Gazebo window
+tools/cam_stream.sh                 # once Gazebo is up
+# Jetson
+./ros.sh demo tcp://<mac-ip>:5601 px4:=true
+./ros.sh doctor                     # "uXRCE-DDS agent listening on UDP 8888"
+```
+
+### Result (2026-11-20, one full simulated inspection flight)
+
+| Check | Result |
+| --- | --- |
+| PX4 → relay → agent on the Jetson → ROS 2 | connected about 60 s after start (PX4 boot); `/px4/telemetry` at about 18 Hz once connected |
+| Flight phases seen from PX4 | inspection → return → disarmed |
+| PX4 pose vs the simulator's telemetry (1,916 pairs) | horizontal median 0.62 m, p95 1.77 m, max 2.21 m; altitude 0.05 m; heading 0.4° |
+| Real faults, alerts placed with PX4's pose | F1 broken wire at 2.4 m, F2 fallen post at 3.0 m, F3 branch at 4.2 m from the true position |
+| False alerts | 5 `wire_break` alerts 12–59 m from any fault: the detector's known false broken wire, not the pose |
+
+The 0.6 m median gap between the two poses is mostly timing. The simulator telemetry travels with the camera frame
+(about 0.1 s older at 5 m/s), and `/px4/telemetry` is the newest pose.
+
+### Next: re-fly a confirmed fault (part 2)
+
+- `px4_msgs` already has `OffboardControlMode`, `TrajectorySetpoint` and `VehicleCommand` (v1, on
+  `/fmu/in/vehicle_command_v1`).
+- The re-fly node:
+  1. takes a new `/fence/alerts` message;
+  2. waits for the mission to finish or pauses it;
+  3. streams the offboard heartbeat and a setpoint above the fault at low altitude, then switches to offboard;
+  4. takes a close-up and hands control back (RTL).
+- Test it in SITL first. It must not fight `sim/mission.py`, which flies the mission over MAVLink.
+- **Real flight controller:** run the agent on the TELEM serial port instead of UDP
+  (`micro_ros_agent serial --dev /dev/ttyTHS1 -b 921600`, with `UXRCE_DDS_CFG` set to that port on PX4).

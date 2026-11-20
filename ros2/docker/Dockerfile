@@ -4,6 +4,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       ros-humble-rosbag2-storage-mcap ros-humble-foxglove-bridge ros-humble-sensor-msgs-py \
       ros-humble-tf2-ros ros-humble-visualization-msgs python3-opencv python3-numpy python3-pil ros-humble-vision-msgs \
     && rm -rf /var/lib/apt/lists/*
+# Phase 3: micro-ROS agent, the Micro-XRCE-DDS agent built against Humble's own Fast DDS, so PX4's uXRCE-DDS
+# client reaches ROS 2 with no second DDS version in the container. There is no arm64 apt package; build from source.
+RUN apt-get update && apt-get install -y --no-install-recommends ros-humble-micro-ros-msgs git \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /opt/uros/src && git clone --depth 1 -b humble https://github.com/micro-ROS/micro-ROS-Agent.git /opt/uros/src/micro-ROS-Agent \
+    && . /opt/ros/humble/setup.sh && cd /opt/uros \
+    && colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release --event-handlers console_cohesion- \
+    && rm -rf /opt/uros/build /opt/uros/log /opt/uros/src
 ENV ROS_DOMAIN_ID=42 RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 COPY entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]

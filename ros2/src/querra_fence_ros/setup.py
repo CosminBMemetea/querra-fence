@@ -15,5 +15,6 @@ setup(
         "sim_camera = querra_fence_ros.sim_camera:main",
         "detector = querra_fence_ros.detector:main",
         "alerts = querra_fence_ros.alerts:main",
+        "px4_pose = querra_fence_ros.px4_pose:main",
     ]},
 )
