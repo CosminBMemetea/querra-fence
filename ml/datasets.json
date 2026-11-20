@@ -1,0 +1,103 @@
+{
+ "_info": "Dataset registry for the fence detector. Every dataset is synthetic and auto-labelled from Gazebo ground truth by tools/make_dataset.py (no hand labels). Images are not in git: they live on the training machine under ~/querra-data/<id> and can be regenerated with the command at the given code commit. Farm seed = --seed + layout number (default --seed 100), so layout 40 is always seed 140. Ids are the folder names. 'role' says how a split may be used: train, val (model selection) or test (never used for training or model selection).",
+ "datasets": [
+  {
+   "id": "fence_yolo",
+   "look": "classic",
+   "style": "v1",
+   "created": "2026-11-19",
+   "code": "b22c195",
+   "command": "tools/make_dataset.sh --layouts 12 --val-layouts 2 --frames 350",
+   "size": "104 MB",
+   "splits": {
+    "train": {"layouts": "0-9", "seeds": "100-109", "frames": 3500, "role": "train"},
+    "val": {"layouts": "10-11", "seeds": "110-111", "frames": 700, "role": "val"}
+   },
+   "notes": "Random farms: fence shape, post spacing, wire heights, 2-3 broken wires, 1-2 fallen posts, 1-2 branches, herd, sun, grass colour. Camera 5-20 m, tilt 35-80 deg. The dead strand after a break is always grey."
+  },
+  {
+   "id": "fence_yolo_v2",
+   "look": "classic",
+   "style": "v2",
+   "created": "2026-11-19",
+   "code": "513f162",
+   "command": "tools/make_dataset.sh --style v2 (layouts 20-29, 300 frames; tests: layouts 40-42, 250 frames; --mission-world layout 90, 400 frames)",
+   "size": "95 MB",
+   "splits": {
+    "train": {"layouts": "20-27", "seeds": "120-127", "frames": 2400, "role": "train"},
+    "val": {"layouts": "28-29", "seeds": "128-129", "frames": 600, "role": "val"},
+    "test": {"layouts": "40-42", "seeds": "140-142", "frames": 750, "role": "test"},
+    "test_mission": {"layouts": "90", "world": "fence.json (the mission pasture)", "frames": 400, "role": "test", "split_dir": "test", "prefix": "L90"}
+   },
+   "notes": "Targets the false broken wire: 3-4 breaks per farm, so long dead strands, drawn in random colours (grey, live yellow, dull, dark) and labelled wire. Three break shapes. 60% of the poses imitate the inspection flight."
+  },
+  {
+   "id": "fence_yolo_rich",
+   "look": "rich",
+   "style": "v3 (test: v2)",
+   "created": "2026-11-20",
+   "code": "fb6ff9f",
+   "command": "tools/make_dataset.sh --seed 100 --look rich --style v3 --start 200 --layouts 212 --split train --frames 300 (val: --start 212 --layouts 214; test: --style v2 --start 40 --layouts 43 --frames 250; mission: --mission-world --start 90 --layouts 91 --frames 400)",
+   "size": "1.7 GB",
+   "splits": {
+    "train": {"layouts": "200-211", "seeds": "300-311", "frames": 3600, "role": "train"},
+    "val": {"layouts": "212-213", "seeds": "312-313", "frames": 600, "role": "val"},
+    "test": {"layouts": "40-42", "seeds": "140-142", "frames": 750, "role": "test", "prefix": "L40,L41,L42"},
+    "test_mission": {"layouts": "90", "world": "fence.json (the mission pasture)", "frames": 400, "role": "test", "split_dir": "test", "prefix": "L90"}
+   },
+   "notes": "The rich world (textured grass, terrain, sky): random sun height and strength, sky fill, ambient light, grass tint, one terrain mesh per farm. The test farms use the same seeds as fence_yolo_v2's test, so the two looks are compared on the same farms and pose distribution (not frame-identical: empty frames are skipped)."
+  },
+  {
+   "id": "fence_yolo_v3c",
+   "look": "classic",
+   "style": "v3",
+   "created": "2026-11-20",
+   "code": "fb6ff9f",
+   "command": "tools/make_dataset.sh --seed 100 --look classic --style v3 --start 220 --layouts 224 --split train --frames 300",
+   "size": "29 MB",
+   "splits": {
+    "train": {"layouts": "220-223", "seeds": "320-323", "frames": 1200, "role": "train"}
+   },
+   "notes": "Classic look with the v3 poses: v2 plus 20% low re-fly hovers (4.5-8 m, pitch 48-62 deg, mostly at faults)."
+  },
+  {
+   "id": "fence_yolo_refly_classic",
+   "look": "classic",
+   "style": "v3, re-fly poses only",
+   "created": "2026-11-20",
+   "code": "fb6ff9f",
+   "command": "tools/make_dataset.sh --seed 100 --look classic --style v3 --refly-share 1 --start 50 --layouts 52 --split test --frames 200",
+   "size": "11 MB",
+   "splits": {
+    "test": {"layouts": "50-51", "seeds": "150-151", "frames": 400, "role": "test"}
+   },
+   "notes": "Close-ups like the re-fly hover (about 6 m), to score the verification step."
+  },
+  {
+   "id": "fence_yolo_refly_rich",
+   "look": "rich",
+   "style": "v3, re-fly poses only",
+   "created": "2026-11-20",
+   "code": "fb6ff9f",
+   "command": "tools/make_dataset.sh --seed 100 --look rich --style v3 --refly-share 1 --start 50 --layouts 52 --split test --frames 200",
+   "size": "142 MB",
+   "splits": {
+    "test": {"layouts": "50-51", "seeds": "150-151", "frames": 400, "role": "test"}
+   },
+   "notes": "The same farms and poses as fence_yolo_refly_classic, in the rich look."
+  },
+  {
+   "id": "mission-rec/m1",
+   "look": "classic",
+   "style": "recorded flight",
+   "created": "2026-11-19",
+   "code": "9b94252",
+   "command": "tools/cam_record.py during ./start.sh (the default mission over fence.json)",
+   "size": "19 MB",
+   "splits": {
+    "test": {"frames": 2535, "in_flight_frames": 1986, "role": "test"}
+   },
+   "notes": "The JPEG stream the Jetson receives (tools/cam_stream.py, 640x400), with the simulator's GPS and heading per frame. No boxes: tools/eval_mission.py scores it against the three known faults (F1-F3). The same recording is the ROS 2 replay demo on the Jetson (/ssd/querra/sim/m1)."
+  }
+ ]
+}

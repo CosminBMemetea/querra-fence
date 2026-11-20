@@ -1,5 +1,40 @@
 # Changelog
 
+## v0.10.0 · 2026-11-20 · model-v0.4 (both world looks) and a model registry
+
+- **model-v0.4**, fine-tuned from v0.3 on 7,200 frames: half in the rich look, half classic, with re-fly close-ups.
+  - **Held-out tests:**
+    - Rich look, test seeds: mAP50 0.710 → 0.938, broken-wire recall 0.14 → 0.68.
+    - Classic look, test seeds: 0.911 → 0.938.
+  - **Live on the Jetson (TensorRT FP16, 3.6 ms per frame):**
+    - Rich world: 3 of 3 faults with 6 false alerts, where v0.3 found 1 of 3.
+    - Classic mission: 13 false broken-wire alerts against v0.3's 5. They sit at corner posts and along the dead
+      strand. The offline tests did not show this.
+  - **Where each model runs:**
+    - v0.4 runs the live Gazebo flights.
+    - v0.3 stays the default: the ROS 2 detector, the classic replay demo and field mode.
+- **Model and dataset registry (`ml/`):**
+  - `models.json` lists every model from v0.1 to v0.4: status, data, code commit, training, offline and live
+    scores, and the sha256 of every file. The hashes were checked against the releases, the Mac and the Jetson.
+  - `datasets.json` holds the generator command and commit, seeds and splits. Test splits are marked, and the
+    validator refuses a model trained on one.
+  - `runs/model-v0.4/` keeps the arguments, scores per epoch, the data mix, held-out and replay scores, the live
+    flights alert by alert, and the engine build.
+  - `tools/model_registry.py` validates the registries, writes the table in `ml/README.md` and checks local model
+    files against the hashes.
+- **Tools:**
+  - `make_dataset.py --look rich` and `--style v3` (re-fly poses).
+  - `tools/mix_dataset.py` for training mixes.
+  - `tools/eval_sets.py` scores the held-out sets of both looks.
+  - `train_yolo.py --resume` continues a paused run.
+- **Jetson:**
+  - `ros.sh demo tcp://…` picks model-v0.4, and `engine:=` overrides it.
+  - `ros.sh doctor` checks both engines.
+  - The detector overlay names the model.
+  - The panel lists v0.4 for field mode.
+- **Docs:** the v0.4 section and the v0.5 plan in `docs/retraining-log.md`, an updated model card, and a map of where
+  the false alerts fall.
+
 ## v0.9.0 · 2026-11-20 · a nicer simulation: the "rich" look
 
 - **New default look** (`sim/gen_world.py`):

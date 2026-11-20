@@ -2,7 +2,8 @@
 
 This log follows the fence detector from version to version. Each entry records what we trained, how it scored, what it
 got wrong on the Jetson, and what we changed because of it. Model files are attached to the GitHub releases
-(`model-v0.x`). The model card is in [model-card.md](model-card.md).
+(`model-v0.x`). The model card is in [model-card.md](model-card.md). The model and dataset registries (data, code
+commit, scores, live results and sha256 of every model) and the run records are in [ml/](../ml/README.md).
 
 **Classes:** `post`, `wire`, `wire_break`, `fallen_post`, `branch`, `cow`, `sheep`
 
@@ -211,12 +212,80 @@ The model has never seen texture on the ground. It misses the broken wire and th
 the false broken wire. This is a small sim-to-sim version of the sim-to-real gap. The cure is the same: train on
 varied looks.
 
-## v0.4 · planned
 
-- **Both looks in the training data.** Generate frames in the classic and the rich world (`GARDIAN_DATASET_LOOK=rich`
-  once `write_world()` randomises the rich sun and ground), and keep a held-out set in each look.
-- **Hard negatives from flights.** Record missions over new farm seeds (never the test seeds). Add every confident
-  false `wire_break` frame to the training data with its true labels.
-- **Live and dead strands side by side** for long runs, and more lighting set-ups.
+## v0.4 · both world looks (`model-v0.4`)
+
+Full run record: [ml/runs/model-v0.4](../ml/runs/model-v0.4/README.md).
+
+**What we changed.**
+
+1. **The rich look in the training data.** `tools/make_dataset.py --look rich` randomises the sun height and
+   strength, the sky fill, the ambient light and the grass tint, with its own terrain per farm. 12 new farms
+   (3,600 frames), plus 2 validation farms and the test seeds 140–142 rendered again in the rich look.
+2. **Re-fly close-ups** (`--style v3`). 20% of the poses copy the re-fly hover: 4.5–8 m high, 48–62° down, mostly at
+   faults, away from tree crowns. There are 4 new classic farms in this style, and a close-up test set in each look.
+3. **Fine-tuned from v0.3** for 8 epochs on 7,200 frames: half rich, half classic, with old data kept so nothing is
+   forgotten (`tools/mix_dataset.py`). CPU, 3.4 h, paused twice to cool the laptop (`--resume`).
+4. **Scored on 9 held-out sets** in both looks (`tools/eval_sets.py`), on the recorded mission, and in live flights in
+   both looks.
+
+### Scores, v0.3 → v0.4 (mAP50)
+
+| Set | All classes | `wire_break` | `wire_break` precision / recall |
+|---|---|---|---|
+| **Held-out test, classic (750)** | 0.911 → **0.938** | 0.684 → **0.822** | 0.70 / 0.61 → 0.85 / 0.69 |
+| **Held-out test, rich (750)** | 0.710 → **0.938** | 0.330 → **0.789** | 0.85 / 0.14 → 0.84 / 0.68 |
+| Mission pasture frames, classic (400) | 0.958 → **0.981** | 0.775 → **0.900** | 0.66 / 0.81 → 0.93 / 0.79 |
+| Mission pasture frames, rich (400) | 0.657 → **0.977** | 0.151 → **0.877** | 0.70 / 0.05 → 0.87 / 0.84 |
+| Re-fly close-ups, rich (400) | 0.584 → **0.984** | 0.053 → **0.968** | 0.60 / 0.01 → 0.98 / 0.89 |
+
+On every held-out set but one, v0.4 scores higher. In the rich look it goes from nearly blind (`wire_break` recall
+0.14) to as good as in the classic look.
+
+### In flight: better in the rich world, worse on the classic mission
+
+Live chain: Gazebo → LAN → Jetson TensorRT FP16 (3.6 ms per frame) → 5-of-8 confirmation → PX4 pose.
+The table counts the inspection loop only.
+
+| World | v0.3 | v0.4 |
+|---|---|---|
+| **rich** (the default look) | 1 of 3 faults, 0 false alerts | **3 of 3 faults**, 6 false alerts |
+| classic | 3 of 3 faults, 5 false alerts | 3 of 3 faults, **13 false alerts** |
+
+The recorded classic mission confirms it, replayed through both models with the same confirmation: 6 false alerts
+for v0.3, 12 for v0.4. v0.4 sees the real broken wire in more frames (147 against 121) and fires much more often on
+the intact fence (257 false frames at conf ≥ 0.7, against 153).
+
+![False alerts on the mission fence](img/v0.4-false-alert-map.png)
+
+The false alerts land in the same places in every flight, with both models. Three spots appear in all three
+flights, each within 4 m of a **corner post**, where the strand turns. On the classic mission, 12 of the 13 false
+alerts of v0.4 are on the stretch after the break, where the **dead grey strand** runs beside the live one.
+
+![Flight frames with false broken wires](img/v0.4-false-wire-break-flight.jpg)
+
+**Why the offline tests missed it.** The test sets use random camera poses. The inspection flight is one narrow case:
+12 m high, along the fence, minutes of the same dead strand, and a turn at every corner. Rendered frames of the
+mission pasture gave `wire_break` precision 0.93, and the flight over the same pasture still doubled the false
+alerts. A model is not better until it flies better.
+
+**Re-fly.**
+- **Rich:**
+  - Verified the real broken wire and the branch.
+  - Rejected all 5 false alerts it visited.
+  - Missed the real fallen post: the alert sat 2.9 m away, so the post was at the edge of the view.
+- **Classic:** verified the branch, rejected 6 false alerts, and wrongly verified one at a corner post.
+
+**Decision.**
+- v0.4 runs the **live Gazebo flights** (`ros.sh demo tcp://…`), because the rich look is the default world.
+- **v0.3 stays the default** for the ROS 2 detector, the classic replay demo and field mode.
+
+## v0.5 · planned
+
+- **Inspection-flight poses.** Frames posed like the flight: 12 m, along the fence, turning through corners. Use new
+  farm seeds with long dead stretches, in both looks.
+- **Hard negatives.** Corners and live/dead strand pairs, with their true labels.
+- **Re-fly budget.** Visit every alert, or rank by confidence, not only by distance (8 nearest missed two real faults
+  among 18 alerts).
 - **Real frames.** Fine-tune on photos from the field mode recorder (`field.sh`). Reality matters more than any
   simulation artefact.

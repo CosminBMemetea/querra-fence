@@ -1,0 +1,11 @@
+# Training mix written by tools/mix_dataset.py (image lists live on the training machine; ids in ml/datasets.json)
+# mix: --train ~/querra-data/fence_yolo_rich:train ~/querra-data/fence_yolo_v3c:train ~/querra-data/fence_yolo_v2:train@1400 ~/querra-data/fence_yolo:train@1000 --val ~/querra-data/fence_yolo_rich:val ~/querra-data/fence_yolo_v2:val --seed 0
+# train: 7200 images, val: 1200 images
+names:
+  0: post
+  1: wire
+  2: wire_break
+  3: fallen_post
+  4: branch
+  5: cow
+  6: sheep

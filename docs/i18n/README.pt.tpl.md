@@ -50,7 +50,7 @@ A fase 2 corre o detetor de cerca em ROS 2: `fence_detector` executa o motor Ten
 GPU do Jetson (cerca de 15 Hz, 20–30 ms por imagem, do JPEG às caixas) e publica `vision_msgs/Detection2DArray` e uma
 imagem anotada. `alert_confirm` transforma deteções em `/fence/alerts` só quando 5 das últimas 8 imagens concordam a
 menos de 5 m no solo. `./ros.sh demo` (ou **Demo** no painel) reproduz uma missão gravada do Gazebo por toda a cadeia;
-`./ros.sh demo tcp://<mac>:5601` usa a simulação ao vivo. Layout do Foxglove:
+`./ros.sh demo tcp://<mac>:5601` (model-v0.4) usa a simulação ao vivo. Layout do Foxglove:
 [`ros2/foxglove/querra-layout.json`](ros2/foxglove/querra-layout.json).
 
 A fase 3 liga o próprio PX4: `./ros.sh demo tcp://<mac>:5601 px4:=true` inicia um agente micro-ROS em UDP 8888. O
@@ -207,11 +207,13 @@ imagens corre como motor TensorRT FP16 num Jetson Orin Nano. O Jetson lê a câm
 | v0.1 · checkpoint da época 2 | 0.72 | fio partido F1 encontrado (0.78); fraco no poste caído | `model-v0.1` |
 | v0.2 · 25 épocas | 0.921 | 13.3 fps; F1, F2, F3 todos encontrados (0.94 / 0.96 / 0.84); 385 imagens com fio partido falso | `model-v0.2` |
 | v0.3 · afinado com dados dirigidos | 0.916 (teste separado 0.912) | `wire_break` teste mAP50 0.58 → 0.68; com confirmação GPS 5 de 8, alertas falsos 33 → 6, todas as avarias encontradas | `model-v0.3` |
+| v0.4 · os dois visuais do mundo | 0.956 (teste separado 0.938 classic, 0.938 rich) | mundo rich: 3 de 3 avarias (v0.3: 1 de 3); missão classic: 13 alertas falsos (v0.3: 5), por isso só corre os voos ao vivo no Gazebo | `model-v0.4` |
 
 ![v0.2 no Jetson: fio partido, poste caído, ramo e o fio partido falso que a v0.3 reduz](docs/img/v0.2-jetson-faults.jpg)
 
 - [Registo de retreino](docs/retraining-log.md): o que cada versão falhou e o que mudou.
 - [Ficha do modelo](docs/model-card.md): dados, métricas, limites e como reproduzir.
+- [Modelos e dados](ml/README.md): registo de todos os modelos e conjuntos de dados, registos dos treinos e sha256 dos ficheiros dos modelos.
 - [Integração com o Jetson](docs/jetson-integration.md): a fonte de câmara `sim:`, o detetor e o modo de campo no querra-scout.
 
 ## Simulado versus real

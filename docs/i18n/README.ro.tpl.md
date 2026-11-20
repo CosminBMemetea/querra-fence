@@ -50,7 +50,7 @@ Faza 2 rulează detectorul de gard în ROS 2: `fence_detector` execută motorul 
 pe GPU-ul Jetson-ului (circa 15 Hz, 20–30 ms pe cadru de la JPEG la casete) și publică `vision_msgs/Detection2DArray`
 plus o imagine adnotată. `alert_confirm` transformă detecțiile în `/fence/alerts` doar când 5 din ultimele 8 cadre
 sunt de acord, la cel mult 5 m pe sol. `./ros.sh demo` (sau **Demo** în panou) redă o misiune Gazebo înregistrată prin
-tot lanțul; `./ros.sh demo tcp://<mac>:5601` folosește simularea live. Layout Foxglove:
+tot lanțul; `./ros.sh demo tcp://<mac>:5601` (model-v0.4) folosește simularea live. Layout Foxglove:
 [`ros2/foxglove/querra-layout.json`](ros2/foxglove/querra-layout.json).
 
 Faza 3 conectează PX4 însuși: `./ros.sh demo tcp://<mac>:5601 px4:=true` pornește un agent micro-ROS pe UDP 8888.
@@ -208,11 +208,13 @@ locală (`tools/cam_stream.py`) în timp ce PX4 zboară misiunea și înregistre
 | v0.1 · checkpoint din epoca 2 | 0.72 | sârma ruptă F1 găsită (0.78); slab pe stâlpul căzut | `model-v0.1` |
 | v0.2 · 25 de epoci | 0.921 | 13.3 fps; F1, F2, F3 toate găsite (0.94 / 0.96 / 0.84); 385 de cadre cu sârmă ruptă falsă | `model-v0.2` |
 | v0.3 · reglat fin pe date țintite | 0.916 (test separat 0.912) | `wire_break` test mAP50 0.58 → 0.68; cu confirmare GPS 5 din 8, alerte false 33 → 6, toate defectele găsite | `model-v0.3` |
+| v0.4 · ambele aspecte ale lumii | 0.956 (test separat 0.938 classic, 0.938 rich) | lumea rich: 3 din 3 defecte (v0.3: 1 din 3); misiunea classic: 13 alerte false (v0.3: 5), deci rulează doar zborurile live în Gazebo | `model-v0.4` |
 
 ![v0.2 pe Jetson: sârmă ruptă, stâlp căzut, creangă și sârma ruptă falsă pe care v0.3 o reduce](docs/img/v0.2-jetson-faults.jpg)
 
 - [Jurnalul de reantrenare](docs/retraining-log.md): ce a ratat fiecare versiune și ce s-a schimbat.
 - [Fișa modelului](docs/model-card.md): date, metrici, limite și cum se reproduce.
+- [Modele și date](ml/README.md): registrul tuturor modelelor și seturilor de date, fișele antrenărilor și sha256 pentru fișierele modelelor.
 - [Integrarea cu Jetson](docs/jetson-integration.md): sursa de cameră `sim:`, detectorul și modul de teren din querra-scout.
 
 ## Simulare versus realitate
