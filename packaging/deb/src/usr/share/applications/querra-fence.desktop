@@ -2,16 +2,16 @@
 Type=Application
 Version=1.0
 Name=Querra Fence
-GenericName=Fence inspection panel
-Comment=QUERRA Fence control panel: live cameras, radar, GPS, data collection and ROS 2
+GenericName=Safe fence control panel
+Comment=Protect your animals: live cameras, radar, GPS, fence alerts and ROS 2
 Exec=/usr/bin/querra-fence
 Icon=querra-fence
 Terminal=false
 Categories=System;Monitor;
-Keywords=querra;fence;drone;radar;gps;ros;
+Keywords=querra;fence;safe;animals;predators;drone;radar;gps;ros;
 StartupNotify=true
 StartupWMClass=QuerraFence
-Actions=ros-demo;foxglove;
+Actions=ros-demo;foxglove;restart;
 
 [Desktop Action ros-demo]
 Name=ROS 2 demo (sim + detector)
@@ -20,3 +20,7 @@ Exec=/usr/bin/querra-fence --ros-demo
 [Desktop Action foxglove]
 Name=Foxglove connection info
 Exec=/usr/bin/querra-fence --foxglove
+
+[Desktop Action restart]
+Name=Restart the panel
+Exec=/usr/bin/querra-fence --restart

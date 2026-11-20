@@ -4,53 +4,111 @@
 #   querra-fence --ros-demo  also start the ROS 2 phase 2 demo (ros.sh demo)
 #   querra-fence --foxglove  show the Foxglove address
 #   querra-fence --check     only start the panel if needed, no window (exit 0 when it answers)
+#   querra-fence --restart   restart the panel (clears a hung panel), then open it
+#   querra-fence --version   print the launcher version
 # Settings (optional) in ~/.config/querra-fence.conf: PANEL_DIR, PANEL_PORT, ROS_DIR
 set -u
+VERSION=dev   # set by build.sh
 PANEL_USER=mmx
 PANEL_DIR=/home/$PANEL_USER/querra-scout-20261107/panel
 PANEL_PORT=8080
 ROS_DIR=/ssd/querra/ros2
 [ -r "$HOME/.config/querra-fence.conf" ] && . "$HOME/.config/querra-fence.conf"
 URL="http://localhost:$PANEL_PORT/"
+LOG=${XDG_CACHE_HOME:-$HOME/.cache}/querra-fence.log
 
 note() { command -v notify-send >/dev/null && notify-send -i querra-fence "Querra Fence" "$1"; echo "querra-fence: $1" >&2; }
-up() { curl -fsS -m 2 -o /dev/null "${URL}api/status" 2>/dev/null; }
+# Liveness: the static page only (cheap). /api/status runs the panel's full state() and can take seconds.
+up() { curl -fsS -m 3 -o /dev/null "$URL" 2>/dev/null; }
+as_panel_user() {
+  if [ "$(id -un)" = "$PANEL_USER" ]; then bash -c "$1"
+  elif [ "$(id -u)" = 0 ]; then runuser -u "$PANEL_USER" -- bash -c "$1"
+  else note "run as $PANEL_USER to start the panel"; return 1; fi
+}
 
 start_panel() {
   up && return 0
   [ -f "$PANEL_DIR/panel.py" ] || { note "panel not found in $PANEL_DIR"; return 1; }
   note "Starting the panel…"
-  # Same command as the '# querra-panel' crontab @reboot line, as the panel's user.
-  local cmd="cd '$PANEL_DIR' && setsid nohup /usr/bin/python3 panel.py >> panel.log 2>&1 < /dev/null &"
-  if [ "$(id -un)" = "$PANEL_USER" ]; then bash -c "$cmd"
-  elif [ "$(id -u)" = 0 ]; then runuser -u "$PANEL_USER" -- bash -c "$cmd"
-  else note "run as $PANEL_USER to start the panel"; return 1; fi
-  for _ in $(seq 1 40); do up && return 0; sleep 0.5; done
+  # restart.sh is the one place that knows how to (re)start the panel: it also clears a hung panel.py first.
+  # Note: a panel started from here lives in the desktop session; the '# querra-panel' crontab line remains the
+  # normal way it starts at boot.
+  if [ -x "$PANEL_DIR/restart.sh" ]; then
+    as_panel_user "PANEL_PORT=$PANEL_PORT '$PANEL_DIR/restart.sh' >> '$PANEL_DIR/panel.log' 2>&1" || true
+  else
+    as_panel_user "cd '$PANEL_DIR' && setsid nohup /usr/bin/python3 panel.py >> panel.log 2>&1 < /dev/null &" || return 1
+  fi
+  for _ in $(seq 1 40); do up && return 0; sleep 0.5; done      # about 20 s
   note "the panel did not answer on $URL (see $PANEL_DIR/panel.log)"; return 1
 }
 
+# Starts one browser; returns 0 if it is still running after 3 s or handed the window to a running instance (exit 0).
+try_browser() {
+  mkdir -p "$(dirname "$LOG")" 2>/dev/null
+  echo "--- $(date '+%F %T') $*" >> "$LOG"
+  "$@" >> "$LOG" 2>&1 &
+  local pid=$!
+  sleep 3
+  kill -0 "$pid" 2>/dev/null && { disown "$pid" 2>/dev/null; return 0; }
+  wait "$pid"
+}
+
 open_window() {
-  local data="$HOME/snap/chromium/common/querra-fence-app"   # own profile: separate window class, no tabs
-  if command -v chromium-browser >/dev/null || command -v chromium >/dev/null; then
-    local b; b=$(command -v chromium-browser || command -v chromium)
+  local b data="$HOME/snap/chromium/common/querra-fence-app"   # own profile: separate window class, no tabs
+  local flags=(--app="$URL" --class=QuerraFence --user-data-dir="$data" --no-first-run --no-default-browser-check --window-size=1280,860)
+  # Snap Chromium cannot initialise the GPU on Jetson (EGL), which leaves a blank window; the panel needs no GPU.
+  [ -e /etc/nv_tegra_release ] && flags+=(--disable-gpu)
+  for b in chromium-browser chromium; do
+    command -v "$b" >/dev/null || continue
     mkdir -p "$data" 2>/dev/null
-    exec "$b" --app="$URL" --class=QuerraFence --user-data-dir="$data" --no-first-run --no-default-browser-check \
-      --window-size=1280,860 >/dev/null 2>&1
-  elif command -v firefox >/dev/null; then exec firefox --new-window "$URL"
-  else exec xdg-open "$URL"; fi
+    try_browser "$b" "${flags[@]}" && return 0
+    note "$b did not start (see $LOG), trying the next browser"
+    break
+  done
+  command -v firefox >/dev/null && try_browser firefox --new-window "$URL" && return 0
+  xdg-open "$URL" >> "$LOG" 2>&1 || note "no browser could open $URL"
+}
+
+lan_ip() {  # source address of the default route; hostname -I can list docker0 or l4tbr0 first
+  local ip; ip=$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<NF;i++) if($i=="src"){print $(i+1); exit}}')
+  echo "${ip:-$(hostname).local}"
+}
+
+pin_header() {  # X-Pin header file for POSTs when the panel requires a PIN (never printed)
+  python3 - "$PANEL_DIR/config.json" <<'PY' 2>/dev/null
+import json, sys
+try:
+    c = json.load(open(sys.argv[1]))
+except Exception:
+    sys.exit()
+if c.get("require_pin") and c.get("pin"):
+    print("X-Pin: %s" % c["pin"])
+PY
+}
+
+restart_panel() {
+  [ -x "$PANEL_DIR/restart.sh" ] || { note "restart.sh not found in $PANEL_DIR"; return 1; }
+  note "Restarting the panel…"
+  as_panel_user "PANEL_PORT=$PANEL_PORT '$PANEL_DIR/restart.sh' >> '$PANEL_DIR/panel.log' 2>&1" || true
+  for _ in $(seq 1 40); do up && return 0; sleep 0.5; done
+  note "the panel did not answer on $URL after the restart (see $PANEL_DIR/panel.log)"; return 1
 }
 
 case "${1:-}" in
   --check) start_panel ;;
+  --restart) restart_panel || exit 1; open_window ;;
+  --version) echo "querra-fence $VERSION" ;;
   --foxglove)
-    ip=$(hostname -I | awk '{print $1}')
-    msg="Foxglove: open ws://$ip:8765 (layout: ros2/foxglove/querra-layout.json). ROS 2 must be running."
-    command -v zenity >/dev/null && zenity --info --title="Querra Fence" --text="$msg" 2>/dev/null || note "$msg" ;;
+    layout="ros2/foxglove/querra-layout.json in the repo"
+    [ -f "$ROS_DIR/foxglove/querra-layout.json" ] && layout="$ROS_DIR/foxglove/querra-layout.json"
+    msg="Foxglove: open ws://$(lan_ip):8765 (layout: $layout). ROS 2 must be running."
+    if command -v zenity >/dev/null; then zenity --info --title="Querra Fence" --text="$msg" 2>/dev/null; else note "$msg"; fi ;;
   --ros-demo)
     start_panel || exit 1
-    curl -fsS -m 5 -X POST -H 'Content-Type: application/json' -d '{}' "${URL}api/ros/demo" >/dev/null \
-      && note "ROS 2 demo starting (about 20 s)" || note "could not start the ROS 2 demo"
+    if curl -fsS -m 5 -X POST -H 'Content-Type: application/json' -H @<(pin_header) -d '{}' "${URL}api/ros/demo" >/dev/null; then
+      note "ROS 2 demo starting (about 20 s)"
+    else note "could not start the ROS 2 demo (is a PIN set in the panel's config.json?)"; fi
     open_window ;;
-  -h|--help) sed -n '2,7p' "$0" ;;
+  -h|--help) sed -n '2,9p' "$0" ;;
   *) start_panel || exit 1; open_window ;;
 esac

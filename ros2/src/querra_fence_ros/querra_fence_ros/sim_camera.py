@@ -48,8 +48,31 @@ class SimCamera(Node):
         f.status.service = NavSatStatus.SERVICE_GPS
         self.pub_fix.publish(f)
 
+    def _load(self):
+        """frames.jsonl rows (blank or broken lines skipped); [] with an error log if the recording is unusable."""
+        path = os.path.join(self.source, "frames.jsonl")
+        try:
+            with open(path) as f:
+                rows = []
+                for line in f:
+                    try:
+                        r = json.loads(line)
+                    except ValueError:
+                        continue
+                    if isinstance(r, dict) and "file" in r and "sim_time_s" in r:
+                        rows.append(r)
+        except OSError as e:
+            self.get_logger().error(f"no recording at {path}: {e} (copy one to /ssd/querra/sim on the Jetson); retrying in 10 s")
+            return []
+        if not rows:
+            self.get_logger().error(f"{path} has no usable frames; retrying in 10 s")
+        return rows
+
     def _replay(self):
-        rows = [json.loads(l) for l in open(os.path.join(self.source, "frames.jsonl"))]
+        rows = self._load()
+        while not rows and rclpy.ok():
+            time.sleep(10)
+            rows = self._load()
         self.get_logger().info(f"replaying {len(rows)} frames from {self.source} at x{self.rate}, looped")
         while rclpy.ok():
             t0, s0 = time.monotonic(), rows[0]["sim_time_s"]
@@ -64,22 +87,34 @@ class SimCamera(Node):
                 self._publish(jpeg, r.get("telemetry"))
             time.sleep(1.0)
 
+    @staticmethod
+    def _read(f, n):
+        b = f.read(n)
+        if len(b) != n:
+            raise OSError(f"stream closed ({len(b)} of {n} bytes)")
+        return b
+
     def _tcp(self):
-        host, port = self.source[6:].rsplit(":", 1)
+        hostport = self.source[6:].strip("/")
+        host, _, port = hostport.rpartition(":") if ":" in hostport else (hostport, "", "5601")
+        try:
+            port = int(port)
+        except ValueError:
+            self.get_logger().error(f"bad source {self.source}: expected tcp://HOST:PORT")
+            return
         while rclpy.ok():
             try:
-                with socket.create_connection((host, int(port)), timeout=10) as s:
-                    self.get_logger().info(f"connected to {self.source}")
+                with socket.create_connection((host, port), timeout=10) as s:
+                    self.get_logger().info(f"connected to {host}:{port}")
                     f = s.makefile("rb")
                     while rclpy.ok():
-                        magic = f.read(4)
-                        if magic != b"QFC1":
+                        if self._read(f, 4) != b"QFC1":
                             raise OSError("bad frame magic")
-                        hl, jl = struct.unpack(">II", f.read(8))
-                        hdr = json.loads(f.read(hl)); jpeg = f.read(jl)
-                        self._publish(jpeg, hdr.get("telemetry"))
-            except (OSError, ValueError) as e:
-                self.get_logger().warn(f"{self.source}: {e}; retrying in 3 s", throttle_duration_sec=30)
+                        hl, jl = struct.unpack(">II", self._read(f, 8))
+                        hdr = json.loads(self._read(f, hl)); jpeg = self._read(f, jl)
+                        self._publish(jpeg, hdr.get("telemetry") if isinstance(hdr, dict) else None)
+            except (OSError, ValueError, struct.error) as e:
+                self.get_logger().warn(f"{host}:{port}: {e}; retrying in 3 s", throttle_duration_sec=30)
             time.sleep(3)
 
 

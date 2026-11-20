@@ -30,7 +30,7 @@ class Detector(Node):
         self.pub = self.create_publisher(Detection2DArray, "/detections", 10)
         self.pub_img = self.create_publisher(CompressedImage, "/detections/image", qos_profile_sensor_data)
         self.pub_lat = self.create_publisher(Float32, "/detections/latency_ms", 10)
-        self.latest, self.cv = None, threading.Condition()
+        self.latest, self.cv, self.errors = None, threading.Condition(), 0
         self.create_subscription(CompressedImage, topic, self._on_image, qos_profile_sensor_data)
         threading.Thread(target=self._worker, daemon=True).start()
 
@@ -45,24 +45,31 @@ class Detector(Node):
                 msg, self.latest = self.latest, None
             if msg is None:
                 continue
-            t0 = time.perf_counter()
-            bgr = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
-            if bgr is None:
-                continue
-            dets, tm = self.det.detect(cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB))
-            out = Detection2DArray(header=msg.header)
-            for d in dets:
-                x0, y0, x1, y1 = d["box_xyxy"]
-                o = Detection2D(header=msg.header)
-                o.bbox.center.position.x, o.bbox.center.position.y = (x0 + x1) / 2.0, (y0 + y1) / 2.0
-                o.bbox.size_x, o.bbox.size_y = float(x1 - x0), float(y1 - y0)
-                h = ObjectHypothesisWithPose(); h.hypothesis.class_id = d["class"]; h.hypothesis.score = float(d["conf"])
-                o.results.append(h); out.detections.append(o)
-            self.pub.publish(out)
-            total = (time.perf_counter() - t0) * 1000.0
-            self.pub_lat.publish(Float32(data=float(total)))
-            if self.pub_img.get_subscription_count():
-                self._annotate(bgr, dets, tm, total, msg.header)
+            try:
+                self._process(msg)
+            except Exception as e:  # noqa: BLE001  one bad frame (or a CUDA hiccup) must not end inference for good
+                self.errors += 1
+                self.get_logger().error(f"frame failed ({self.errors} so far): {type(e).__name__}: {e}", throttle_duration_sec=10)
+
+    def _process(self, msg):
+        t0 = time.perf_counter()
+        bgr = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
+        if bgr is None:
+            return
+        dets, tm = self.det.detect(cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB))
+        out = Detection2DArray(header=msg.header)
+        for d in dets:
+            x0, y0, x1, y1 = (float(v) for v in d["box_xyxy"])
+            o = Detection2D(header=msg.header)
+            o.bbox.center.position.x, o.bbox.center.position.y = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+            o.bbox.size_x, o.bbox.size_y = x1 - x0, y1 - y0
+            h = ObjectHypothesisWithPose(); h.hypothesis.class_id = str(d["class"]); h.hypothesis.score = float(d["conf"])
+            o.results.append(h); out.detections.append(o)
+        self.pub.publish(out)
+        total = (time.perf_counter() - t0) * 1000.0
+        self.pub_lat.publish(Float32(data=float(total)))
+        if self.pub_img.get_subscription_count():
+            self._annotate(bgr, dets, tm, total, msg.header)
 
     def _annotate(self, bgr, dets, tm, total, header):
         for d in dets:
