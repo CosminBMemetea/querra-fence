@@ -29,6 +29,11 @@ sys.path.insert(0, os.path.join(ROOT, "sim"))
 import geo  # noqa: E402
 import gen_world  # noqa: E402
 
+# The detector (model-v0.1..v0.3) was trained on the original flat-green world, and write_world() below edits that
+# world's light and ground XML by exact string. Keep the dataset on the "classic" look; a dataset in the "rich" look
+# needs its own lighting/ground randomisation first.
+gen_world.LOOK = os.environ.get("GARDIAN_DATASET_LOOK", "classic")
+
 from gz.transport13 import Node  # noqa: E402
 from gz.msgs10.image_pb2 import Image  # noqa: E402
 from gz.msgs10.pose_pb2 import Pose  # noqa: E402

@@ -11,7 +11,9 @@
 #                         fence voltage, streams its cameras as RTSP, and sends the drone when it sees a problem
 #
 #   --share               guard mode: publish the RTSP streams on the local network (for the Jetson)
-#   --lang ro             terminal and report in Romanian (or GARDIAN_LANG=ro); English by default
+#   --lang pl             terminal and report language: en (default), ro, pl, pt, de, es, hr, bg, da (or GARDIAN_LANG)
+#   --look classic        the original flat green world instead of the default "rich" look (or GARDIAN_LOOK);
+#                         use it for live detector tests: model-v0.3 was trained on the classic look
 #
 # Ctrl+C or ./stop.sh stops everything.
 set -u
@@ -28,10 +30,12 @@ while [ $# -gt 0 ]; do
     guard) MODE=guard; shift ;;
     --lang) export GARDIAN_LANG="${2:-en}"; shift 2 ;;
     --lang=*) export GARDIAN_LANG="${1#--lang=}"; shift ;;
+    --look) export GARDIAN_LOOK="${2:-rich}"; shift 2 ;;
+    --look=*) export GARDIAN_LOOK="${1#--look=}"; shift ;;
     auto|manual|demo) MODE="$1"; shift ;;
     headless|fara-gui) MODE=headless; shift ;;
     mission|misiune) MODE=mission; shift ;;
-    *) echo "Usage: ./start.sh [auto|manual|headless|mission|demo|guard] [--lang en|ro] [--share]"; exit 1 ;;
+    *) echo "Usage: ./start.sh [auto|manual|headless|mission|demo|guard] [--lang en|ro|pl|pt|de|es|hr|bg|da] [--look rich|classic] [--share]"; exit 1 ;;
   esac
 done
 export GARDIAN_LANG="${GARDIAN_LANG:-en}"

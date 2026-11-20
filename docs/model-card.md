@@ -40,6 +40,10 @@ known 3D geometry of posts, wires, faults and animals. Nobody labelled anything 
   confirmed alerts, not single frames.
 - **Indoors and other scenes.** Out-of-domain images produce confident false animals; a person indoors came out as `cow`.
 - **Thin wires.** At 12 m the wire is about 1 px wide. Detection relies on the post-to-post pattern more than the wire itself.
+- **Trained on the "classic" look only.** On the new "rich" world (textured grass, hills; 2026-11-20) the same live
+  chain found **1 of 3** real faults (the branch, 4.0 m away) and no false alert, against 3 of 3 with 5 false alerts
+  on the classic world. That is a domain gap inside the simulation itself. Use `./start.sh --look classic` for live
+  detector tests until a model is trained on both looks (v0.4).
 
 ## Metrics
 

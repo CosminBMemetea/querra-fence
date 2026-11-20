@@ -151,15 +151,31 @@ def save_jpg(src, dst, width=1600):
     return dst
 
 
-def save_gif(frames, dst, width, fps):
-    ims = []
-    for fr in frames:
-        im = fr if isinstance(fr, Image.Image) else Image.open(fr).convert("RGB")
+def save_gif(frames, dst, width, fps, step=1, colors=96, blur=0.0):
+    """Animated GIF with one palette for the whole clip and no dithering.
+
+    Textured grass ("rich" look) defeats GIF compression when every frame has its own dithered palette (26 MB for the
+    drone clip). One shared palette, no dither, an optional light blur and every `step`-th frame keep it to a few MB.
+    """
+    from PIL import ImageFilter
+    rgb = []
+    for fr in frames[::step]:
+        im = fr if isinstance(fr, Image.Image) else Image.open(fr)
+        im = im.convert("RGB")
         if im.width != width:
             im = im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)
-        ims.append(im.convert("P", palette=Image.ADAPTIVE, colors=128))
-    if ims:
-        ims[0].save(dst, save_all=True, append_images=ims[1:], duration=int(1000 / fps), loop=0, optimize=True, disposal=1)
+        if blur:
+            im = im.filter(ImageFilter.GaussianBlur(blur))
+        rgb.append(im)
+    if rgb:
+        k = max(1, len(rgb) // 6)
+        sample = rgb[::k][:6]
+        mosaic = Image.new("RGB", (rgb[0].width, rgb[0].height * len(sample)))
+        for i, im in enumerate(sample):
+            mosaic.paste(im, (0, i * im.height))
+        pal = mosaic.quantize(colors=colors, method=Image.Quantize.MEDIANCUT)
+        ims = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in rgb]
+        ims[0].save(dst, save_all=True, append_images=ims[1:], duration=int(1000 * step / fps), loop=0, optimize=True)
     return dst
 
 
@@ -204,7 +220,7 @@ def main():
         made.append(save_jpg(fpath, os.path.join(MEDIA, "flight-%d.jpg" % (i + 1)), 1400))
     take = latest_png("04_takeoff")
     if len(take) > 3:
-        made.append(save_gif(take, os.path.join(MEDIA, "takeoff.gif"), 720, max(4, len(take) / 9.0)))
+        made.append(save_gif(take, os.path.join(MEDIA, "takeoff.gif"), 640, max(4, len(take) / 9.0), colors=128, blur=0.5))
 
     # fault close-ups side by side
     panels = []
@@ -279,7 +295,7 @@ def main():
                 img = np.load(os.path.join(RAW, "stream", "%05d.npy" % fr["i"]))
                 gif_frames.append(annotate(img, pf[2], i18n.pick(("X500 inspection camera · %.0f m AGL", "Camera de inspecție X500 · %.0f m AGL")) % pf[3], scale=1))
             if gif_frames:
-                made.append(save_gif(gif_frames, os.path.join(MEDIA, "dronecam.gif"), 640, 8))
+                made.append(save_gif(gif_frames, os.path.join(MEDIA, "dronecam.gif"), 480, 8, step=2, colors=64, blur=0.8))
         del events
 
     rs = report_shot(os.path.join(MEDIA, "report.png"))

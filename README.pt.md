@@ -143,7 +143,7 @@ rotura, **9 de 24 animais** contados (uma passagem pelo perímetro só vê 10 a 
 
 <p>
   <img src="docs/media/dronecam-F1.jpg" width="49%" alt="Fio de cima partido visto do drone">
-  <img src="docs/media/dronecam-V13.jpg" width="49%" alt="Vaca fugida junto ao fio partido">
+  <img src="docs/media/dronecam-S10.jpg" width="49%" alt="Poste caído e uma ovelha fugida fora da cerca">
 </p>
 
 **As três avarias no solo.**
@@ -252,20 +252,23 @@ flowchart LR
 | Caminho | Papel |
 |---|---|
 | `fence.json` | Fonte única de verdade: polígono da cerca, postes, avarias, rebanho, animais fugidos, definições de voo e de câmara |
-| `sim/gen_world.py` | Gera o mundo do Gazebo: cerca de dois fios com porteira isolada e eletrificador, avarias, árvores, celeiro, rebanho |
+| `sim/gen_world.py` | Gera o mundo do Gazebo: cerca de dois fios com porteira isolada e eletrificador, avarias, árvores, pátio da quinta, rebanho; aspeto "rich" (céu, relva texturada, colinas) ou o "classic" original |
 | `models/x500_fence` | O X500 do PX4 mais uma câmara de inspeção de 640×400 a 15 fps, inclinada 55° para baixo, mais leve do que a de série de 1280×960 |
 | `sim/mission.py` | pymavlink: parâmetros PX4 para voo suave, envio da missão, armar como GCS, detetor, relatório |
 | `sim/director.py` | Python do Gazebo: animais a pastar e a andar, câmara de seguimento, rota planeada e marcadores das deteções |
 | `sim/geo.py` | Geometria partilhada: postes, locais das avarias, rota exterior, ponto no polígono, local ⇄ GPS, modelo de tensão |
 | `sim/report.py` | Relatório HTML com mapa SVG, perfil de tensão e um menu de línguas (nove línguas) |
 | `sim/i18n.py` | Todas as mensagens que uma pessoa lê, em nove línguas (EN, RO, PL, PT, DE, ES, HR, BG, DA) |
-| `tools/` | Captura da demonstração, gerador de media, gravador de cenários, atalho no ambiente de trabalho |
+| `tools/` | Captura da demonstração, gerador de media, gravador de cenários, atalho no ambiente de trabalho, texturas de relva (`make_textures.py`), imagens estáticas (`snap_world.sh`) |
 | `ground/`, `brain/` | Nó simulado da estação terrestre; o cérebro do Jetson que responde a perguntas sobre o que vê |
 | `radar/` | Radar mmWave LD2450 no Jetson: vista web ao vivo e o pacote Debian |
 
 ## Configuração
 
 Todo o cenário está em `fence.json`. Altere-o e volte a arrancar; o mundo é gerado de novo.
+O aspeto predefinido "rich" acrescenta céu, um sol baixo, relva texturada, colinas e o pátio da quinta, e mantém o
+cercado plano. `"look": "classic"` em `fence.json` (ou `GARDIAN_LOOK=classic`) repõe o mundo original, verde e
+plano, que os dados de treino do detetor ainda usam.
 
 ```json
 "fence":   { "polygon": [[10, 6], [70, -4], [128, 14], ...], "post_spacing_m": 6.0, "strand_heights_m": [0.55, 1.0] },
@@ -324,7 +327,6 @@ A vigilância de predadores à noite (câmara térmica e radar na porteira) est�
 
 - A simulação fala nove línguas (`--lang pl`, `--lang de`, …). Os registos estão sempre em inglês. Nos dados JSON, o
   texto que uma pessoa lê é guardado em todas as línguas.
-- As imagens da demonstração em `docs/media` têm por agora legendas em romeno; `./start.sh demo` gera-as de novo em inglês.
 - O Linux ainda não foi testado. Os scripts esperam o ambiente Gazebo do PX4 para macOS (`Tools/setup/macos/.pixi`) e
   usam `open` para o relatório.
 - Os registos de cada execução estão em `run/`: `mission.log`, `px4.log`, `gz_server.log`, `director.log`.

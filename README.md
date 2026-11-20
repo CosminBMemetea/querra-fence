@@ -141,7 +141,7 @@ Result of the sample run in [`docs/sample-report`](docs/sample-report/sample-rep
 
 <p>
   <img src="docs/media/dronecam-F1.jpg" width="49%" alt="Broken top wire seen from the drone">
-  <img src="docs/media/dronecam-V13.jpg" width="49%" alt="Escaped cow next to the broken wire">
+  <img src="docs/media/dronecam-S10.jpg" width="49%" alt="Fallen post, with an escaped sheep outside the fence">
 </p>
 
 **The three faults on the ground.**
@@ -251,20 +251,23 @@ flowchart LR
 | Path | Role |
 |---|---|
 | `fence.json` | Single source of truth: fence polygon, posts, faults, herd, escaped animals, flight and camera settings |
-| `sim/gen_world.py` | Generates the Gazebo world: two-strand fence with insulated gate and energizer, faults, trees, barn, herd |
+| `sim/gen_world.py` | Generates the Gazebo world: two-strand fence with insulated gate and energizer, faults, trees, farmyard, herd; a "rich" look (sky, textured grass, hills) or the original "classic" one |
 | `models/x500_fence` | PX4's X500 plus a 640×400, 15 fps inspection camera tilted 55° down, lighter than the stock 1280×960 one |
 | `sim/mission.py` | pymavlink: smooth-flight PX4 parameters, mission upload, arming as a GCS, detector, report |
 | `sim/director.py` | Gazebo Python: grazing and wandering animals, follow camera, planned route and detection markers |
 | `sim/geo.py` | Shared geometry: posts, fault anchors, outward route, point-in-polygon, local ⇄ GPS, voltage model |
 | `sim/report.py` | HTML report with an SVG map, the voltage profile and a language menu (nine languages) |
 | `sim/i18n.py` | Every message a person reads, in nine languages (EN, RO, PL, PT, DE, ES, HR, BG, DA) |
-| `tools/` | Demo capture, media builder, scenario recorder, Desktop launcher |
+| `tools/` | Demo capture, media builder, scenario recorder, Desktop launcher, grass textures (`make_textures.py`), still renders (`snap_world.sh`) |
 | `ground/`, `brain/` | Simulated ground station node; the Jetson brain that answers questions about what it sees |
 | `radar/` | LD2450 mmWave radar on the Jetson: live web view and its Debian package |
 
 ## Configuration
 
 Everything about the scenario lives in `fence.json`. Change it and start again; the world regenerates.
+The default "rich" look adds a sky, a low sun, textured grass, hills and a farmyard, and keeps the paddock flat.
+`"look": "classic"` in `fence.json` (or `GARDIAN_LOOK=classic`) brings back the original flat green world, which the
+detector's training data still uses.
 
 ```json
 "fence":   { "polygon": [[10, 6], [70, -4], [128, 14], ...], "post_spacing_m": 6.0, "strand_heights_m": [0.55, 1.0] },
@@ -322,7 +325,6 @@ Predator watch at night (thermal camera and radar at the gate) is planned; see t
 
 - The simulation speaks nine languages (`--lang pl`, `--lang de`, …). Logs are always in English. In the JSON
   data, text a person reads is stored in every language.
-- The demo images in `docs/media` currently carry Romanian labels; `./start.sh demo` regenerates them in English.
 - Linux is not tested yet. The scripts expect PX4's macOS Gazebo environment (`Tools/setup/macos/.pixi`) and use `open` for the report.
 - Logs for every run are in `run/`: `mission.log`, `px4.log`, `gz_server.log`, `director.log`.
   The two "Unable to load Ogre Plugin" errors in `gz_server.log` are normal on macOS; the camera renders anyway.

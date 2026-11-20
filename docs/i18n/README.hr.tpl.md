@@ -83,7 +83,7 @@ izbrojano **9 od 24 životinje** (prelet po obodu vidi samo 10 do 15 m u obor).
 
 <p>
   <img src="docs/media/dronecam-F1.jpg" width="49%" alt="Prekinuta gornja žica viđena iz drona">
-  <img src="docs/media/dronecam-V13.jpg" width="49%" alt="Odbjegla krava pokraj prekinute žice">
+  <img src="docs/media/dronecam-S10.jpg" width="49%" alt="Srušeni stup i odbjegla ovca izvan ograde">
 </p>
 
 **Tri kvara na tlu.**
@@ -172,20 +172,23 @@ Detalji, spajanje i JSON/SSE API su u [radar/README.md](radar/README.md).
 | Putanja | Uloga |
 |---|---|
 | `fence.json` | Jedini izvor istine: poligon ograde, stupovi, kvarovi, stado, odbjegle životinje, postavke leta i kamere |
-| `sim/gen_world.py` | Stvara Gazebo svijet: ogradu s dvije žice, izoliranim vratima i električnim pastirom, kvarove, drveće, štalu, stado |
+| `sim/gen_world.py` | Stvara Gazebo svijet: ogradu s dvije žice, izoliranim vratima i električnim pastirom, kvarove, drveće, gospodarsko dvorište, stado; izgled „rich” (nebo, teksturirana trava, brežuljci) ili izvorni „classic” |
 | `models/x500_fence` | X500 iz PX4 plus kamera za pregled 640×400 pri 15 fps, nagnuta 55° prema dolje, lakša od standardne 1280×960 |
 | `sim/mission.py` | pymavlink: PX4 parametri za mirni let, učitavanje misije, aktiviranje kao GCS, detektor, izvješće |
 | `sim/director.py` | Python za Gazebo: životinje koje pasu i lutaju, kamera koja prati, planirana ruta i oznake detekcija |
 | `sim/geo.py` | Zajednička geometrija: stupovi, mjesta kvarova, vanjska ruta, točka u poligonu, lokalno ⇄ GPS, model napona |
 | `sim/report.py` | HTML izvješće s SVG kartom, profilom napona i izbornikom jezika (devet jezika) |
 | `sim/i18n.py` | Svaka poruka koju čovjek čita, na devet jezika (EN, RO, PL, PT, DE, ES, HR, BG, DA) |
-| `tools/` | Snimanje demonstracije, generator medija, snimač scenarija, pokretač na radnoj površini |
+| `tools/` | Snimanje demonstracije, generator medija, snimač scenarija, pokretač na radnoj površini, teksture trave (`make_textures.py`), statične slike (`snap_world.sh`) |
 | `ground/`, `brain/` | Simulirani čvor zemaljske stanice; Jetsonov mozak koji odgovara na pitanja o onome što vidi |
 | `radar/` | mmWave radar LD2450 na Jetsonu: web prikaz uživo i Debian paket |
 
 ## Konfiguracija
 
 Cijeli scenarij nalazi se u `fence.json`. Promijenite ga i ponovno pokrenite; svijet se ponovno stvara.
+Zadani izgled „rich” dodaje nebo, nisko sunce, teksturiranu travu, brežuljke i gospodarsko dvorište, a obor ostaje
+ravan. `"look": "classic"` u `fence.json` (ili `GARDIAN_LOOK=classic`) vraća izvorni ravni, zeleni svijet, koji
+podaci za učenje detektora i dalje koriste.
 
 {{JSON}}
 
@@ -239,7 +242,6 @@ Noćni nadzor grabežljivaca (termalna kamera i radar na vratima) je u planu; vi
 
 - Simulacija govori devet jezika (`--lang pl`, `--lang de`, …). Dnevnici su uvijek na engleskom. U JSON podacima tekst
   koji čita čovjek sprema se na svim jezicima.
-- Demonstracijske slike u `docs/media` zasad imaju rumunjske natpise; `./start.sh demo` ih ponovno stvara na engleskom.
 - Linux još nije testiran. Skripte očekuju PX4-ovo Gazebo okruženje za macOS (`Tools/setup/macos/.pixi`) i otvaraju
   izvješće naredbom `open`.
 - Dnevnici svakog pokretanja nalaze se u `run/`: `mission.log`, `px4.log`, `gz_server.log`, `director.log`.

@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.9.0 · 2026-11-20 · a nicer simulation: the "rich" look
+
+- **New default look** (`sim/gen_world.py`):
+  - a sky with clouds, a low and warm afternoon sun with a cool fill light;
+  - textured grass (tileable albedo and normal maps from `tools/make_textures.py`, no downloaded assets);
+  - rolling hills around the farm, with a valley for the road (`models/pasture_ground`, mesh generated from
+    `fence.json`). The paddock and farmyard stay flat, so the flight, the physics and the alert projection are
+    unchanged;
+  - about 160 trees (broadleaf and fir) on the hills, small woods, a hedgerow along the road;
+  - a farmyard: barn with white trim and doors, silo, hay bales and a farmhouse;
+  - rounder cows (Holstein patches, ears, muzzle, udder, tail) and fleecy sheep.
+- **`--look classic`** (or `GARDIAN_LOOK`, or `"look"` in `fence.json`) brings back the original world.
+  `tools/make_dataset.py` stays on the classic look, and with it the classic world is byte-identical to before.
+- **`tools/snap_world.sh`** renders still images from fixed viewpoints and prints the ground colour the inspection
+  camera sees.
+- **Measured.** Flight time and camera rate are unchanged (2:34, 14.6 fps).
+  - model-v0.3 was trained on the classic look. On the rich world it found 1 of 3 real faults (0 false alerts),
+    against 3 of 3 (5 false alerts) on the classic world.
+  - Use `--look classic` for live detector tests until v0.4 is trained on both looks. Details are in
+    `docs/retraining-log.md`.
+- **Media:** the README and project-page images were regenerated in the new look with `./start.sh demo`, in English.
+
 ## v0.8.0 · 2026-11-20 · re-fly the confirmed faults; nine languages
 
 - **`fence_refly` node (phase 3, part 2, `refly:=true`).** After the inspection mission, when PX4 enters Return, the
