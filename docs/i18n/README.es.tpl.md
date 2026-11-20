@@ -51,7 +51,7 @@ La fase 2 ejecuta el detector de cerca en ROS 2: `fence_detector` corre el motor
 en la GPU del Jetson (unos 15 Hz, 20–30 ms por imagen, del JPEG a las cajas) y publica `vision_msgs/Detection2DArray`
 y una imagen anotada. `alert_confirm` convierte las detecciones en `/fence/alerts` solo cuando 5 de las últimas 8
 imágenes coinciden a menos de 5 m en el suelo. `./ros.sh demo` (o **Demo** en el panel) reproduce una misión grabada de
-Gazebo por toda la cadena; `./ros.sh demo tcp://<mac>:5601` usa la simulación en vivo. Layout de Foxglove:
+Gazebo por toda la cadena; `./ros.sh demo tcp://<mac>:5601` (model-v0.4) usa la simulación en vivo. Layout de Foxglove:
 [`ros2/foxglove/querra-layout.json`](ros2/foxglove/querra-layout.json).
 Guion de presentación: [docs/interview-demo.md](docs/interview-demo.md).
 
@@ -211,11 +211,13 @@ red local (`tools/cam_stream.py`) mientras PX4 vuela la misión, y registra cada
 | v0.1 · checkpoint de la época 2 | 0.72 | hilo cortado F1 encontrado (0.78); flojo con el poste caído | `model-v0.1` |
 | v0.2 · 25 épocas | 0.921 | 13.3 fps; F1, F2, F3 todos encontrados (0.94 / 0.96 / 0.84); 385 imágenes con hilo cortado falso | `model-v0.2` |
 | v0.3 · ajustado con datos dirigidos | 0.916 (prueba reservada 0.912) | `wire_break` prueba mAP50 0.58 → 0.68; con confirmación GPS 5 de 8, falsas alertas 33 → 6, todas las averías encontradas | `model-v0.3` |
+| v0.4 · los dos aspectos del mundo | 0.956 (prueba reservada 0.938 classic, 0.938 rich) | mundo rich: 3 de 3 averías (v0.3: 1 de 3); misión classic: 13 falsas alertas (v0.3: 5), así que solo se usa en los vuelos en vivo en Gazebo | `model-v0.4` |
 
 ![v0.2 en el Jetson: hilo cortado, poste caído, rama y el hilo cortado falso que la v0.3 reduce](docs/img/v0.2-jetson-faults.jpg)
 
 - [Registro de reentrenamiento](docs/retraining-log.md): qué se le escapó a cada versión y qué cambió.
 - [Ficha del modelo](docs/model-card.md): datos, métricas, límites y cómo reproducirlo.
+- [Modelos y datos](ml/README.md): registro de todos los modelos y conjuntos de datos, fichas de cada entrenamiento y sha256 de los archivos de los modelos.
 - [Integración con el Jetson](docs/jetson-integration.md): la fuente de cámara `sim:`, el detector y el modo de campo en querra-scout.
 
 ## Simulado frente a real

@@ -1,0 +1,177 @@
+{
+ "tool": "tools/eval_sets.py (Ultralytics val, imgsz 640, PyTorch CPU)",
+ "metric": "mAP50; wb_p / wb_r = wire_break precision / recall",
+ "sets": {
+  "classic: old validation farms": {
+   "frames": 700,
+   "model-v0.3": {
+    "all": 0.916,
+    "wire_break": 0.778,
+    "wb_p": 0.77,
+    "wb_r": 0.74,
+    "fallen_post": 0.917,
+    "branch": 0.927
+   },
+   "model-v0.4": {
+    "all": 0.927,
+    "wire_break": 0.834,
+    "wb_p": 0.86,
+    "wb_r": 0.75,
+    "fallen_post": 0.911,
+    "branch": 0.942
+   }
+  },
+  "classic: v2 validation farms": {
+   "frames": 600,
+   "model-v0.3": {
+    "all": 0.932,
+    "wire_break": 0.681,
+    "wb_p": 0.71,
+    "wb_r": 0.6,
+    "fallen_post": 0.966,
+    "branch": 0.956
+   },
+   "model-v0.4": {
+    "all": 0.956,
+    "wire_break": 0.818,
+    "wb_p": 0.87,
+    "wb_r": 0.67,
+    "fallen_post": 0.977,
+    "branch": 0.961
+   }
+  },
+  "classic: test seeds 140-142": {
+   "frames": 750,
+   "model-v0.3": {
+    "all": 0.911,
+    "wire_break": 0.684,
+    "wb_p": 0.7,
+    "wb_r": 0.61,
+    "fallen_post": 0.911,
+    "branch": 0.92
+   },
+   "model-v0.4": {
+    "all": 0.938,
+    "wire_break": 0.822,
+    "wb_p": 0.85,
+    "wb_r": 0.69,
+    "fallen_post": 0.934,
+    "branch": 0.941
+   }
+  },
+  "classic: mission pasture": {
+   "frames": 400,
+   "model-v0.3": {
+    "all": 0.958,
+    "wire_break": 0.775,
+    "wb_p": 0.66,
+    "wb_r": 0.81,
+    "fallen_post": 0.981,
+    "branch": 0.995
+   },
+   "model-v0.4": {
+    "all": 0.981,
+    "wire_break": 0.9,
+    "wb_p": 0.93,
+    "wb_r": 0.79,
+    "fallen_post": 0.995,
+    "branch": 0.995
+   }
+  },
+  "classic: re-fly close-ups": {
+   "frames": 400,
+   "model-v0.3": {
+    "all": 0.97,
+    "wire_break": 0.93,
+    "wb_p": 0.89,
+    "wb_r": 0.84,
+    "fallen_post": 0.979,
+    "branch": 0.995
+   },
+   "model-v0.4": {
+    "all": 0.981,
+    "wire_break": 0.963,
+    "wb_p": 0.97,
+    "wb_r": 0.88,
+    "fallen_post": 0.991,
+    "branch": 0.995
+   }
+  },
+  "rich: validation farms": {
+   "frames": 600,
+   "model-v0.3": {
+    "all": 0.603,
+    "wire_break": 0.138,
+    "wb_p": 0.66,
+    "wb_r": 0.09,
+    "fallen_post": 0.736,
+    "branch": 0.451
+   },
+   "model-v0.4": {
+    "all": 0.954,
+    "wire_break": 0.858,
+    "wb_p": 0.82,
+    "wb_r": 0.76,
+    "fallen_post": 0.922,
+    "branch": 0.976
+   }
+  },
+  "rich: test seeds 140-142": {
+   "frames": 750,
+   "model-v0.3": {
+    "all": 0.71,
+    "wire_break": 0.33,
+    "wb_p": 0.85,
+    "wb_r": 0.14,
+    "fallen_post": 0.827,
+    "branch": 0.717
+   },
+   "model-v0.4": {
+    "all": 0.938,
+    "wire_break": 0.789,
+    "wb_p": 0.84,
+    "wb_r": 0.68,
+    "fallen_post": 0.946,
+    "branch": 0.962
+   }
+  },
+  "rich: mission pasture": {
+   "frames": 400,
+   "model-v0.3": {
+    "all": 0.657,
+    "wire_break": 0.151,
+    "wb_p": 0.7,
+    "wb_r": 0.05,
+    "fallen_post": 0.629,
+    "branch": 0.772
+   },
+   "model-v0.4": {
+    "all": 0.977,
+    "wire_break": 0.877,
+    "wb_p": 0.87,
+    "wb_r": 0.84,
+    "fallen_post": 0.995,
+    "branch": 0.995
+   }
+  },
+  "rich: re-fly close-ups": {
+   "frames": 400,
+   "model-v0.3": {
+    "all": 0.584,
+    "wire_break": 0.053,
+    "wb_p": 0.6,
+    "wb_r": 0.01,
+    "fallen_post": 0.799,
+    "branch": 0.718
+   },
+   "model-v0.4": {
+    "all": 0.984,
+    "wire_break": 0.968,
+    "wb_p": 0.98,
+    "wb_r": 0.89,
+    "fallen_post": 0.989,
+    "branch": 0.995
+   }
+  }
+ }
+}

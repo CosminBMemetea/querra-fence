@@ -1,0 +1,509 @@
+{
+ "setup": "Gazebo (Mac) -> LAN JPEG stream -> Jetson Orin Nano, TensorRT FP16 -> 5-of-8 GPS confirmation (conf >= 0.7, 5 m), PX4 pose over uXRCE-DDS; re-fly: 6 m altitude, 4.2 m stand-off, 5 s hover, up to 8 alerts nearest-first",
+ "rule": "an alert is a real fault when its class matches a fault within 15 m (as tools/eval_mission.py); faults F1 wire_break, F2 post_down, F3 branch_short",
+ "flights": [
+  {
+   "world": "classic",
+   "model": "model-v0.4",
+   "date": "2026-11-20",
+   "summary": {
+    "inspection_alerts": 18,
+    "faults_found": "3 of 3",
+    "false_alerts": 13,
+    "re_fly_alerts": 2
+   },
+   "alerts": [
+    {
+     "id": 1,
+     "class": "wire_break",
+     "conf": 0.77,
+     "phase": "inspection",
+     "nearest_fault": "F1",
+     "distance_m": 58.9,
+     "verdict": "false"
+    },
+    {
+     "id": 2,
+     "class": "wire_break",
+     "conf": 0.82,
+     "phase": "inspection",
+     "nearest_fault": "F1",
+     "distance_m": 2.1,
+     "verdict": "real fault"
+    },
+    {
+     "id": 3,
+     "class": "wire_break",
+     "conf": 0.72,
+     "phase": "inspection",
+     "nearest_fault": "F1",
+     "distance_m": 9.1,
+     "verdict": "real fault"
+    },
+    {
+     "id": 4,
+     "class": "wire_break",
+     "conf": 0.73,
+     "phase": "inspection",
+     "nearest_fault": "F1",
+     "distance_m": 21.3,
+     "verdict": "false"
+    },
+    {
+     "id": 5,
+     "class": "wire_break",
+     "conf": 0.72,
+     "phase": "inspection",
+     "nearest_fault": "F1",
+     "distance_m": 35.6,
+     "verdict": "false"
+    },
+    {
+     "id": 6,
+     "class": "wire_break",
+     "conf": 0.78,
+     "phase": "inspection",
+     "nearest_fault": "F2",
+     "distance_m": 44.9,
+     "verdict": "false"
+    },
+    {
+     "id": 7,
+     "class": "fallen_post",
+     "conf": 0.87,
+     "phase": "inspection",
+     "nearest_fault": "F2",
+     "distance_m": 3.1,
+     "verdict": "real fault"
+    },
+    {
+     "id": 8,
+     "class": "fallen_post",
+     "conf": 0.94,
+     "phase": "inspection",
+     "nearest_fault": "F2",
+     "distance_m": 5.0,
+     "verdict": "real fault"
+    },
+    {
+     "id": 9,
+     "class": "wire_break",
+     "conf": 0.82,
+     "phase": "inspection",
+     "nearest_fault": "F2",
+     "distance_m": 2.2,
+     "verdict": "false"
+    },
+    {
+     "id": 10,
+     "class": "wire_break",
+     "conf": 0.73,
+     "phase": "inspection",
+     "nearest_fault": "F2",
+     "distance_m": 22.6,
+     "verdict": "false"
+    },
+    {
+     "id": 11,
+     "class": "wire_break",
+     "conf": 0.71,
+     "phase": "inspection",
+     "nearest_fault": "F2",
+     "distance_m": 47.1,
+     "verdict": "false"
+    },
+    {
+     "id": 12,
+     "class": "wire_break",
+     "conf": 0.75,
+     "phase": "inspection",
+     "nearest_fault": "F3",
+     "distance_m": 43.3,
+     "verdict": "false"
+    },
+    {
+     "id": 13,
+     "class": "wire_break",
+     "conf": 0.81,
+     "phase": "inspection",
+     "nearest_fault": "F3",
+     "distance_m": 31.5,
+     "verdict": "false"
+    },
+    {
+     "id": 14,
+     "class": "branch",
+     "conf": 0.81,
+     "phase": "inspection",
+     "nearest_fault": "F3",
+     "distance_m": 1.4,
+     "verdict": "real fault"
+    },
+    {
+     "id": 15,
+     "class": "wire_break",
+     "conf": 0.88,
+     "phase": "inspection",
+     "nearest_fault": "F3",
+     "distance_m": 12.0,
+     "verdict": "false"
+    },
+    {
+     "id": 16,
+     "class": "wire_break",
+     "conf": 0.82,
+     "phase": "inspection",
+     "nearest_fault": "F3",
+     "distance_m": 23.5,
+     "verdict": "false"
+    },
+    {
+     "id": 17,
+     "class": "wire_break",
+     "conf": 0.81,
+     "phase": "inspection",
+     "nearest_fault": "F3",
+     "distance_m": 31.6,
+     "verdict": "false"
+    },
+    {
+     "id": 18,
+     "class": "wire_break",
+     "conf": 0.7,
+     "phase": "inspection",
+     "nearest_fault": "F3",
+     "distance_m": 56.4,
+     "verdict": "false"
+    },
+    {
+     "id": 19,
+     "class": "wire_break",
+     "conf": 0.85,
+     "phase": "re-fly",
+     "nearest_fault": "F3",
+     "distance_m": 70.7,
+     "verdict": "false"
+    },
+    {
+     "id": 20,
+     "class": "wire_break",
+     "conf": 0.81,
+     "phase": "re-fly",
+     "nearest_fault": "F3",
+     "distance_m": 48.6,
+     "verdict": "false"
+    }
+   ],
+   "re_fly": {
+    "altitude_m": 6.0,
+    "standoff_m": 4.2,
+    "hover_s": 5.0,
+    "results": [
+     {
+      "id": 18,
+      "class": "wire_break",
+      "alert_conf": 0.7,
+      "verdict": "not seen up close",
+      "frames": 63,
+      "hits": 2,
+      "best_conf": 0.76
+     },
+     {
+      "id": 17,
+      "class": "wire_break",
+      "alert_conf": 0.81,
+      "verdict": "not seen up close",
+      "frames": 74,
+      "hits": 6,
+      "best_conf": 0.75
+     },
+     {
+      "id": 16,
+      "class": "wire_break",
+      "alert_conf": 0.82,
+      "verdict": "not seen up close",
+      "frames": 76,
+      "hits": 7,
+      "best_conf": 0.65
+     },
+     {
+      "id": 15,
+      "class": "wire_break",
+      "alert_conf": 0.88,
+      "verdict": "not seen up close",
+      "frames": 70,
+      "hits": 4,
+      "best_conf": 0.89
+     },
+     {
+      "id": 14,
+      "class": "branch",
+      "alert_conf": 0.81,
+      "verdict": "verified",
+      "frames": 69,
+      "hits": 69,
+      "best_conf": 0.84
+     },
+     {
+      "id": 13,
+      "class": "wire_break",
+      "alert_conf": 0.81,
+      "verdict": "not seen up close",
+      "frames": 62,
+      "hits": 1,
+      "best_conf": 0.55
+     },
+     {
+      "id": 12,
+      "class": "wire_break",
+      "alert_conf": 0.75,
+      "verdict": "verified",
+      "frames": 73,
+      "hits": 58,
+      "best_conf": 0.92
+     },
+     {
+      "id": 11,
+      "class": "wire_break",
+      "alert_conf": 0.71,
+      "verdict": "not seen up close",
+      "frames": 71,
+      "hits": 1,
+      "best_conf": 0.51
+     }
+    ]
+   }
+  },
+  {
+   "world": "rich",
+   "model": "model-v0.4",
+   "date": "2026-11-20",
+   "summary": {
+    "inspection_alerts": 9,
+    "faults_found": "3 of 3",
+    "false_alerts": 6,
+    "re_fly_alerts": 4
+   },
+   "alerts": [
+    {
+     "id": 1,
+     "class": "wire_break",
+     "conf": 0.85,
+     "phase": "inspection",
+     "nearest_fault": "F1",
+     "distance_m": 58.1,
+     "verdict": "false"
+    },
+    {
+     "id": 2,
+     "class": "wire_break",
+     "conf": 0.81,
+     "phase": "inspection",
+     "nearest_fault": "F1",
+     "distance_m": 2.6,
+     "verdict": "real fault"
+    },
+    {
+     "id": 3,
+     "class": "wire_break",
+     "conf": 0.76,
+     "phase": "inspection",
+     "nearest_fault": "F2",
+     "distance_m": 39.2,
+     "verdict": "false"
+    },
+    {
+     "id": 4,
+     "class": "fallen_post",
+     "conf": 0.86,
+     "phase": "inspection",
+     "nearest_fault": "F2",
+     "distance_m": 2.9,
+     "verdict": "real fault"
+    },
+    {
+     "id": 5,
+     "class": "wire_break",
+     "conf": 0.83,
+     "phase": "inspection",
+     "nearest_fault": "F3",
+     "distance_m": 43.5,
+     "verdict": "false"
+    },
+    {
+     "id": 6,
+     "class": "branch",
+     "conf": 0.8,
+     "phase": "inspection",
+     "nearest_fault": "F3",
+     "distance_m": 1.5,
+     "verdict": "real fault"
+    },
+    {
+     "id": 7,
+     "class": "wire_break",
+     "conf": 0.92,
+     "phase": "inspection",
+     "nearest_fault": "F3",
+     "distance_m": 12.6,
+     "verdict": "false"
+    },
+    {
+     "id": 8,
+     "class": "wire_break",
+     "conf": 0.79,
+     "phase": "inspection",
+     "nearest_fault": "F3",
+     "distance_m": 55.7,
+     "verdict": "false"
+    },
+    {
+     "id": 9,
+     "class": "wire_break",
+     "conf": 0.74,
+     "phase": "inspection",
+     "nearest_fault": "F3",
+     "distance_m": 81.8,
+     "verdict": "false"
+    },
+    {
+     "id": 10,
+     "class": "wire_break",
+     "conf": 0.83,
+     "phase": "re-fly",
+     "nearest_fault": "F3",
+     "distance_m": 28.2,
+     "verdict": "false"
+    },
+    {
+     "id": 11,
+     "class": "wire_break",
+     "conf": 0.82,
+     "phase": "re-fly",
+     "nearest_fault": "F1",
+     "distance_m": 11.5,
+     "verdict": "real fault"
+    },
+    {
+     "id": 12,
+     "class": "wire_break",
+     "conf": 0.75,
+     "phase": "re-fly",
+     "nearest_fault": "F1",
+     "distance_m": 85.1,
+     "verdict": "false"
+    },
+    {
+     "id": 13,
+     "class": "wire_break",
+     "conf": 0.74,
+     "phase": "re-fly",
+     "nearest_fault": "F3",
+     "distance_m": 89.4,
+     "verdict": "false"
+    }
+   ],
+   "re_fly": {
+    "altitude_m": 6.0,
+    "standoff_m": 4.2,
+    "hover_s": 5.0,
+    "results": [
+     {
+      "id": 9,
+      "class": "wire_break",
+      "alert_conf": 0.74,
+      "verdict": "not seen up close",
+      "frames": 58,
+      "hits": 2,
+      "best_conf": 0.58
+     },
+     {
+      "id": 8,
+      "class": "wire_break",
+      "alert_conf": 0.79,
+      "verdict": "not seen up close",
+      "frames": 61,
+      "hits": 1,
+      "best_conf": 0.63
+     },
+     {
+      "id": 7,
+      "class": "wire_break",
+      "alert_conf": 0.92,
+      "verdict": "not seen up close",
+      "frames": 61,
+      "hits": 13,
+      "best_conf": 0.85
+     },
+     {
+      "id": 6,
+      "class": "branch",
+      "alert_conf": 0.8,
+      "verdict": "verified",
+      "frames": 68,
+      "hits": 68,
+      "best_conf": 0.83
+     },
+     {
+      "id": 5,
+      "class": "wire_break",
+      "alert_conf": 0.83,
+      "verdict": "not seen up close",
+      "frames": 70,
+      "hits": 21,
+      "best_conf": 0.9
+     },
+     {
+      "id": 4,
+      "class": "fallen_post",
+      "alert_conf": 0.86,
+      "verdict": "not seen up close",
+      "frames": 56,
+      "hits": 4,
+      "best_conf": 0.76
+     },
+     {
+      "id": 3,
+      "class": "wire_break",
+      "alert_conf": 0.76,
+      "verdict": "not seen up close",
+      "frames": 66,
+      "hits": 0,
+      "best_conf": 0.45
+     },
+     {
+      "id": 2,
+      "class": "wire_break",
+      "alert_conf": 0.81,
+      "verdict": "verified",
+      "frames": 65,
+      "hits": 65,
+      "best_conf": 0.9
+     }
+    ]
+   }
+  },
+  {
+   "world": "classic",
+   "model": "model-v0.3",
+   "date": "2026-11-20",
+   "summary": {
+    "inspection_alerts": 8,
+    "faults_found": "3 of 3",
+    "false_alerts": 5
+   },
+   "raw": "classic_v03_px4_check.txt"
+  },
+  {
+   "world": "rich",
+   "model": "model-v0.3",
+   "date": "2026-11-20",
+   "summary": {
+    "inspection_alerts": 1,
+    "faults_found": "1 of 3",
+    "false_alerts": 0
+   },
+   "raw": "rich_v03_px4_check.txt"
+  }
+ ]
+}

@@ -49,7 +49,7 @@ Faza 2 pokreće detektor ograde u ROS 2: `fence_detector` izvodi TensorRT FP16 m
 Jetsona (oko 15 Hz, 20–30 ms po slici od JPEG-a do okvira) i objavljuje `vision_msgs/Detection2DArray` te označenu
 sliku. `alert_confirm` pretvara detekcije u `/fence/alerts` samo kad se 5 od posljednjih 8 slika složi unutar 5 m na
 tlu. `./ros.sh demo` (ili **Demo** na ploči) reproducira snimljenu Gazebo misiju kroz cijeli lanac;
-`./ros.sh demo tcp://<mac>:5601` koristi simulaciju uživo. Raspored za Foxglove:
+`./ros.sh demo tcp://<mac>:5601` (model-v0.4) koristi simulaciju uživo. Raspored za Foxglove:
 [`ros2/foxglove/querra-layout.json`](ros2/foxglove/querra-layout.json).
 Scenarij prezentacije: [docs/interview-demo.md](docs/interview-demo.md).
 
@@ -207,11 +207,13 @@ PX4 leti misiju i bilježi svaku detekciju s GPS-om.
 | v0.1 · checkpoint iz epohe 2 | 0.72 | pronađena prekinuta žica F1 (0.78); slab na srušenom stupu | `model-v0.1` |
 | v0.2 · 25 epoha | 0.921 | 13.3 fps; F1, F2, F3 svi pronađeni (0.94 / 0.96 / 0.84); 385 slika s lažnom prekinutom žicom | `model-v0.2` |
 | v0.3 · dodatno učen na ciljanim podacima | 0.916 (odvojeni test 0.912) | `wire_break` test mAP50 0.58 → 0.68; s GPS potvrdom 5 od 8 lažna upozorenja 33 → 6, svi kvarovi pronađeni | `model-v0.3` |
+| v0.4 · oba izgleda svijeta | 0.956 (odvojeni test 0.938 classic, 0.938 rich) | svijet rich: 3 od 3 kvara (v0.3: 1 od 3); misija classic: 13 lažnih upozorenja (v0.3: 5), pa se koristi samo za letove uživo u Gazebu | `model-v0.4` |
 
 ![v0.2 na Jetsonu: prekinuta žica, srušeni stup, grana i lažna prekinuta žica koju v0.3 smanjuje](docs/img/v0.2-jetson-faults.jpg)
 
 - [Dnevnik učenja](docs/retraining-log.md): što je koja verzija promašila i što se promijenilo.
 - [Kartica modela](docs/model-card.md): podaci, metrike, ograničenja i kako ponoviti rezultate.
+- [Modeli i podaci](ml/README.md): registar svih modela i skupova podataka, zapisi učenja i sha256 datoteka modela.
 - [Integracija s Jetsonom](docs/jetson-integration.md): izvor kamere `sim:`, detektor i terenski način u querra-scout.
 
 ## Simulacija naspram stvarnosti

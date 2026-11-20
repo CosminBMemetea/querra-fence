@@ -1,0 +1,131 @@
+{
+ "tool": "tools/eval_mission.py on the recorded classic mission (ros2 demo recording m1, 1,986 in-flight JPEG frames); alerts_5of8_conf0.7 = tools/confirm.py with the live settings",
+ "results": {
+  "model-v0.3": {
+   "frames": 1986,
+   "F1": {
+    "near": 249,
+    "detected": 121,
+    "max_conf": 0.929
+   },
+   "false_frames_wire_break@0.35": 596,
+   "false_frames_wire_break@0.5": 413,
+   "false_frames_wire_break@0.7": 153,
+   "F2": {
+    "near": 242,
+    "detected": 65,
+    "max_conf": 0.929
+   },
+   "false_frames_fallen_post@0.35": 5,
+   "false_frames_fallen_post@0.5": 1,
+   "false_frames_fallen_post@0.7": 0,
+   "F3": {
+    "near": 242,
+    "detected": 66,
+    "max_conf": 0.865
+   },
+   "false_frames_branch@0.35": 0,
+   "false_frames_branch@0.5": 0,
+   "false_frames_branch@0.7": 0,
+   "alerts_1of1": {
+    "total": 36,
+    "false": 31,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ]
+   },
+   "alerts_3of5": {
+    "total": 26,
+    "false": 21,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ]
+   },
+   "alerts_5of8": {
+    "total": 23,
+    "false": 17,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ]
+   },
+   "alerts_5of8_conf0.7": {
+    "total": 10,
+    "false": 6,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ]
+   }
+  },
+  "model-v0.4": {
+   "frames": 1986,
+   "F1": {
+    "near": 249,
+    "detected": 147,
+    "max_conf": 0.935
+   },
+   "false_frames_wire_break@0.35": 718,
+   "false_frames_wire_break@0.5": 551,
+   "false_frames_wire_break@0.7": 257,
+   "F2": {
+    "near": 242,
+    "detected": 66,
+    "max_conf": 0.946
+   },
+   "false_frames_fallen_post@0.35": 1,
+   "false_frames_fallen_post@0.5": 0,
+   "false_frames_fallen_post@0.7": 0,
+   "F3": {
+    "near": 242,
+    "detected": 62,
+    "max_conf": 0.848
+   },
+   "false_frames_branch@0.35": 0,
+   "false_frames_branch@0.5": 0,
+   "false_frames_branch@0.7": 0,
+   "alerts_1of1": {
+    "total": 36,
+    "false": 30,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ]
+   },
+   "alerts_3of5": {
+    "total": 29,
+    "false": 24,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ]
+   },
+   "alerts_5of8": {
+    "total": 29,
+    "false": 23,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ]
+   },
+   "alerts_5of8_conf0.7": {
+    "total": 18,
+    "false": 12,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ]
+   }
+  }
+ }
+}

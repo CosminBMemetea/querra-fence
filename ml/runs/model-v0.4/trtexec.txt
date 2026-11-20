@@ -1,0 +1,5 @@
+[I] Throughput: 292.994 qps
+[I] Latency: min = 3.54248 ms, max = 4.11359 ms, mean = 3.63808 ms, median = 3.60913 ms, percentile(90%) = 3.61926 ms, percentile(95%) = 4.05313 ms, percentile(99%) = 4.06769 ms
+[I] H2D Latency: min = 0.183228 ms, max = 0.319427 ms, mean = 0.206092 ms, median = 0.199951 ms, percentile(90%) = 0.205994 ms, percentile(95%) = 0.288513 ms, percentile(99%) = 0.29715 ms
+[I] D2H Latency: min = 0.0141602 ms, max = 0.045929 ms, mean = 0.0259004 ms, median = 0.0246582 ms, percentile(90%) = 0.0319824 ms, percentile(95%) = 0.032959 ms, percentile(99%) = 0.040741 ms
+&&&& PASSED TensorRT.trtexec [TensorRT v100300] # /usr/src/tensorrt/bin/trtexec --onnx=fence-yolo11n-v0.4.onnx --saveEngine=fence-yolo11n-v0.4-fp16.engine --fp16
