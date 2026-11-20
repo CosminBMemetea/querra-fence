@@ -1,5 +1,7 @@
 # Querra Fence · Gardian X500
 
+**English** · [Polski](README.pl.md)
+
 <img src="docs/assets/icon.svg" width="72" align="right" alt="Querra Fence icon">
 
 **Safe fence: protect your animals from predators.** Project page with the sensors and the roadmap:
@@ -297,6 +299,9 @@ The sensing is not real yet, and the boxes in the demo images say so:
 5. Alerts to a phone and a map view of open faults
 6. The LD2450 radar as the real gate counter in guard mode, in place of the simulated iToF sensor
 7. Hardware: X500 V2, Pixhawk, Raspberry Pi 5 or Jetson companion computer, same MAVLink mission code
+
+Predator watch at night (thermal camera and radar at the gate) is planned; see the
+[project page](https://cosminbmemetea.github.io/querra-fence/#roadmap).
 
 ## Notes
 
