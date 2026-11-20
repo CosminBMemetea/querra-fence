@@ -4,6 +4,8 @@
 
 - **Project page** on GitHub Pages (`docs/index.html`): what works today, sensors in and alerts out (live, simulated,
   planned) and the roadmap.
+  - It has an **EN | PL** switch, picks Polish for Polish browsers, and links work with `?lang=pl`.
+- **README in Polish**: `README.pl.md`, linked from the top of `README.md`.
 - **New icon**: a shield around a live electric fence. It is used in the dock (48–512 px) and as the panel's favicon
   and phone home-screen icon.
 - **Launcher** (`querra-fence-panel_0.6.0_arm64.deb`, which upgrades and replaces 0.5.1):

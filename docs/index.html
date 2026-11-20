@@ -11,6 +11,8 @@
 <meta name="theme-color" content="#081419">
 <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="alternate" hreflang="en" href="https://cosminbmemetea.github.io/querra-fence/?lang=en">
+<link rel="alternate" hreflang="pl" href="https://cosminbmemetea.github.io/querra-fence/?lang=pl">
 <style>
 :root{
   --bg:#071217; --bg2:#0b1d22; --card:#0f242a; --line:#1c3a40; --ink:#e9f2ef; --mut:#93aaa6;
@@ -49,8 +51,12 @@ nav .wrap{display:flex;align-items:center;gap:14px;height:62px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;color:var(--ink);letter-spacing:.02em}
 .brand img{width:34px;height:34px;border-radius:9px}
 .brand b{color:var(--gold)}
-nav .links{margin-left:auto;display:flex;gap:18px;font-size:15px}
+nav .links{margin-left:auto;display:flex;gap:18px;font-size:15px;align-items:center}
 nav .links a{color:var(--mut)}nav .links a:hover{color:var(--ink);text-decoration:none}
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.lang button{all:unset;cursor:pointer;padding:5px 10px;font-size:13px;font-weight:800;color:var(--mut)}
+.lang button[aria-pressed="true"]{background:var(--gold);color:#1a1300}
+.lang button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 @media (max-width:640px){nav .links a:not(.gh){display:none}}
 
 /* hero */
@@ -128,8 +134,9 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
   <div class="wrap">
     <a class="brand" href="#top"><img src="assets/icon.svg" alt="" width="34" height="34"> QUERRA <b>FENCE</b></a>
     <div class="links">
-      <a href="#today">Today</a><a href="#system">Sensors</a><a href="#roadmap">Roadmap</a>
+      <a href="#today" data-i18n="nav_today">Today</a><a href="#system" data-i18n="nav_sensors">Sensors</a><a href="#roadmap" data-i18n="nav_roadmap">Roadmap</a>
       <a class="gh" href="https://github.com/CosminBMemetea/querra-fence">GitHub ↗</a>
+      <span class="lang" role="group" aria-label="Language / Język"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="pl" aria-pressed="false">PL</button></span>
     </div>
   </div>
 </nav>
@@ -137,21 +144,21 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
 <header class="hero" id="top">
   <div class="wrap grid">
     <div>
-      <div class="eyebrow">Safe fence · research prototype</div>
-      <h1>Protect your animals from <span>predators</span> and broken fences.</h1>
-      <p class="lead">A drone and an edge-AI ground station watch the electric fence for you. They find a broken wire,
+      <div class="eyebrow" data-i18n="hero_eyebrow">Safe fence · research prototype</div>
+      <h1 data-i18n="hero_h1">Protect your animals from <span>predators</span> and broken fences.</h1>
+      <p class="lead" data-i18n="hero_lead">A drone and an edge-AI ground station watch the electric fence for you. They find a broken wire,
         a fallen post or a branch on the wire, spot animals that got out, and send an alert with the GPS position, so
         the farmer does not have to walk five kilometres of fence.</p>
       <div class="cta">
-        <a class="btn primary" href="#roadmap">See the roadmap</a>
-        <a class="btn" href="https://github.com/CosminBMemetea/querra-fence">Source on GitHub</a>
-        <a class="btn" href="https://github.com/CosminBMemetea/querra-fence/releases">Releases</a>
+        <a class="btn primary" href="#roadmap" data-i18n="btn_roadmap">See the roadmap</a>
+        <a class="btn" href="https://github.com/CosminBMemetea/querra-fence" data-i18n="btn_source">Source on GitHub</a>
+        <a class="btn" href="https://github.com/CosminBMemetea/querra-fence/releases" data-i18n="btn_releases">Releases</a>
       </div>
-      <div class="honest"><span class="chip live">real sensors on a Jetson</span><span class="chip sim">drone flies in simulation</span><span class="chip plan">predator watch planned</span></div>
+      <div class="honest"><span class="chip live" data-i18n="hero_c1">real sensors on a Jetson</span><span class="chip sim" data-i18n="hero_c2">drone flies in simulation</span><span class="chip plan" data-i18n="hero_c3">predator watch planned</span></div>
     </div>
     <figure class="shot" style="margin:0">
-      <img src="media/result-overview.jpg" width="1231" height="777" alt="Simulated pasture after an inspection flight: the drone's route in yellow, orange beams on fence faults, red beams on escaped animals">
-      <figcaption>After one flight: route in yellow, fence faults in orange, escaped animals in red.</figcaption>
+      <img src="media/result-overview.jpg" width="1231" height="777" data-i18n-alt="alt_hero" alt="Simulated pasture after an inspection flight: the drone's route in yellow, orange beams on fence faults, red beams on escaped animals">
+      <figcaption data-i18n="hero_cap">After one flight: route in yellow, fence faults in orange, escaped animals in red.</figcaption>
     </figure>
   </div>
 </header>
@@ -159,56 +166,56 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
 <section style="padding-top:20px">
   <div class="wrap">
     <div class="stats">
-      <div class="stat"><b>15 Hz</b><span>fence detector on the Jetson GPU (YOLO11n, TensorRT FP16, 20–30 ms per frame)</span></div>
-      <div class="stat"><b>33 → 6</b><span>false alerts in the simulated mission once 5 of 8 frames must agree, with all 3 real faults still found</span></div>
-      <div class="stat"><b>0</b><span>hand-drawn labels: thousands of training images rendered in Gazebo and labelled from its ground truth</span></div>
-      <div class="stat"><b>4</b><span>real sensors on ROS 2: two cameras, GPS and a 24 GHz radar</span></div>
+      <div class="stat"><b>15 Hz</b><span data-i18n="st1">fence detector on the Jetson GPU (YOLO11n, TensorRT FP16, 20–30 ms per frame)</span></div>
+      <div class="stat"><b>33 → 6</b><span data-i18n="st2">false alerts in the simulated mission once 5 of 8 frames must agree, with all 3 real faults still found</span></div>
+      <div class="stat"><b>0</b><span data-i18n="st3">hand-drawn labels: thousands of training images rendered in Gazebo and labelled from its ground truth</span></div>
+      <div class="stat"><b>4</b><span data-i18n="st4">real sensors on ROS 2: two cameras, GPS and a 24 GHz radar</span></div>
     </div>
   </div>
 </section>
 
 <section id="today">
   <div class="wrap">
-    <div class="eyebrow">What works today</div>
-    <h2>From the simulated flight to a confirmed alert</h2>
-    <p class="lead">Everything below runs now. The flight is real PX4 code in a simulated farm, and the brain is a real
+    <div class="eyebrow" data-i18n="today_eyebrow">What works today</div>
+    <h2 data-i18n="today_h2">From the simulated flight to a confirmed alert</h2>
+    <p class="lead" data-i18n="today_lead">Everything below runs now. The flight is real PX4 code in a simulated farm, and the brain is a real
       NVIDIA Jetson with real sensors on the bench.</p>
     <div class="cards">
       <article class="card">
-        <div class="top"><h3>Autonomous fence inspection</h3><span class="chip sim">simulated</span></div>
-        <img class="pic" src="media/dronecam.gif" width="640" height="400" loading="lazy" alt="Inspection camera passing a broken wire, with escaped cows boxed">
+        <div class="top"><h3 data-i18n="c1_h">Autonomous fence inspection</h3><span class="chip sim" data-i18n="chip_sim_long">simulated</span></div>
+        <img class="pic" src="media/dronecam.gif" width="640" height="400" loading="lazy" data-i18n-alt="alt_c1" alt="Inspection camera passing a broken wire, with escaped cows boxed">
         <ul>
-          <li>A PX4 Holybro X500 takes off, flies the 414 m fence loop at 12 m and lands, in about 2.5 minutes.</li>
-          <li>It finds the broken wire, the fallen post and the branch on the wire, plus animals outside the paddock.</li>
-          <li>A report with a map and the GPS position of every finding is written after each flight.</li>
+          <li data-i18n="c1_1">A PX4 Holybro X500 takes off, flies the 414 m fence loop at 12 m and lands, in about 2.5 minutes.</li>
+          <li data-i18n="c1_2">It finds the broken wire, the fallen post and the branch on the wire, plus animals outside the paddock.</li>
+          <li data-i18n="c1_3">A report with a map and the GPS position of every finding is written after each flight.</li>
         </ul>
       </article>
       <article class="card">
-        <div class="top"><h3>Edge AI that does not cry wolf</h3><span class="chip live">on the Jetson</span></div>
-        <img class="pic" src="img/dataset-auto-labels.jpg" width="1280" height="800" loading="lazy" alt="Training frames rendered in Gazebo with labels computed automatically from the simulation: posts, wires, broken wire, animals">
+        <div class="top"><h3 data-i18n="c2_h">Edge AI that does not cry wolf</h3><span class="chip live" data-i18n="chip_onjetson">on the Jetson</span></div>
+        <img class="pic" src="img/dataset-auto-labels.jpg" width="1280" height="800" loading="lazy" data-i18n-alt="alt_c2" alt="Training frames rendered in Gazebo with labels computed automatically from the simulation: posts, wires, broken wire, animals">
         <ul>
-          <li>A YOLO11n fence detector, trained only on synthetic farms rendered in Gazebo, runs as a TensorRT FP16 engine.</li>
-          <li>One frame is never an alert: 5 of the last 8 frames must place the same fault within 5 m on the ground.</li>
-          <li>Each model version is logged with a held-out test set and what it got wrong.</li>
+          <li data-i18n="c2_1">A YOLO11n fence detector, trained only on synthetic farms rendered in Gazebo, runs as a TensorRT FP16 engine.</li>
+          <li data-i18n="c2_2">One frame is never an alert: 5 of the last 8 frames must place the same fault within 5 m on the ground.</li>
+          <li data-i18n="c2_3">Each model version is logged with a held-out test set and what it got wrong.</li>
         </ul>
       </article>
       <article class="card">
-        <div class="top"><h3>Ground station at the gate</h3><span class="chip sim">simulated</span></div>
-        <img class="pic strip" src="media/ground-cameras.png" width="1349" height="300" loading="lazy" alt="Simulated ground-station streams: RGB on the mast, thermal on the mast, iToF depth at the gate">
-        <img class="pic strip" src="media/faults.jpg" width="1936" height="404" loading="lazy" alt="The three fence faults: broken top wire, fallen post, branch on the wires">
+        <div class="top"><h3 data-i18n="c3_h">Ground station at the gate</h3><span class="chip sim" data-i18n="chip_sim_long">simulated</span></div>
+        <img class="pic strip" src="media/ground-cameras.png" width="1349" height="300" loading="lazy" data-i18n-alt="alt_c3a" alt="Simulated ground-station streams: RGB on the mast, thermal on the mast, iToF depth at the gate">
+        <img class="pic strip" src="media/faults.jpg" width="1936" height="404" loading="lazy" data-i18n-alt="alt_c3b" alt="The three fence faults: broken top wire, fallen post, branch on the wires">
         <ul>
-          <li>RGB and thermal cameras on a pole, an iToF depth sensor on the gate post and a fence-voltage monitor.</li>
-          <li>When a cow walks out of an open gate or the fence loses voltage, the ground station sends the drone.</li>
-          <li>You can ask the Jetson what it sees and hear the answer, from a local vision-language model.</li>
+          <li data-i18n="c3_1">RGB and thermal cameras on a pole, an iToF depth sensor on the gate post and a fence-voltage monitor.</li>
+          <li data-i18n="c3_2">When a cow walks out of an open gate or the fence loses voltage, the ground station sends the drone.</li>
+          <li data-i18n="c3_3">You can ask the Jetson what it sees and hear the answer, from a local vision-language model.</li>
         </ul>
       </article>
       <article class="card">
-        <div class="top"><h3>Field panel and ROS 2</h3><span class="chip live">real sensors</span></div>
-        <img class="pic strip" src="assets/panel-radar.jpg" width="1000" height="455" loading="lazy" alt="Querra Fence panel: the LD2450 radar fan with its live status, and the Jetson's temperatures, power mode, memory and disk">
+        <div class="top"><h3 data-i18n="c4_h">Field panel and ROS 2</h3><span class="chip live" data-i18n="chip_real">real sensors</span></div>
+        <img class="pic strip" src="assets/panel-radar.jpg" width="1000" height="455" loading="lazy" data-i18n-alt="alt_c4" alt="Querra Fence panel: the LD2450 radar fan with its live status, and the Jetson's temperatures, power mode, memory and disk">
         <ul>
-          <li>A web panel for a phone or a laptop, offline, in English or Polish: live cameras, radar, GPS, data collection.</li>
-          <li>Every sensor is a ROS 2 Humble topic: recorded as MCAP bags and viewed live in Foxglove.</li>
-          <li>The same topics come from the simulation or from the real sensors, so the pipeline is tested before the field.</li>
+          <li data-i18n="c4_1">A web panel for a phone or a laptop, offline, in English or Polish: live cameras, radar, GPS, data collection.</li>
+          <li data-i18n="c4_2">Every sensor is a ROS 2 Humble topic: recorded as MCAP bags and viewed live in Foxglove.</li>
+          <li data-i18n="c4_3">The same topics come from the simulation or from the real sensors, so the pipeline is tested before the field.</li>
         </ul>
       </article>
     </div>
@@ -217,47 +224,47 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
 
 <section id="system" style="background:var(--bg2)">
   <div class="wrap">
-    <div class="eyebrow">Sensors in, alerts out</div>
-    <h2>How the system fits together</h2>
-    <p class="lead">Each piece of hardware is owned by one service. The ROS 2 nodes are clients of those services, so
+    <div class="eyebrow" data-i18n="sys_eyebrow">Sensors in, alerts out</div>
+    <h2 data-i18n="sys_h2">How the system fits together</h2>
+    <p class="lead" data-i18n="sys_lead">Each piece of hardware is owned by one service. The ROS 2 nodes are clients of those services, so
       nothing fights over a camera or a serial port.</p>
-    <div class="legend"><span class="chip live">live: real hardware</span><span class="chip sim">simulated: PX4 + Gazebo</span><span class="chip plan">planned</span></div>
+    <div class="legend"><span class="chip live" data-i18n="lg_live">live: real hardware</span><span class="chip sim" data-i18n="lg_sim">simulated: PX4 + Gazebo</span><span class="chip plan" data-i18n="lg_plan">planned</span></div>
 
     <div class="sys">
       <div class="col">
-        <h3>Inputs</h3>
+        <h3 data-i18n="col_in">Inputs</h3>
         <ul class="io">
-          <li><div class="h">Arducam 8 MP USB camera <span class="chip live">live</span></div><small>1280×720 MJPEG at 30 fps, the detector's camera in the field</small></li>
-          <li><div class="h">Sony IMX219 CSI camera <span class="chip live">live</span></div><small>8 MP sensor, 1280×720 through the Jetson ISP</small></li>
-          <li><div class="h">u-blox 7 GPS <span class="chip live">live</span></div><small>through gpsd, 1 Hz, 2D/3D fix, satellites and HDOP</small></li>
-          <li><div class="h">HLK-LD2450 radar <span class="chip live">live</span></div><small>24 GHz mmWave, up to 3 moving targets, 6 m, ±60°, ~10 Hz</small></li>
-          <li><div class="h">Drone camera + telemetry <span class="chip sim">sim</span></div><small>X500 inspection camera and GPS, streamed from Gazebo to the Jetson</small></li>
-          <li><div class="h">Gate RGB, thermal, iToF + fence monitor <span class="chip sim">sim</span></div><small>the ground station's view of the gate and the fence voltage</small></li>
-          <li><div class="h">Drone pose from PX4 <span class="chip plan">phase 3</span></div><small>uXRCE-DDS from the flight controller into ROS 2</small></li>
+          <li><div class="h"><span data-i18n="in1">Arducam 8 MP USB camera</span> <span class="chip live" data-i18n="chip_live">live</span></div><small data-i18n="in1s">1280×720 MJPEG at 30 fps, the detector's camera in the field</small></li>
+          <li><div class="h"><span data-i18n="in2">Sony IMX219 CSI camera</span> <span class="chip live" data-i18n="chip_live">live</span></div><small data-i18n="in2s">8 MP sensor, 1280×720 through the Jetson ISP</small></li>
+          <li><div class="h"><span data-i18n="in3">u-blox 7 GPS</span> <span class="chip live" data-i18n="chip_live">live</span></div><small data-i18n="in3s">through gpsd, 1 Hz, 2D/3D fix, satellites and HDOP</small></li>
+          <li><div class="h"><span data-i18n="in4">HLK-LD2450 radar</span> <span class="chip live" data-i18n="chip_live">live</span></div><small data-i18n="in4s">24 GHz mmWave, up to 3 moving targets, 6 m, ±60°, ~10 Hz</small></li>
+          <li><div class="h"><span data-i18n="in5">Drone camera + telemetry</span> <span class="chip sim" data-i18n="chip_sim">sim</span></div><small data-i18n="in5s">X500 inspection camera and GPS, streamed from Gazebo to the Jetson</small></li>
+          <li><div class="h"><span data-i18n="in6">Gate RGB, thermal, iToF + fence monitor</span> <span class="chip sim" data-i18n="chip_sim">sim</span></div><small data-i18n="in6s">the ground station's view of the gate and the fence voltage</small></li>
+          <li><div class="h"><span data-i18n="in7">Drone pose from PX4</span> <span class="chip plan" data-i18n="chip_phase3">phase 3</span></div><small data-i18n="in7s">uXRCE-DDS from the flight controller into ROS 2</small></li>
         </ul>
       </div>
       <div class="arrow" aria-hidden="true">→</div>
       <div class="col brain">
-        <h3>Jetson brain</h3>
+        <h3 data-i18n="col_brain">Jetson brain</h3>
         <ul class="io">
-          <li><div class="h">NVIDIA Jetson Orin Nano Super</div><small>8 GB, JetPack 6.2, runs on site with no cloud</small></li>
-          <li><div class="h">ROS 2 Humble</div><small>in Docker on the SSD; services own the hardware (panel hub, gpsd, radar service)</small></li>
-          <li><div class="h">Fence detector</div><small>YOLO11n v0.3, TensorRT FP16, 7 classes: post, wire, broken wire, fallen post, branch, cow, sheep</small></li>
-          <li><div class="h">Alert confirmation</div><small>each box placed on the ground from GPS, altitude and heading; 5 of 8 frames within 5 m</small></li>
-          <li><div class="h">Ask the ground station</div><small>local vision-language model and speech: "Are any animals outside the fence?"</small></li>
+          <li><div class="h">NVIDIA Jetson Orin Nano Super</div><small data-i18n="br1s">8 GB, JetPack 6.2, runs on site with no cloud</small></li>
+          <li><div class="h">ROS 2 Humble</div><small data-i18n="br2s">in Docker on the SSD; services own the hardware (panel hub, gpsd, radar service)</small></li>
+          <li><div class="h"><span data-i18n="br3">Fence detector</span></div><small data-i18n="br3s">YOLO11n v0.3, TensorRT FP16, 7 classes: post, wire, broken wire, fallen post, branch, cow, sheep</small></li>
+          <li><div class="h"><span data-i18n="br4">Alert confirmation</span></div><small data-i18n="br4s">each box placed on the ground from GPS, altitude and heading; 5 of 8 frames within 5 m</small></li>
+          <li><div class="h"><span data-i18n="br5">Ask the ground station</span></div><small data-i18n="br5s">local vision-language model and speech: "Are any animals outside the fence?"</small></li>
         </ul>
       </div>
       <div class="arrow" aria-hidden="true">→</div>
       <div class="col">
-        <h3>Outputs</h3>
+        <h3 data-i18n="col_out">Outputs</h3>
         <ul class="io">
-          <li><div class="h">Confirmed fence alerts <span class="chip live">live</span></div><small>class, GPS position, confidence and frames, on <code>/fence/alerts</code></small></li>
-          <li><div class="h">Field panel <span class="chip live">live</span></div><small>phone or laptop on the hotspot, English or Polish, works offline</small></li>
-          <li><div class="h">Foxglove + MCAP bags <span class="chip live">live</span></div><small>live view and recordings of every topic</small></li>
-          <li><div class="h">Inspection report <span class="chip sim">sim</span></div><small>HTML and JSON: map, findings with GPS, voltage along the fence</small></li>
-          <li><div class="h">Drone dispatch <span class="chip sim">sim</span></div><small>the ground station sends the drone when it sees a problem</small></li>
-          <li><div class="h">Phone alerts + fault map <span class="chip plan">planned</span></div><small>the farmer gets the alert, not a log file</small></li>
-          <li><div class="h">Predator warning at night <span class="chip plan">planned</span></div><small>thermal camera and radar at the gate</small></li>
+          <li><div class="h"><span data-i18n="out1">Confirmed fence alerts</span> <span class="chip live" data-i18n="chip_live">live</span></div><small data-i18n="out1s">class, GPS position, confidence and frames, on <code>/fence/alerts</code></small></li>
+          <li><div class="h"><span data-i18n="out2">Field panel</span> <span class="chip live" data-i18n="chip_live">live</span></div><small data-i18n="out2s">phone or laptop on the hotspot, English or Polish, works offline</small></li>
+          <li><div class="h"><span data-i18n="out3">Foxglove + MCAP bags</span> <span class="chip live" data-i18n="chip_live">live</span></div><small data-i18n="out3s">live view and recordings of every topic</small></li>
+          <li><div class="h"><span data-i18n="out4">Inspection report</span> <span class="chip sim" data-i18n="chip_sim">sim</span></div><small data-i18n="out4s">HTML and JSON: map, findings with GPS, voltage along the fence</small></li>
+          <li><div class="h"><span data-i18n="out5">Drone dispatch</span> <span class="chip sim" data-i18n="chip_sim">sim</span></div><small data-i18n="out5s">the ground station sends the drone when it sees a problem</small></li>
+          <li><div class="h"><span data-i18n="out6">Phone alerts + fault map</span> <span class="chip plan" data-i18n="chip_plan">planned</span></div><small data-i18n="out6s">the farmer gets the alert, not a log file</small></li>
+          <li><div class="h"><span data-i18n="out7">Predator warning at night</span> <span class="chip plan" data-i18n="chip_plan">planned</span></div><small data-i18n="out7s">thermal camera and radar at the gate</small></li>
         </ul>
       </div>
     </div>
@@ -266,48 +273,48 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
 
 <section id="roadmap">
   <div class="wrap">
-    <div class="eyebrow">Roadmap</div>
-    <h2>Where it is going</h2>
-    <p class="lead">Simulation first, then real sensors, then the field. Each step ends in something that runs and can be
+    <div class="eyebrow" data-i18n="rm_eyebrow">Roadmap</div>
+    <h2 data-i18n="rm_h2">Where it is going</h2>
+    <p class="lead" data-i18n="rm_lead">Simulation first, then real sensors, then the field. Each step ends in something that runs and can be
       measured.</p>
     <div class="road">
       <div class="lane done">
-        <h3>Done <span class="tag">NOV 2026</span></h3>
+        <h3><span data-i18n="rm_done">Done</span> <span class="tag" data-i18n="rm_done_t">NOV 2026</span></h3>
         <ul class="steps">
-          <li><b>First inspection flight</b><small>v0.1 · PX4 X500 in Gazebo flies the fence, finds faults and escaped animals, writes a GPS report</small></li>
-          <li><b>Ground station + Jetson brain</b><small>v0.2 · guard mode at the gate, spoken answers, LD2450 radar service</small></li>
-          <li><b>Fence detector v0.1 → v0.3</b><small>auto-labelled Gazebo data, TensorRT on the Jetson, 5-of-8 confirmation</small></li>
-          <li><b>Field control panel</b><small>v0.3 · cameras, radar, GPS and data collection on a phone</small></li>
-          <li><b>ROS 2 phases 1 and 2</b><small>v0.4–v0.5 · sensors as topics, MCAP, Foxglove, detector and alerts in ROS 2</small></li>
-          <li><b>Safe-fence launcher</b><small>v0.6 · desktop app, new icon, reliability fixes, this page</small></li>
+          <li><b data-i18n="d1">First inspection flight</b><small data-i18n="d1s">v0.1 · PX4 X500 in Gazebo flies the fence, finds faults and escaped animals, writes a GPS report</small></li>
+          <li><b data-i18n="d2">Ground station + Jetson brain</b><small data-i18n="d2s">v0.2 · guard mode at the gate, spoken answers, LD2450 radar service</small></li>
+          <li><b data-i18n="d3">Fence detector v0.1 → v0.3</b><small data-i18n="d3s">auto-labelled Gazebo data, TensorRT on the Jetson, 5-of-8 confirmation</small></li>
+          <li><b data-i18n="d4">Field control panel</b><small data-i18n="d4s">v0.3 · cameras, radar, GPS and data collection on a phone</small></li>
+          <li><b data-i18n="d5">ROS 2 phases 1 and 2</b><small data-i18n="d5s">v0.4–v0.5 · sensors as topics, MCAP, Foxglove, detector and alerts in ROS 2</small></li>
+          <li><b data-i18n="d6">Safe-fence launcher</b><small data-i18n="d6s">v0.6 · desktop app, new icon, reliability fixes, this page in English and Polish</small></li>
         </ul>
       </div>
       <div class="lane next">
-        <h3>Next <span class="tag">NOW</span></h3>
+        <h3><span data-i18n="rm_next">Next</span> <span class="tag" data-i18n="rm_next_t">NOW</span></h3>
         <ul class="steps">
-          <li><b>PX4 ↔ ROS 2 (phase 3)</b><small>uXRCE-DDS: alerts use the drone's own pose, and the Jetson can send it back to re-check a fault from low altitude</small></li>
-          <li><b>Real fence data</b><small>field collection is ready: real photos, labels and retraining to close the gap between simulation and reality</small></li>
-          <li><b>Calibrated sensors</b><small>camera calibration and the real mounting offsets of every sensor on the airframe</small></li>
+          <li><b data-i18n="n1">PX4 ↔ ROS 2 (phase 3)</b><small data-i18n="n1s">uXRCE-DDS: alerts use the drone's own pose, and the Jetson can send it back to re-check a fault from low altitude</small></li>
+          <li><b data-i18n="n2">Real fence data</b><small data-i18n="n2s">field collection is ready: real photos, labels and retraining to close the gap between simulation and reality</small></li>
+          <li><b data-i18n="n3">Calibrated sensors</b><small data-i18n="n3s">camera calibration and the real mounting offsets of every sensor on the airframe</small></li>
         </ul>
       </div>
       <div class="lane later">
-        <h3>Later <span class="tag">FIELD</span></h3>
+        <h3><span data-i18n="rm_later">Later</span> <span class="tag" data-i18n="rm_later_t">FIELD</span></h3>
         <ul class="steps">
-          <li><b>Predator watch at night</b><small>thermal camera and radar at the gate; warn the farmer before an attack</small></li>
-          <li><b>Real gate counter</b><small>the LD2450 radar counts animals through the gate in guard mode</small></li>
-          <li><b>Phone alerts and a fault map</b><small>open faults on a map, with the photo and the position</small></li>
-          <li><b>Fence from a GPS walk or KML</b><small>plan the route from the real fence line</small></li>
-          <li><b>Night inspections and herd counts</b><small>gimbal and thermal camera; a grid flight to count the whole herd</small></li>
-          <li><b>Hardware</b><small>X500 V2, Pixhawk and a Jetson companion computer, with the same MAVLink mission code</small></li>
+          <li><b data-i18n="l1">Predator watch at night</b><small data-i18n="l1s">thermal camera and radar at the gate; warn the farmer before an attack</small></li>
+          <li><b data-i18n="l2">Real gate counter</b><small data-i18n="l2s">the LD2450 radar counts animals through the gate in guard mode</small></li>
+          <li><b data-i18n="l3">Phone alerts and a fault map</b><small data-i18n="l3s">open faults on a map, with the photo and the position</small></li>
+          <li><b data-i18n="l4">Fence from a GPS walk or KML</b><small data-i18n="l4s">plan the route from the real fence line</small></li>
+          <li><b data-i18n="l5">Night inspections and herd counts</b><small data-i18n="l5s">gimbal and thermal camera; a grid flight to count the whole herd</small></li>
+          <li><b data-i18n="l6">Hardware</b><small data-i18n="l6s">X500 V2, Pixhawk and a Jetson companion computer, with the same MAVLink mission code</small></li>
         </ul>
       </div>
     </div>
 
-    <h3 style="margin-top:46px">Honest limits</h3>
+    <h3 style="margin-top:46px" data-i18n="lim_h">Honest limits</h3>
     <div class="limits">
-      <div><b>The drone flies in simulation.</b>The mission is real PX4 code that would drive a physical X500; the airframe is not built yet.</div>
-      <div><b>The model has seen synthetic farms only.</b>It is not validated on real fences or real animals yet; real data collection is next.</div>
-      <div><b>Predator detection is planned, not built.</b>Today the system finds fence faults and escaped animals.</div>
+      <div data-i18n="lim1"><b>The drone flies in simulation.</b>The mission is real PX4 code that would drive a physical X500; the airframe is not built yet.</div>
+      <div data-i18n="lim2"><b>The model has seen synthetic farms only.</b>It is not validated on real fences or real animals yet; real data collection is next.</div>
+      <div data-i18n="lim3"><b>Predator detection is planned, not built.</b>Today the system finds fence faults and escaped animals.</div>
     </div>
   </div>
 </section>
@@ -315,8 +322,128 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
 <footer>
   <div class="wrap">
     <span>© 2026 Cosmin B. Memetea · Querra Fence</span>
-    <span><a href="https://github.com/CosminBMemetea/querra-fence">GitHub</a> · <a href="https://github.com/CosminBMemetea/querra-fence/releases">Releases</a> · <a href="https://github.com/CosminBMemetea/querra-fence/blob/main/docs/ros2.md">ROS 2 notes</a> · <a href="https://github.com/CosminBMemetea/querra-fence/blob/main/docs/retraining-log.md">Retraining log</a></span>
+    <span><a href="https://github.com/CosminBMemetea/querra-fence">GitHub</a> · <a href="https://github.com/CosminBMemetea/querra-fence/releases" data-i18n="ft_rel">Releases</a> · <a href="https://github.com/CosminBMemetea/querra-fence/blob/main/docs/ros2.md" data-i18n="ft_ros">ROS 2 notes</a> · <a href="https://github.com/CosminBMemetea/querra-fence/blob/main/docs/retraining-log.md" data-i18n="ft_log">Retraining log</a> · <a href="https://github.com/CosminBMemetea/querra-fence/blob/main/README.md" data-i18n="ft_readme" data-i18n-href="https://github.com/CosminBMemetea/querra-fence/blob/main/README.pl.md">README</a></span>
   </div>
 </footer>
+
+<script>
+// EN | PL. English is the page's own text (works without JavaScript); Polish comes from this dictionary.
+const PL = {
+  title: "Querra Fence · Bezpieczne ogrodzenie",
+  description: "Querra Fence: dron i stacja naziemna z AI na brzegu sieci, które utrzymują ogrodzenie elektryczne w działaniu i chronią zwierzęta przed drapieżnikami. PX4, Gazebo, ROS 2 i TensorRT na NVIDIA Jetson.",
+  nav_today: "Dziś", nav_sensors: "Czujniki", nav_roadmap: "Plan rozwoju",
+  hero_eyebrow: "Bezpieczne ogrodzenie · prototyp badawczy",
+  hero_h1: "Chroń swoje zwierzęta przed <span>drapieżnikami</span> i zerwanym ogrodzeniem.",
+  hero_lead: "Dron i stacja naziemna z AI na brzegu sieci pilnują ogrodzenia elektrycznego za Ciebie. Znajdują zerwany drut, przewrócony słupek albo gałąź na przewodzie, wykrywają zwierzęta, które uciekły, i wysyłają alert z pozycją GPS, więc rolnik nie musi obchodzić pięciu kilometrów ogrodzenia.",
+  btn_roadmap: "Zobacz plan rozwoju", btn_source: "Kod na GitHubie", btn_releases: "Wydania",
+  hero_c1: "prawdziwe czujniki na Jetsonie", hero_c2: "dron lata w symulacji", hero_c3: "ochrona przed drapieżnikami w planach",
+  hero_cap: "Po jednym locie: trasa na żółto, usterki ogrodzenia na pomarańczowo, zbiegłe zwierzęta na czerwono.",
+  alt_hero: "Symulowane pastwisko po locie inspekcyjnym: trasa drona na żółto, pomarańczowe promienie nad usterkami, czerwone nad zbiegłymi zwierzętami",
+  st1: "detektor ogrodzenia na GPU Jetsona (YOLO11n, TensorRT FP16, 20–30 ms na klatkę)",
+  st2: "fałszywych alarmów w symulowanej misji, gdy 5 z 8 klatek musi się zgadzać; wszystkie 3 prawdziwe usterki nadal znalezione",
+  st3: "ręcznie rysowanych etykiet: tysiące obrazów treningowych wyrenderowanych w Gazebo i oznaczonych na podstawie danych symulacji",
+  st4: "prawdziwe czujniki w ROS 2: dwie kamery, GPS i radar 24 GHz",
+  today_eyebrow: "Co działa dziś",
+  today_h2: "Od symulowanego lotu do potwierdzonego alertu",
+  today_lead: "Wszystko poniżej działa już teraz. Lot to prawdziwy kod PX4 na symulowanej farmie, a mózg to prawdziwy NVIDIA Jetson z prawdziwymi czujnikami na biurku.",
+  chip_sim_long: "symulacja", chip_onjetson: "na Jetsonie", chip_real: "prawdziwe czujniki",
+  chip_live: "na żywo", chip_sim: "symulacja", chip_plan: "planowane", chip_phase3: "faza 3",
+  c1_h: "Autonomiczna inspekcja ogrodzenia",
+  alt_c1: "Kamera inspekcyjna mija zerwany drut, zbiegłe krowy są zaznaczone ramkami",
+  c1_1: "PX4 Holybro X500 startuje, okrąża 414 m ogrodzenia na wysokości 12 m i ląduje, w około 2,5 minuty.",
+  c1_2: "Znajduje zerwany drut, przewrócony słupek i gałąź na przewodzie, a także zwierzęta poza pastwiskiem.",
+  c1_3: "Po każdym locie powstaje raport z mapą i pozycją GPS każdego znaleziska.",
+  c2_h: "AI, które nie podnosi fałszywego alarmu",
+  alt_c2: "Klatki treningowe wyrenderowane w Gazebo z etykietami obliczonymi automatycznie z symulacji: słupki, druty, zerwany drut, zwierzęta",
+  c2_1: "Detektor ogrodzenia YOLO11n, trenowany wyłącznie na syntetycznych farmach z Gazebo, działa jako silnik TensorRT FP16.",
+  c2_2: "Jedna klatka nigdy nie jest alertem: 5 z ostatnich 8 klatek musi umieścić tę samą usterkę w promieniu 5 m na ziemi.",
+  c2_3: "Każda wersja modelu jest opisana wraz z odłożonym zbiorem testowym i tym, w czym się myliła.",
+  c3_h: "Stacja naziemna przy bramie",
+  alt_c3a: "Symulowane strumienie stacji naziemnej: RGB na maszcie, termowizja na maszcie, głębia iToF przy bramie",
+  alt_c3b: "Trzy usterki ogrodzenia: zerwany górny drut, przewrócony słupek, gałąź na przewodach",
+  c3_1: "Kamery RGB i termowizyjna na słupie, czujnik głębi iToF na słupku bramy i monitor napięcia ogrodzenia.",
+  c3_2: "Gdy krowa wyjdzie przez otwartą bramę albo ogrodzenie straci napięcie, stacja naziemna wysyła drona.",
+  c3_3: "Możesz zapytać Jetsona, co widzi, i usłyszeć odpowiedź z lokalnego modelu wizyjno-językowego.",
+  c4_h: "Panel terenowy i ROS 2",
+  alt_c4: "Panel Querra Fence: wachlarz radaru LD2450 ze stanem na żywo oraz temperatury, tryb zasilania, pamięć i dysk Jetsona",
+  c4_1: "Panel webowy na telefon albo laptop, offline, po angielsku lub po polsku: kamery na żywo, radar, GPS, zbieranie danych.",
+  c4_2: "Każdy czujnik jest tematem ROS 2 Humble: nagrywany jako bagi MCAP i oglądany na żywo w Foxglove.",
+  c4_3: "Te same tematy pochodzą z symulacji albo z prawdziwych czujników, więc cały łańcuch jest testowany przed wyjściem w teren.",
+  sys_eyebrow: "Czujniki na wejściu, alerty na wyjściu",
+  sys_h2: "Jak to wszystko się łączy",
+  sys_lead: "Każdym urządzeniem zarządza jedna usługa. Węzły ROS 2 są klientami tych usług, więc nic nie walczy o kamerę ani o port szeregowy.",
+  lg_live: "na żywo: prawdziwy sprzęt", lg_sim: "symulacja: PX4 + Gazebo", lg_plan: "planowane",
+  col_in: "Wejścia", col_brain: "Mózg Jetsona", col_out: "Wyjścia",
+  in1: "Kamera USB Arducam 8 MP", in1s: "1280×720 MJPEG, 30 kl./s; kamera detektora w terenie",
+  in2: "Kamera CSI Sony IMX219", in2s: "matryca 8 MP, 1280×720 przez ISP Jetsona",
+  in3: "GPS u-blox 7", in3s: "przez gpsd, 1 Hz, fix 2D/3D, satelity i HDOP",
+  in4: "Radar HLK-LD2450", in4s: "mmWave 24 GHz, do 3 poruszających się celów, 6 m, ±60°, ~10 Hz",
+  in5: "Kamera drona + telemetria", in5s: "kamera inspekcyjna X500 i GPS, przesyłane z Gazebo do Jetsona",
+  in6: "RGB, termowizja i iToF przy bramie + monitor ogrodzenia", in6s: "widok stacji naziemnej na bramę i napięcie ogrodzenia",
+  in7: "Pozycja drona z PX4", in7s: "uXRCE-DDS z kontrolera lotu do ROS 2",
+  br1s: "8 GB, JetPack 6.2, działa na miejscu, bez chmury",
+  br2s: "w Dockerze na SSD; sprzętem zarządzają usługi (hub panelu, gpsd, usługa radaru)",
+  br3: "Detektor ogrodzenia", br3s: "YOLO11n v0.3, TensorRT FP16, 7 klas: słupek, drut, zerwany drut, przewrócony słupek, gałąź, krowa, owca",
+  br4: "Potwierdzanie alertów", br4s: "każda ramka umieszczona na ziemi na podstawie GPS, wysokości i kursu; 5 z 8 klatek w promieniu 5 m",
+  br5: "Zapytaj stację naziemną", br5s: "lokalny model wizyjno-językowy i mowa: „Czy jakieś zwierzęta są poza ogrodzeniem?”",
+  out1: "Potwierdzone alerty ogrodzenia", out1s: "klasa, pozycja GPS, pewność i liczba klatek, na <code>/fence/alerts</code>",
+  out2: "Panel terenowy", out2s: "telefon albo laptop w hotspocie, po angielsku lub po polsku, działa offline",
+  out3: "Foxglove + bagi MCAP", out3s: "podgląd na żywo i nagrania wszystkich tematów",
+  out4: "Raport z inspekcji", out4s: "HTML i JSON: mapa, znaleziska z GPS, napięcie wzdłuż ogrodzenia",
+  out5: "Wysłanie drona", out5s: "stacja naziemna wysyła drona, gdy zauważy problem",
+  out6: "Alerty na telefon + mapa usterek", out6s: "rolnik dostaje alert, a nie plik z logami",
+  out7: "Ostrzeżenie przed drapieżnikami w nocy", out7s: "kamera termowizyjna i radar przy bramie",
+  rm_eyebrow: "Plan rozwoju", rm_h2: "Dokąd zmierzamy",
+  rm_lead: "Najpierw symulacja, potem prawdziwe czujniki, potem teren. Każdy krok kończy się czymś, co działa i co da się zmierzyć.",
+  rm_done: "Zrobione", rm_done_t: "LIS 2026", rm_next: "Dalej", rm_next_t: "TERAZ", rm_later: "Później", rm_later_t: "TEREN",
+  d1: "Pierwszy lot inspekcyjny", d1s: "v0.1 · PX4 X500 w Gazebo okrąża ogrodzenie, znajduje usterki i zbiegłe zwierzęta, pisze raport z GPS",
+  d2: "Stacja naziemna + mózg Jetsona", d2s: "v0.2 · tryb guard przy bramie, odpowiedzi głosowe, usługa radaru LD2450",
+  d3: "Detektor ogrodzenia v0.1 → v0.3", d3s: "automatycznie etykietowane dane z Gazebo, TensorRT na Jetsonie, potwierdzanie 5 z 8",
+  d4: "Panel sterowania w terenie", d4s: "v0.3 · kamery, radar, GPS i zbieranie danych na telefonie",
+  d5: "ROS 2, fazy 1 i 2", d5s: "v0.4–v0.5 · czujniki jako tematy, MCAP, Foxglove, detektor i alerty w ROS 2",
+  d6: "Aplikacja Safe Fence", d6s: "v0.6 · aplikacja na pulpit, nowa ikona, poprawki niezawodności, ta strona po angielsku i po polsku",
+  n1: "PX4 ↔ ROS 2 (faza 3)", n1s: "uXRCE-DDS: alerty korzystają z pozycji samego drona, a Jetson może wysłać go z powrotem, by sprawdził usterkę z niskiej wysokości",
+  n2: "Prawdziwe dane z ogrodzeń", n2s: "zbieranie danych w terenie jest gotowe: prawdziwe zdjęcia, etykiety i ponowne trenowanie, by zmniejszyć różnicę między symulacją a rzeczywistością",
+  n3: "Skalibrowane czujniki", n3s: "kalibracja kamery i rzeczywiste przesunięcia montażu każdego czujnika na ramie drona",
+  l1: "Nocna ochrona przed drapieżnikami", l1s: "kamera termowizyjna i radar przy bramie; ostrzeżenie dla rolnika przed atakiem",
+  l2: "Prawdziwy licznik przy bramie", l2s: "radar LD2450 liczy zwierzęta przechodzące przez bramę w trybie guard",
+  l3: "Alerty na telefon i mapa usterek", l3s: "otwarte usterki na mapie, ze zdjęciem i pozycją",
+  l4: "Ogrodzenie z przejścia z GPS albo z KML", l4s: "trasa planowana na podstawie prawdziwej linii ogrodzenia",
+  l5: "Inspekcje nocne i liczenie stada", l5s: "gimbal i kamera termowizyjna; lot po siatce, by policzyć całe stado",
+  l6: "Sprzęt", l6s: "X500 V2, Pixhawk i Jetson jako komputer pokładowy, z tym samym kodem misji MAVLink",
+  lim_h: "Uczciwie o ograniczeniach",
+  lim1: "<b>Dron lata w symulacji.</b>Misja to prawdziwy kod PX4, który sterowałby fizycznym X500; sama maszyna nie jest jeszcze zbudowana.",
+  lim2: "<b>Model widział tylko syntetyczne farmy.</b>Nie jest jeszcze sprawdzony na prawdziwych ogrodzeniach ani zwierzętach; następny krok to zbieranie prawdziwych danych.",
+  lim3: "<b>Wykrywanie drapieżników jest planowane, a nie zbudowane.</b>Dziś system znajduje usterki ogrodzenia i zbiegłe zwierzęta.",
+  ft_rel: "Wydania", ft_ros: "Notatki ROS 2", ft_log: "Dziennik trenowania", ft_readme: "README po polsku"
+};
+const EN = {title: document.title, description: document.querySelector('meta[name=description]').content};
+const texts = [...document.querySelectorAll('[data-i18n]')], alts = [...document.querySelectorAll('[data-i18n-alt]')];
+texts.forEach(e => { e.dataset.en = e.innerHTML; if (e.hasAttribute('href')) e.dataset.enHref = e.getAttribute('href'); });
+alts.forEach(e => e.dataset.enAlt = e.alt);
+
+function setLang(l, save) {
+  const pl = l === 'pl';
+  document.documentElement.lang = pl ? 'pl' : 'en';
+  texts.forEach(e => {
+    const k = e.dataset.i18n;
+    e.innerHTML = pl && PL[k] != null ? PL[k] : e.dataset.en;
+    if (e.dataset.i18nHref) e.setAttribute('href', pl ? e.dataset.i18nHref : e.dataset.enHref);
+  });
+  alts.forEach(e => { const k = e.dataset.i18nAlt; e.alt = pl && PL[k] ? PL[k] : e.dataset.enAlt; });
+  document.title = pl ? PL.title : EN.title;
+  document.querySelector('meta[name=description]').content = pl ? PL.description : EN.description;
+  document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === (pl ? 'pl' : 'en'))));
+  if (save) {
+    try { localStorage.setItem('qf-lang', pl ? 'pl' : 'en'); } catch (_) {}
+    const u = new URL(location.href); u.searchParams.set('lang', pl ? 'pl' : 'en'); history.replaceState(null, '', u);
+  }
+}
+document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang, true)));
+let start = new URLSearchParams(location.search).get('lang');
+if (!start) { try { start = localStorage.getItem('qf-lang'); } catch (_) {} }
+if (!start) start = (navigator.language || '').toLowerCase().startsWith('pl') ? 'pl' : 'en';
+setLang(start, false);
+</script>
 </body>
 </html>
