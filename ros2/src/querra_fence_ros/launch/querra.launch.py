@@ -28,6 +28,8 @@ def generate_launch_description():
     px4 = LaunchConfiguration("px4")
     is_px4 = IfCondition(px4)
     telemetry = PythonExpression(["'/px4/telemetry' if '", px4, "'.lower() in ('true', '1') else '/sim/telemetry'"])
+    is_refly = IfCondition(PythonExpression(["'", px4, "'.lower() in ('true', '1') and '", LaunchConfiguration("refly"),
+                                             "'.lower() in ('true', '1')"]))
     cams = [Node(package="querra_fence_ros", executable="hub_camera", name=f"{c}_camera", namespace=f"camera/{c}",
                  parameters=[{"camera": c, "url": ["http://", panel, f"/stream/{c}.mjpg"]}], output="screen")
             for c in ("usb", "csi")]
@@ -39,6 +41,8 @@ def generate_launch_description():
         DeclareLaunchArgument("sim_source", default_value="/sim/m1", description="recording dir or tcp://host:port"),
         DeclareLaunchArgument("px4", default_value="false", description="true: PX4 over uXRCE-DDS (agent on UDP px4_port)"),
         DeclareLaunchArgument("px4_port", default_value="8888"),
+        DeclareLaunchArgument("refly", default_value="false",
+                              description="true (with px4:=true): after the mission, re-fly every confirmed fault low (OFFBOARD)"),
         *cams,
         Node(package="querra_fence_ros", executable="stats", name="querra_stats", output="log"),
         Node(package="querra_fence_ros", executable="gpsd_gps", name="gps", output="screen"),
@@ -61,6 +65,7 @@ def generate_launch_description():
         Node(package="micro_ros_agent", executable="micro_ros_agent", name="xrce_agent", condition=is_px4,
              arguments=["udp4", "-p", LaunchConfiguration("px4_port")], output="log"),
         Node(package="querra_fence_ros", executable="px4_pose", name="px4_pose", condition=is_px4, output="screen"),
+        Node(package="querra_fence_ros", executable="refly", name="fence_refly", condition=is_refly, output="screen"),
         # ---- phase 2 on the real USB camera (1280x720 frames from the hub are 640x360 live view) ----
         Node(package="querra_fence_ros", executable="detector", name="fence_detector", condition=is_usb,
              parameters=[{"image": "/camera/usb/image_raw/compressed"}], output="screen"),

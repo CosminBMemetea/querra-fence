@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.8.0 · 2026-11-20 · re-fly the confirmed faults; nine languages
+
+- **`fence_refly` node (phase 3, part 2, `refly:=true`).** After the inspection mission, when PX4 enters Return, the
+  Jetson takes over in OFFBOARD over uXRCE-DDS.
+  - It visits every confirmed alert nearest-first at 6 m, stopping 4.2 m before the fault so the 55° camera centres
+    it.
+  - It hovers 5 s, counts the detector frames, then hands back with Return.
+  - The setpoint moves at most 4 m/s.
+  - The offboard stream stays alive until PX4 is in Return.
+  - If a pilot or a failsafe changes the mode, the node aborts.
+- **Tested in SITL (5 min 13 s, 852 m).** The handover, the 8 visits, the Return and the landing all worked.
+  - The close-up verdicts were not reliable: the model was trained at 12 m.
+  - The verdict is now a majority rule (at least half of the hover frames), chosen after this one flight and not
+    validated. Numbers in `docs/ros2.md`.
+- **Nine languages** (EN, RO, PL, PT, DE, ES, HR, BG, DA):
+  - **Simulation and report:** `sim/i18n.py` covers the terminal and the HTML report, which has a language menu.
+    `--lang <code>` picks the language. JSON text fields hold every language, and older EN/RO reports still open.
+  - **READMEs:** `README.<lang>.md` for every language. The translated prose lives in `docs/i18n/*.tpl.md`, and
+    `docs/i18n/build_readmes.py` copies the shared parts (diagrams, commands, config) from `README.md`.
+  - **Project page:** a language menu, with the translations in `docs/assets/i18n/<lang>.json`, loaded on demand.
+
 ## v0.7.0 · 2026-11-20 · ROS 2 phase 3, part 1: PX4 over uXRCE-DDS
 
 - **micro-ROS agent** in the ROS 2 image: a Micro-XRCE-DDS agent built against Humble's Fast DDS. `px4:=true` starts
