@@ -1,11 +1,11 @@
-"""Fence detector node: YOLO11n (model-v0.3) TensorRT FP16 engine on the Jetson GPU.
+"""Fence detector node: YOLO11n TensorRT FP16 engine on the Jetson GPU (model-v0.3 by default, engine:=... to change).
 
 Subscribes image (CompressedImage, default /camera/usb/image_raw/compressed), always works on the newest frame,
 publishes /detections (vision_msgs/Detection2DArray, same stamp as the image), /detections/image (annotated JPEG
 for Foxglove) and /detections/latency_ms. The engine and querra_scout's YOLODetector are mounted from the host
 (see ros.sh); TensorRT and CUDA come from JetPack, read-only.
 """
-import threading, time
+import os, re, threading, time
 import cv2, numpy as np, rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
@@ -26,6 +26,8 @@ class Detector(Node):
         topic = self.declare_parameter("image", "/camera/usb/image_raw/compressed").value
         from querra_scout.detector import YOLODetector
         self.det = YOLODetector(engine, conf=self.conf)
+        m = re.search(r"v\d+\.\d+", os.path.basename(engine))
+        self.model_name = m.group(0) if m else os.path.basename(engine)   # shown on /detections/image
         self.get_logger().info(f"TensorRT engine {engine} {self.det.in_shape}, classes {self.det.classes}; input {topic}")
         self.pub = self.create_publisher(Detection2DArray, "/detections", 10)
         self.pub_img = self.create_publisher(CompressedImage, "/detections/image", qos_profile_sensor_data)
@@ -80,7 +82,7 @@ class Detector(Node):
             (tw, tht), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
             cv2.rectangle(bgr, (x0, max(0, y0 - tht - 6)), (x0 + tw + 6, y0), c, -1)
             cv2.putText(bgr, label, (x0 + 3, y0 - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
-        txt = f"YOLO11n v0.3 TensorRT FP16  infer {tm.get('det_infer_ms', 0):.1f} ms  total {total:.1f} ms  {len(dets)} det"
+        txt = f"YOLO11n {self.model_name} TensorRT FP16  infer {tm.get('det_infer_ms', 0):.1f} ms  total {total:.1f} ms  {len(dets)} det"
         cv2.rectangle(bgr, (0, bgr.shape[0] - 22), (bgr.shape[1], bgr.shape[0]), (0, 0, 0), -1)
         cv2.putText(bgr, txt, (6, bgr.shape[0] - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1, cv2.LINE_AA)
         m = CompressedImage(header=header, format="jpeg", data=cv2.imencode(".jpg", bgr, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tobytes())

@@ -7,6 +7,8 @@
 #   ./ros.sh demo tcp://MAC:5601 px4:=true
 #                                  phase 3: live simulation, alerts placed with PX4's own pose over uXRCE-DDS
 #                                  (on the Mac: ./start.sh headless, tools/cam_stream.sh, tools/uxrce_relay.py JETSON)
+#                                  model: the replay uses model-v0.3; a live tcp:// source uses model-v0.4 (trained on
+#                                  both world looks). engine:=/models/<file>.engine overrides (ml/README.md lists them)
 #   ./ros.sh stop                  stop and remove the container
 #   ./ros.sh status                container state, nodes and topic rates (from the stats node)
 #   ./ros.sh record [SECONDS]      MCAP bag of all QUERRA topics to /ssd/querra/bags (no SECONDS: until Ctrl-C)
@@ -30,6 +32,7 @@ lan_ip() { ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<NF;i++) if($i=="sr
 # the host (nothing is copied to the root disk). /sim holds recorded Gazebo missions for the demo.
 # Host folders are mounted only when they exist: docker -v would otherwise create them empty and root-owned.
 L=/usr/lib/aarch64-linux-gnu Q=${QUERRA_SCOUT:-/home/mmx/querra-scout-20261107} SIM=/ssd/querra/sim
+DEFAULT_ENGINE=fence-yolo11n-v0.3-fp16.engine LIVE_ENGINE=fence-yolo11n-v0.4-fp16.engine   # model registry: ml/README.md
 TRT=(-e NVIDIA_VISIBLE_DEVICES=all -e NVIDIA_DRIVER_CAPABILITIES=all -e PYTHONPATH=/opt/querra_scout
      -e LD_LIBRARY_PATH=/usr/local/cuda-12.6/targets/aarch64-linux/lib:/usr/lib/aarch64-linux-gnu/nvidia)
 mnt() { if [ -e "$1" ]; then TRT+=(-v "$1:$2:ro"); else MISSING+=("$1"); fi; }
@@ -57,12 +60,15 @@ case "${1:-help}" in
     for _ in $(seq 1 120); do [ -f "$WS/stats.json" ] && break; running || break; sleep 1; done
     if running; then echo "ROS 2 running (foxglove: ws://$(lan_ip):8765)"; else echo "start failed:"; docker logs --tail 30 "$NAME"; exit 1; fi ;;
   demo)
-    src=${2:-/sim/m1}
+    src=${2:-/sim/m1}; model=()
     case "$src" in
-      tcp://*) ;;
+      # live Gazebo runs the "rich" look by default, which model-v0.3 barely sees (ml/runs/model-v0.4/README.md)
+      tcp://*) case " ${*:3} " in *" engine:="*) ;; *) [ -s "$Q/models/fence-yolo/$LIVE_ENGINE" ] && model=(engine:=/models/$LIVE_ENGINE) ;; esac ;;
       /sim/*) [ -s "$SIM/${src#/sim/}/frames.jsonl" ] || { echo "no recording at $SIM/${src#/sim/} (frames.jsonl missing or empty)"; exit 1; } ;;
     esac
-    "$0" start detector:=sim sim_source:="$src" "${@:3}"
+    "$0" start detector:=sim sim_source:="$src" ${model[@]+"${model[@]}"} "${@:3}"
+    eng=$(printf '%s\n' ${model[@]+"${model[@]}"} "${@:3}" | sed -n 's/^engine:=//p' | tail -1)
+    echo "model: $(basename "${eng:-$DEFAULT_ENGINE}")"
     case " ${*:3} " in *" px4:=true "*) echo "phase 3: micro-ROS agent on UDP 8888, alerts use /px4/telemetry (PX4's own pose)";; esac
     echo "demo: $src -> /sim/camera -> fence_detector (TensorRT) -> alert_confirm -> /fence/alerts"
     echo "Foxglove: open ws://$(lan_ip):8765 and import ros2/foxglove/querra-layout.json" ;;
@@ -96,8 +102,10 @@ PY
     nvidia_rt && ok "docker nvidia runtime" || bad "docker has no 'nvidia' runtime (nvidia-container-toolkit): no GPU for the detector"
     running && ok "container $NAME running" || echo "  --   container $NAME stopped (./ros.sh start)"
     [ -d "$Q/querra_scout" ] && ok "querra_scout $Q/querra_scout" || bad "querra_scout not found in $Q (set QUERRA_SCOUT)"
-    eng=$Q/models/fence-yolo/fence-yolo11n-v0.3-fp16.engine   # the detector node's default 'engine' parameter
-    [ -s "$eng" ] && ok "TensorRT engine $(basename "$eng")" || bad "$eng missing: the detector cannot start"
+    eng=$Q/models/fence-yolo/$DEFAULT_ENGINE   # the detector node's default 'engine' parameter
+    [ -s "$eng" ] && ok "TensorRT engine $(basename "$eng") (replay demo)" || bad "$eng missing: the detector cannot start"
+    eng=$Q/models/fence-yolo/$LIVE_ENGINE
+    [ -s "$eng" ] && ok "TensorRT engine $(basename "$eng") (live Gazebo)" || echo "  --   $(basename "$eng") not built: live demos fall back to $DEFAULT_ENGINE"
     [ -s "$SIM/m1/frames.jsonl" ] && ok "demo recording $SIM/m1 ($(wc -l < "$SIM/m1/frames.jsonl") frames)" || bad "demo recording $SIM/m1 missing: ./ros.sh demo will not run"
     port 8080 && ok "panel hub :8080 (cameras)" || bad "panel not reachable on :8080: cameras will be silent"
     port 2947 && ok "gpsd :2947" || bad "gpsd not reachable on :2947"
