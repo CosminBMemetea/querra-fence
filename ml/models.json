@@ -1,6 +1,14 @@
 {
- "_info": "Model registry for the fence detector (YOLO11n, 7 classes). One entry per released model: where it is used, the data and code it came from, how it was trained, how it scored offline and live, and the sha256 of every file. Weights are attached to the GitHub release named in 'release'; TensorRT engines are built on the Jetson (hardware-specific) and live in ~/querra-scout-20261107/models/fence-yolo. 'python3 tools/model_registry.py' validates this file and rebuilds the table in ml/README.md; '--check DIR' compares local files with the hashes.",
- "classes": ["post", "wire", "wire_break", "fallen_post", "branch", "cow", "sheep"],
+ "_info": "Model registry for the fence detector (YOLO11n, 7 classes). One entry per released model: where it is used, the data and code it came from, how it was trained, how it scored offline and live, and the sha256 of every file. Weights are attached to the GitHub release named in 'release'; TensorRT engines are built on the Jetson (hardware-specific) and live in ~/querra-scout-20261107/models/fence-yolo. 'python3 tools/model_registry.py' validates this file and rebuilds the table in ml/README.md; '--check DIR' compares local files with the hashes. 'summary' is the one-line change shown on the charts; 'platform' says from which platform release the model is the default (default_from) or runs the live simulation (live_sim_from).",
+ "classes": [
+  "post",
+  "wire",
+  "wire_break",
+  "fallen_post",
+  "branch",
+  "cow",
+  "sheep"
+ ],
  "statuses": {
   "default": "the model the system uses unless told otherwise (ROS 2 detector, replay demo, field mode)",
   "live-sim": "used for live Gazebo flights (ros.sh demo tcp://...), not the default elsewhere",
@@ -10,129 +18,383 @@
   {
    "id": "model-v0.4",
    "status": "live-sim",
+   "summary": "+ rich look, re-fly poses",
    "date": "2026-11-20",
    "parent": "model-v0.3",
    "code": "fb6ff9f",
    "release": "model-v0.4",
    "run": "ml/runs/model-v0.4",
-   "used_for": ["live Gazebo flights on the Jetson: ros.sh demo tcp://MAC:5601 (the rich look is the default world)", "panel field mode: selectable"],
+   "used_for": [
+    "live Gazebo flights on the Jetson: ros.sh demo tcp://MAC:5601 (the rich look is the default world)",
+    "panel field mode: selectable"
+   ],
+   "platform": {
+    "live_sim_from": "v0.10.0"
+   },
    "data": {
     "train": [
-     {"dataset": "fence_yolo_rich", "split": "train", "frames": 3600},
-     {"dataset": "fence_yolo_v3c", "split": "train", "frames": 1200},
-     {"dataset": "fence_yolo_v2", "split": "train", "frames": 1400, "sample": "random 1400 of 2400, seed 0"},
-     {"dataset": "fence_yolo", "split": "train", "frames": 1000, "sample": "random 1000 of 3500, seed 0"}
+     {
+      "dataset": "fence_yolo_rich",
+      "split": "train",
+      "frames": 3600
+     },
+     {
+      "dataset": "fence_yolo_v3c",
+      "split": "train",
+      "frames": 1200
+     },
+     {
+      "dataset": "fence_yolo_v2",
+      "split": "train",
+      "frames": 1400,
+      "sample": "random 1400 of 2400, seed 0"
+     },
+     {
+      "dataset": "fence_yolo",
+      "split": "train",
+      "frames": 1000,
+      "sample": "random 1000 of 3500, seed 0"
+     }
     ],
     "val": [
-     {"dataset": "fence_yolo_rich", "split": "val", "frames": 600},
-     {"dataset": "fence_yolo_v2", "split": "val", "frames": 600}
+     {
+      "dataset": "fence_yolo_rich",
+      "split": "val",
+      "frames": 600
+     },
+     {
+      "dataset": "fence_yolo_v2",
+      "split": "val",
+      "frames": 600
+     }
     ],
     "mix": "tools/mix_dataset.py (ml/runs/model-v0.4/data.yaml)"
    },
-   "training": {"from": "model-v0.3", "epochs": 8, "selected_epoch": 8, "imgsz": 640, "batch": 16, "optimizer": "AdamW lr0 0.000909 (Ultralytics auto), 3 warm-up epochs", "close_mosaic": 3, "device": "CPU, Apple M2 8 GB", "hours": 3.4, "notes": "Paused twice (after epochs 4 and 6) to let the laptop cool; resumed with --resume, optimizer state kept. Ultralytics 8.4.215, torch 2.15."},
+   "training": {
+    "from": "model-v0.3",
+    "epochs": 8,
+    "selected_epoch": 8,
+    "imgsz": 640,
+    "batch": 16,
+    "optimizer": "AdamW lr0 0.000909 (Ultralytics auto), 3 warm-up epochs",
+    "close_mosaic": 3,
+    "device": "CPU, Apple M2 8 GB",
+    "hours": 3.4,
+    "notes": "Paused twice (after epochs 4 and 6) to let the laptop cool; resumed with --resume, optimizer state kept. Ultralytics 8.4.215, torch 2.15."
+   },
    "scores": {
     "val_mix_mAP50": 0.956,
-    "test_classic_mAP50": 0.938, "test_classic_wire_break_recall": 0.69,
-    "test_rich_mAP50": 0.938, "test_rich_wire_break_recall": 0.68,
-    "mission_frames_classic_mAP50": 0.981, "mission_frames_rich_mAP50": 0.977,
-    "refly_classic_mAP50": 0.981, "refly_rich_mAP50": 0.984
+    "test_classic_mAP50": 0.938,
+    "test_classic_wire_break_recall": 0.69,
+    "test_rich_mAP50": 0.938,
+    "test_rich_wire_break_recall": 0.68,
+    "mission_frames_classic_mAP50": 0.981,
+    "mission_frames_rich_mAP50": 0.977,
+    "refly_classic_mAP50": 0.981,
+    "refly_rich_mAP50": 0.984
    },
-   "mission_replay": {"faults_found": "3 of 3", "false_alerts": 12, "false_wire_break_frames_conf0.7": 257},
+   "mission_replay": {
+    "faults_found": "3 of 3",
+    "false_alerts": 12,
+    "false_wire_break_frames_conf0.7": 257
+   },
    "live": {
-    "classic": {"faults_found": "3 of 3", "false_alerts": 13},
-    "rich": {"faults_found": "3 of 3", "false_alerts": 6}
+    "classic": {
+     "faults_found": "3 of 3",
+     "false_alerts": 13
+    },
+    "rich": {
+     "faults_found": "3 of 3",
+     "false_alerts": 6
+    }
    },
    "decision": "Live-sim model only. Big gain on the rich look (finds 3 of 3 faults where v0.3 found 1), but twice the false broken-wire alerts on the classic mission (dead strand, corners), so the classic replay demo stays on v0.3.",
-   "jetson": {"engine_gpu_ms": 3.64, "trtexec": "TensorRT 10.3 FP16, 293 inferences/s"},
+   "jetson": {
+    "engine_gpu_ms": 3.64,
+    "trtexec": "TensorRT 10.3 FP16, 293 inferences/s"
+   },
    "artefacts": [
-    {"file": "fence-yolo11n-v0.4.pt", "bytes": 5485786, "sha256": "858a47768ebebcc27139e216134c5494a9de48ea727e07b4914eab6d6260199a"},
-    {"file": "fence-yolo11n-v0.4.onnx", "bytes": 10610501, "sha256": "b2f3c736bfbed1706b42e50b9d232d1acdc4902bc6c9028515f02fba0474c892"},
-    {"file": "fence-yolo11n-v0.4-fp16.engine", "bytes": 8305332, "sha256": "60222eee9d200944c1fe360bcae6b0945ab7a1421ebedfd0b4fb5abd2d78d1ba", "where": "Jetson only"}
-   ]
+    {
+     "file": "fence-yolo11n-v0.4.pt",
+     "bytes": 5485786,
+     "sha256": "858a47768ebebcc27139e216134c5494a9de48ea727e07b4914eab6d6260199a"
+    },
+    {
+     "file": "fence-yolo11n-v0.4.onnx",
+     "bytes": 10610501,
+     "sha256": "b2f3c736bfbed1706b42e50b9d232d1acdc4902bc6c9028515f02fba0474c892"
+    },
+    {
+     "file": "fence-yolo11n-v0.4-fp16.engine",
+     "bytes": 8305332,
+     "sha256": "60222eee9d200944c1fe360bcae6b0945ab7a1421ebedfd0b4fb5abd2d78d1ba",
+     "where": "Jetson only"
+    }
+   ],
+   "benchmark": "ml/benchmark"
   },
   {
    "id": "model-v0.3",
    "status": "default",
+   "summary": "+ dead-strand farms",
    "date": "2026-11-19",
    "parent": "model-v0.2",
    "code": "513f162",
    "release": "model-v0.3",
    "run": null,
-   "used_for": ["ROS 2 detector default", "ROS 2 replay demo (ros.sh demo, classic recording)", "panel field mode default"],
+   "used_for": [
+    "ROS 2 detector default",
+    "ROS 2 replay demo (ros.sh demo, classic recording)",
+    "panel field mode default"
+   ],
+   "platform": {
+    "default_from": "v0.3.0"
+   },
    "data": {
     "train": [
-     {"dataset": "fence_yolo_v2", "split": "train", "frames": 2400},
-     {"dataset": "fence_yolo", "split": "train", "frames": 2400, "sample": "random 2400 of 3500"}
+     {
+      "dataset": "fence_yolo_v2",
+      "split": "train",
+      "frames": 2400
+     },
+     {
+      "dataset": "fence_yolo",
+      "split": "train",
+      "frames": 2400,
+      "sample": "random 2400 of 3500"
+     }
     ],
     "val": "not recorded (v1 and v2 validation farms were both scored)"
    },
-   "training": {"from": "model-v0.2", "epochs": 10, "selected_epoch": 9, "imgsz": 640, "batch": 16, "optimizer": "AdamW lr 0.0009", "close_mosaic": 3, "device": "CPU, Apple M2 8 GB"},
+   "training": {
+    "from": "model-v0.2",
+    "epochs": 10,
+    "selected_epoch": 9,
+    "imgsz": 640,
+    "batch": 16,
+    "optimizer": "AdamW lr 0.0009",
+    "close_mosaic": 3,
+    "device": "CPU, Apple M2 8 GB"
+   },
    "scores": {
     "val_v1_mAP50": 0.916,
-    "test_classic_mAP50": 0.911, "test_classic_wire_break_recall": 0.61,
-    "test_rich_mAP50": 0.710, "test_rich_wire_break_recall": 0.14,
-    "mission_frames_classic_mAP50": 0.958, "mission_frames_rich_mAP50": 0.657,
-    "refly_classic_mAP50": 0.970, "refly_rich_mAP50": 0.584
+    "test_classic_mAP50": 0.911,
+    "test_classic_wire_break_recall": 0.61,
+    "test_rich_mAP50": 0.71,
+    "test_rich_wire_break_recall": 0.14,
+    "mission_frames_classic_mAP50": 0.958,
+    "mission_frames_rich_mAP50": 0.657,
+    "refly_classic_mAP50": 0.97,
+    "refly_rich_mAP50": 0.584
    },
-   "mission_replay": {"faults_found": "3 of 3", "false_alerts": 6, "false_wire_break_frames_conf0.7": 153},
+   "mission_replay": {
+    "faults_found": "3 of 3",
+    "false_alerts": 6,
+    "false_wire_break_frames_conf0.7": 153
+   },
    "live": {
-    "classic": {"faults_found": "3 of 3", "false_alerts": 5},
-    "rich": {"faults_found": "1 of 3", "false_alerts": 0}
+    "classic": {
+     "faults_found": "3 of 3",
+     "false_alerts": 5
+    },
+    "rich": {
+     "faults_found": "1 of 3",
+     "false_alerts": 0
+    }
    },
    "decision": "Default since 2026-11-19: fewer false broken wires than v0.2, all faults found with 5-of-8 confirmation. Trained on the classic look only.",
-   "jetson": {"engine_gpu_ms": 4.9},
+   "jetson": {
+    "engine_gpu_ms": 4.9
+   },
    "artefacts": [
-    {"file": "fence-yolo11n-v0.3.pt", "bytes": 5482522, "sha256": "bfa0a2f5df9ff2e27c326564acd0ec6a3f0db02d99ec2ea282849e3d8bc2e636"},
-    {"file": "fence-yolo11n-v0.3.onnx", "bytes": 10610489, "sha256": "68f4a1023710965feeae4dcb18245fd94f16fc6868b72c9d0f28c53443209436"},
-    {"file": "fence-yolo11n-v0.3-fp16.engine", "bytes": 8119420, "sha256": "1a1d9a62d5c75a87941c76de1dc97227b43e062dae9c62b237d80ce0e712ace5", "where": "Jetson only"}
-   ]
+    {
+     "file": "fence-yolo11n-v0.3.pt",
+     "bytes": 5482522,
+     "sha256": "bfa0a2f5df9ff2e27c326564acd0ec6a3f0db02d99ec2ea282849e3d8bc2e636"
+    },
+    {
+     "file": "fence-yolo11n-v0.3.onnx",
+     "bytes": 10610489,
+     "sha256": "68f4a1023710965feeae4dcb18245fd94f16fc6868b72c9d0f28c53443209436"
+    },
+    {
+     "file": "fence-yolo11n-v0.3-fp16.engine",
+     "bytes": 8119420,
+     "sha256": "1a1d9a62d5c75a87941c76de1dc97227b43e062dae9c62b237d80ce0e712ace5",
+     "where": "Jetson only"
+    }
+   ],
+   "benchmark": "ml/benchmark"
   },
   {
    "id": "model-v0.2",
    "status": "retired",
+   "summary": "25 epochs, 3,500 frames",
    "date": "2026-11-19",
    "parent": "yolo11n.pt (COCO)",
    "code": "b37ef60",
    "release": "model-v0.2",
    "run": null,
-   "used_for": ["panel field mode: selectable"],
+   "used_for": [
+    "panel field mode: selectable"
+   ],
+   "platform": {},
    "data": {
-    "train": [{"dataset": "fence_yolo", "split": "train", "frames": 3500}],
-    "val": [{"dataset": "fence_yolo", "split": "val", "frames": 700}]
+    "train": [
+     {
+      "dataset": "fence_yolo",
+      "split": "train",
+      "frames": 3500
+     }
+    ],
+    "val": [
+     {
+      "dataset": "fence_yolo",
+      "split": "val",
+      "frames": 700
+     }
+    ]
    },
-   "training": {"from": "yolo11n.pt (COCO)", "epochs": 25, "selected_epoch": 25, "imgsz": 640, "batch": 16, "close_mosaic": 3, "device": "CPU, Apple M2 8 GB", "hours": 2},
-   "scores": {"val_v1_mAP50": 0.921, "test_classic_mAP50": 0.897, "test_classic_wire_break_recall": 0.42},
-   "mission_replay": {"faults_found": "3 of 3", "false_alerts": 11, "false_wire_break_frames_conf0.7": 242},
-   "live": {"classic": {"faults_found": "3 of 3", "false_wire_break_frames": 385, "note": "before multi-frame confirmation"}},
+   "training": {
+    "from": "yolo11n.pt (COCO)",
+    "epochs": 25,
+    "selected_epoch": 25,
+    "imgsz": 640,
+    "batch": 16,
+    "close_mosaic": 3,
+    "device": "CPU, Apple M2 8 GB",
+    "hours": 2
+   },
+   "scores": {
+    "val_v1_mAP50": 0.921,
+    "test_classic_mAP50": 0.897,
+    "test_classic_wire_break_recall": 0.42,
+    "test_rich_mAP50": 0.677,
+    "test_rich_wire_break_recall": 0.03,
+    "mission_frames_classic_mAP50": 0.956,
+    "mission_frames_rich_mAP50": 0.686,
+    "refly_classic_mAP50": 0.96,
+    "refly_rich_mAP50": 0.556
+   },
+   "mission_replay": {
+    "faults_found": "3 of 3",
+    "false_alerts": 11,
+    "false_wire_break_frames_conf0.7": 242
+   },
+   "live": {
+    "classic": {
+     "faults_found": "3 of 3",
+     "false_wire_break_frames": 385,
+     "note": "before multi-frame confirmation"
+    }
+   },
    "decision": "First full model. Retired by v0.3: 385 false broken-wire frames on the mission (the grey dead strand).",
-   "jetson": {"engine_gpu_ms": 4.7},
+   "jetson": {
+    "engine_gpu_ms": 4.7
+   },
    "artefacts": [
-    {"file": "fence-yolo11n-v0.2.pt", "bytes": 5484314, "sha256": "3005b8e42ff3b25e7ab146c3ccb441a20271fe2a374ca87f7243636f8329ac67", "aliases": ["fence-yolo11n-final.pt"]},
-    {"file": "fence-yolo11n-v0.2.onnx", "bytes": 10610497, "sha256": "46c0124bb15dbb6c5fe0a047f31fabff4da707de98ce325dc1291469f538ac9f", "aliases": ["fence-yolo11n-final.onnx", "fence-yolo11n.onnx"]},
-    {"file": "fence-yolo11n-fp16.engine", "bytes": 8230804, "sha256": "5777f73c9ba65637c99a145c314020dd6c2a0d9a2098c3fa789a11b969a11adb", "where": "Jetson only"}
-   ]
+    {
+     "file": "fence-yolo11n-v0.2.pt",
+     "bytes": 5484314,
+     "sha256": "3005b8e42ff3b25e7ab146c3ccb441a20271fe2a374ca87f7243636f8329ac67",
+     "aliases": [
+      "fence-yolo11n-final.pt"
+     ]
+    },
+    {
+     "file": "fence-yolo11n-v0.2.onnx",
+     "bytes": 10610497,
+     "sha256": "46c0124bb15dbb6c5fe0a047f31fabff4da707de98ce325dc1291469f538ac9f",
+     "aliases": [
+      "fence-yolo11n-final.onnx",
+      "fence-yolo11n.onnx"
+     ]
+    },
+    {
+     "file": "fence-yolo11n-fp16.engine",
+     "bytes": 8230804,
+     "sha256": "5777f73c9ba65637c99a145c314020dd6c2a0d9a2098c3fa789a11b969a11adb",
+     "where": "Jetson only"
+    }
+   ],
+   "benchmark": "ml/benchmark"
   },
   {
    "id": "model-v0.1",
    "status": "retired",
+   "summary": "epoch-2 checkpoint",
    "date": "2026-11-19",
    "parent": "yolo11n.pt (COCO)",
    "code": "b37ef60",
    "release": "model-v0.1",
    "run": null,
    "used_for": [],
+   "platform": {},
    "data": {
-    "train": [{"dataset": "fence_yolo", "split": "train", "frames": 3500}],
-    "val": [{"dataset": "fence_yolo", "split": "val", "frames": 700}]
+    "train": [
+     {
+      "dataset": "fence_yolo",
+      "split": "train",
+      "frames": 3500
+     }
+    ],
+    "val": [
+     {
+      "dataset": "fence_yolo",
+      "split": "val",
+      "frames": 700
+     }
+    ]
    },
-   "training": {"from": "yolo11n.pt (COCO)", "epochs": 2, "selected_epoch": 2, "imgsz": 640, "device": "CPU, Apple M2 8 GB", "notes": "Epoch-2 checkpoint of the v0.2 run, exported early to test the Jetson pipeline."},
-   "scores": {"val_v1_mAP50": 0.72},
-   "live": {"classic": {"faults_found": "2 of 3 (60 s flight, F3 not reached)", "false_wire_break_frames": 72}},
+   "training": {
+    "from": "yolo11n.pt (COCO)",
+    "epochs": 2,
+    "selected_epoch": 2,
+    "imgsz": 640,
+    "device": "CPU, Apple M2 8 GB",
+    "notes": "Epoch-2 checkpoint of the v0.2 run, exported early to test the Jetson pipeline."
+   },
+   "scores": {
+    "val_v1_mAP50": 0.712,
+    "test_classic_mAP50": 0.693,
+    "test_classic_wire_break_recall": 0.18,
+    "test_rich_mAP50": 0.638,
+    "test_rich_wire_break_recall": 0.16,
+    "mission_frames_classic_mAP50": 0.789,
+    "mission_frames_rich_mAP50": 0.687,
+    "refly_classic_mAP50": 0.679,
+    "refly_rich_mAP50": 0.559
+   },
+   "live": {
+    "classic": {
+     "faults_found": "2 of 3 (60 s flight, F3 not reached)",
+     "false_wire_break_frames": 72
+    }
+   },
    "decision": "Pipeline test only.",
    "artefacts": [
-    {"file": "fence-yolo11n-v0.1.onnx", "bytes": 10610497, "sha256": "f810500460193b528776105f5859ebc7e6442decf64989cba641c61efde3ae45", "aliases": ["fence-yolo11n-prelim.onnx"]},
-    {"file": "fence-yolo11n-prelim-fp16.engine", "bytes": 8116828, "sha256": "cf1ac993552d9c3af981e565a630634f45c4eb3e061ea2f45203c938db843c30", "where": "Jetson only"}
-   ]
+    {
+     "file": "fence-yolo11n-v0.1.onnx",
+     "bytes": 10610497,
+     "sha256": "f810500460193b528776105f5859ebc7e6442decf64989cba641c61efde3ae45",
+     "aliases": [
+      "fence-yolo11n-prelim.onnx"
+     ]
+    },
+    {
+     "file": "fence-yolo11n-prelim-fp16.engine",
+     "bytes": 8116828,
+     "sha256": "cf1ac993552d9c3af981e565a630634f45c4eb3e061ea2f45203c938db843c30",
+     "where": "Jetson only"
+    }
+   ],
+   "mission_replay": {
+    "faults_found": "0 of 3",
+    "false_alerts": 2,
+    "false_wire_break_frames_conf0.7": 33
+   },
+   "benchmark": "ml/benchmark",
+   "benchmark_note": "Scored from the ONNX export; the .pt was not kept."
   }
  ]
 }

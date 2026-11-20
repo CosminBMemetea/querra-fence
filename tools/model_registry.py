@@ -66,8 +66,8 @@ def fmt(x):
 
 def table(reg):
     rows = ["| Model | Status | Date | Trained on | Test mAP50 classic / rich | `wire_break` recall classic / rich "
-            "| Live classic: faults, false alerts | Live rich | Run |",
-            "|---|---|---|---|---|---|---|---|---|"]
+            "| Mission replay: faults, false alerts | Live classic | Live rich | Run |",
+            "|---|---|---|---|---|---|---|---|---|---|"]
     for m in reg["models"]:
         s, tr = m["scores"], m["data"]["train"]
         frames = sum(t["frames"] for t in tr)
@@ -81,12 +81,14 @@ def table(reg):
                 live.append("%s, %d" % (lv["faults_found"], lv["false_alerts"]))
             else:
                 live.append("%s, %d false frames" % (lv["faults_found"], lv["false_wire_break_frames"]))
+        rep = m.get("mission_replay") or {}
+        replay = "%s, %d" % (rep["faults_found"], rep["false_alerts"]) if rep else "–"
         run = "[%s](%s)" % (os.path.basename(m["run"]), os.path.relpath(os.path.join(ROOT, m["run"]), ML)) if m.get("run") else "–"
-        rows.append("| **%s** | %s | %s | %s | %s / %s | %s / %s | %s | %s | %s |" % (
+        rows.append("| **%s** | %s | %s | %s | %s / %s | %s / %s | %s | %s | %s | %s |" % (
             m["id"], m["status"], m["date"], trained,
             fmt(s.get("test_classic_mAP50")), fmt(s.get("test_rich_mAP50")),
             fmt(s.get("test_classic_wire_break_recall")), fmt(s.get("test_rich_wire_break_recall")),
-            live[0], live[1], run))
+            replay, live[0], live[1], run))
     return "\n".join(rows)
 
 
