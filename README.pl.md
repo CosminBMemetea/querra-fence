@@ -1,6 +1,6 @@
 # Querra Fence · Gardian X500
 
-[English](README.md) · **Polski**
+[English](README.md) · **Polski** · [Română](README.ro.md) · [Português](README.pt.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Hrvatski](README.hr.md) · [Български](README.bg.md) · [Dansk](README.da.md)
 
 <img src="docs/assets/icon.svg" width="72" align="right" alt="Ikona Querra Fence">
 
@@ -59,7 +59,10 @@ uXRCE-DDS w PX4 publikuje do niego `/fmu/out/*`, a `px4_pose` zamienia własną 
 na podstawie którego umieszczane są alerty. Na Macu `tools/uxrce_relay.py <jetson>` przekazuje klienta PX4 SITL do
 Jetsona, więc w PX4 nic się nie zmienia. W jednym symulowanym locie pozycja z PX4 zgadzała się z telemetrią symulatora
 z dokładnością 0,6 m (mediana), a trzy prawdziwe usterki zostały zgłoszone 2,4 m, 3,0 m i 4,2 m od ich prawdziwych
-pozycji. Następny krok to ponowny przelot nad potwierdzoną usterką (offboard). Szczegóły:
+pozycji. Z `refly:=true` Jetson przejmuje sterowanie po okrążeniu inspekcyjnym. Przełącza PX4 w tryb OFFBOARD, przelatuje
+nisko nad każdą potwierdzoną usterką, aby obejrzeć ją z bliska, i oddaje sterowanie poleceniem Return. W SITL cały
+lot zadziałał: 8 przelotów, potem powrót i lądowanie. Sprawdzenie z bliska nie jest jeszcze wiarygodne, bo detektor
+był trenowany na wysokości 12 m, a nie 6 m. Szczegóły i uczciwe liczby:
 [docs/ros2.md](docs/ros2.md#phase-3-px4-over-uxrce-dds).
 
 ```mermaid
@@ -89,6 +92,7 @@ flowchart LR
     ST["querra_stats"]
     XRCE["agent micro-ROS<br/>UDP 8888 (px4:=true)"]
     PXP["px4_pose"]
+    REF["fence_refly<br/>(refly:=true)"]
   end
   subgraph TOP["Tematy"]
     T1["/camera/{usb,csi}/image_raw[/compressed]"]
@@ -116,6 +120,7 @@ flowchart LR
   CONF --> T5
   PX4["Kontroler lotu PX4<br/>(TELEM / SITL UDP 8888)"] <--> XRCE <--> T6
   T6 --> PXP -- "/px4/telemetry" --> CONF
+  T5 --> REF -- "punkty zadane OFFBOARD" --> T6
   T1 & T2 & T3 & TS & T4 & T5 --> BAG["rosbag2 MCAP<br/>/ssd/querra/bags"]
   T1 & T2 & T3 & TS & T4 & T5 --> FOX["foxglove_bridge<br/>ws://jetson:8765"]
   ST -. "stats.json" .-> HUB
@@ -155,7 +160,8 @@ policzone **9 z 24 zwierząt** (przelot po obwodzie widzi tylko 10–15 m w gł�
   <img src="docs/media/fence-energizer.jpg" width="49%" alt="Elektryzator i pierwsze słupki ogrodzenia">
 </p>
 
-**Raport.** Otwiera się w języku, w którym odbył się lot, i ma przełącznik EN | RO.
+**Raport.** Otwiera się w języku, w którym odbył się lot, i ma menu z dziewięcioma językami: EN, RO, PL, PT, DE,
+ES, HR, BG, DA.
 
 <img src="docs/media/report.png" width="640" alt="Raport z inspekcji: mapa, tabela usterek, zbiegłe zwierzęta i wykres napięcia">
 
@@ -195,8 +201,8 @@ Testowane na Macu z Apple Silicon (M2, 8 GB) z PX4 `main` (v1.18 beta) i Gazebo 
 | `./stop.sh` | Zatrzymuje wszystkie procesy, także pozostałości po przerwanym uruchomieniu |
 | `tools/install_launcher.sh` | Dodaje na pulpit `Gardian Sim.command` do uruchamiania dwuklikiem |
 
-Dodaj `--lang ro` do dowolnego trybu (albo ustaw `GARDIAN_LANG=ro`), aby terminal i raport były po rumuńsku; domyślnie
-jest angielski. PX4 w innym miejscu: `PX4_DIR=/sciezka/do/PX4-Autopilot ./start.sh`. Nic w drzewie PX4 nie jest
+Dodaj `--lang <kod>` do dowolnego trybu (albo ustaw `GARDIAN_LANG`), aby terminal i raport były w innym języku: `en`
+(domyślnie), `ro`, `pl`, `pt`, `de`, `es`, `hr`, `bg` lub `da`. Język raportu można też zmienić później. PX4 w innym miejscu: `PX4_DIR=/sciezka/do/PX4-Autopilot ./start.sh`. Nic w drzewie PX4 nie jest
 zmieniane.
 
 ## Stacja naziemna + dron
@@ -255,8 +261,8 @@ flowchart LR
 | `sim/mission.py` | pymavlink: parametry PX4 do płynnego lotu, wgranie misji, uzbrajanie jako GCS, detektor, raport |
 | `sim/director.py` | Python dla Gazebo: pasące się i wędrujące zwierzęta, kamera śledząca, zaplanowana trasa i znaczniki wykryć |
 | `sim/geo.py` | Wspólna geometria: słupki, miejsca usterek, trasa na zewnątrz, punkt w wielokącie, lokalne ⇄ GPS, model napięcia |
-| `sim/report.py` | Raport HTML z mapą SVG, profilem napięcia i przełącznikiem EN \| RO |
-| `sim/i18n.py` | Każdy komunikat czytany przez człowieka, po angielsku i rumuńsku |
+| `sim/report.py` | Raport HTML z mapą SVG, profilem napięcia i menu języków (dziewięć języków) |
+| `sim/i18n.py` | Każdy komunikat czytany przez człowieka, w dziewięciu językach (EN, RO, PL, PT, DE, ES, HR, BG, DA) |
 | `tools/` | Nagrywanie demo, generator mediów, rejestrator scenariuszy, skrót na pulpit |
 | `ground/`, `brain/` | Symulowany węzeł stacji naziemnej; „mózg” Jetsona, który odpowiada na pytania o to, co widzi |
 | `radar/` | Radar mmWave LD2450 na Jetsonie: podgląd w przeglądarce i pakiet Debiana |
@@ -321,7 +327,8 @@ Ochrona przed drapieżnikami w nocy (kamera termowizyjna i radar przy bramie) je
 
 ## Uwagi
 
-- Symulacja mówi po angielsku i po rumuńsku (`--lang ro`). Logi i dane JSON są zawsze po angielsku.
+- Symulacja mówi w dziewięciu językach (`--lang pl`, `--lang de`, …). Logi są zawsze po angielsku. W danych JSON
+  tekst czytany przez człowieka jest zapisany we wszystkich językach.
 - Obrazy demo w `docs/media` mają obecnie rumuńskie podpisy; `./start.sh demo` generuje je ponownie po angielsku.
 - Linux nie jest jeszcze testowany. Skrypty oczekują środowiska Gazebo od PX4 dla macOS (`Tools/setup/macos/.pixi`)
   i otwierają raport poleceniem `open`.

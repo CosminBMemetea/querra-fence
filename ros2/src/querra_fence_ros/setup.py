@@ -16,5 +16,6 @@ setup(
         "detector = querra_fence_ros.detector:main",
         "alerts = querra_fence_ros.alerts:main",
         "px4_pose = querra_fence_ros.px4_pose:main",
+        "refly = querra_fence_ros.refly:main",
     ]},
 )

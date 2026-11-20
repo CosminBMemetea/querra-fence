@@ -45,7 +45,7 @@ signal.signal(signal.SIGTERM, stop)
 def say(key, **kw):
     """Same convention as the mission: terminal in the chosen language."""
     def resolved(lang):
-        return {k: (i18n.pick(v, lang) if isinstance(v, tuple) else v) for k, v in kw.items()}
+        return {k: (i18n.pick(v, lang) if i18n.is_text(v) else v) for k, v in kw.items()}
     print(t(key, **resolved(i18n.LANG)), flush=True)
 
 

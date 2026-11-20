@@ -155,7 +155,11 @@ Next: field mode (`field.sh`) becomes a launch file plus `ros2 bag record`, and 
 
 ## Phase 3: PX4 over uXRCE-DDS
 
-Part 1, the drone's own pose for the alerts, is done in simulation. Part 2, re-flying a confirmed fault, is next.
+Both parts work in simulation:
+- **Part 1:** the alerts use the drone's own pose.
+- **Part 2:** the Jetson re-flies the confirmed faults in OFFBOARD mode.
+
+The close-up check in part 2 is not reliable yet; see its results below.
 
 ### How it works
 
@@ -205,15 +209,63 @@ tools/cam_stream.sh                 # once Gazebo is up
 The 0.6 m median gap between the two poses is mostly timing. The simulator telemetry travels with the camera frame
 (about 0.1 s older at 5 m/s), and `/px4/telemetry` is the newest pose.
 
-### Next: re-fly a confirmed fault (part 2)
+### Part 2: re-fly the confirmed faults (`refly:=true`)
 
-- `px4_msgs` already has `OffboardControlMode`, `TrajectorySetpoint` and `VehicleCommand` (v1, on
-  `/fmu/in/vehicle_command_v1`).
-- The re-fly node:
-  1. takes a new `/fence/alerts` message;
-  2. waits for the mission to finish or pauses it;
-  3. streams the offboard heartbeat and a setpoint above the fault at low altitude, then switches to offboard;
-  4. takes a close-up and hands control back (RTL).
-- Test it in SITL first. It must not fight `sim/mission.py`, which flies the mission over MAVLink.
-- **Real flight controller:** run the agent on the TELEM serial port instead of UDP
-  (`micro_ros_agent serial --dev /dev/ttyTHS1 -b 921600`, with `UXRCE_DDS_CFG` set to that port on PX4).
+`fence_refly` (`querra_fence_ros/refly.py`) takes over after the inspection loop:
+
+1. **When.** At the end of the mission PX4 enters Return (AUTO_RTL). If there are confirmed alerts, the node
+   streams `OffboardControlMode` and a `TrajectorySetpoint` (10 Hz) that holds the current position, then sends
+   `VehicleCommand` DO_SET_MODE OFFBOARD on `/fmu/in/vehicle_command_v1`.
+2. **Where.** It visits the alerts nearest-first.
+   - It descends to 6 m.
+   - It stops 4.2 m before each fault. At 6 m, the camera's 55° downward pitch then puts the fault in the middle of
+     the frame.
+   - It faces the fault.
+   - The setpoint moves at most 4 m/s horizontally and 1.5 m/s vertically, so the flight stays smooth.
+3. **Check.** It hovers 5 s and counts the detector frames that show the alert's class at conf ≥ 0.5. The verdict
+   is "verified" when most of the hover frames see it (at least half, and at least 10 frames).
+4. **Back.** It sends Return and keeps the offboard stream alive until PX4 is in Return, so the offboard-loss
+   failsafe never triggers.
+5. **Hand back.** PX4 flies home and lands, and `sim/mission.py`, which only waits for the landing, writes its
+   report as usual.
+
+If a pilot or a failsafe changes the mode, the node stops and does nothing more on that flight. Its output goes to
+the log and to two topics:
+- `/fence/refly/status`: JSON with the state;
+- `/fence/refly/report`: JSON with every verdict and its frame counts.
+
+```bash
+./ros.sh demo tcp://<mac-ip>:5601 px4:=true refly:=true
+```
+
+**Result (2026-11-20, one simulated flight, 5 min 13 s, 852 m).**
+- **What worked:** the handover to OFFBOARD, all 8 visits, the Return and the landing. The report includes the
+  re-fly track.
+- **Close-up verdicts against the truth:**
+
+| Alert | Truth | Frames with the class during the hover |
+| --- | --- | --- |
+| #2 broken wire | real (F1, 1.9 m) | 74 of 74 |
+| #4 fallen post | real (F2) | 60 of 60 |
+| #3 fallen post | real (F2, a second alert for the same post) | 0 of 75 |
+| #6 branch | real (F3) | 0 of 74 |
+| #1, #7, #8 broken wire | false | 36 of 74, 10 of 60, 10 of 70 |
+| #5 broken wire | false | 0 of 75 |
+
+**What this shows.** The flight part works. The close-up check does not yet separate real faults from false ones.
+
+The first rule ("at least 3 frames") passed 3 of the 4 false alerts. The majority rule now in the code would have
+rejected all 4 false alerts and kept 2 of the 4 real faults. That rule was chosen after this one flight, so it is
+not validated.
+
+The real cause is the model. It was trained on frames from 12 m, and at 6 m the branch and one view of the fallen
+post look different.
+
+**Next:**
+1. Add low-altitude, close-up frames to the synthetic dataset and retrain.
+2. Fly several missions to choose the verdict rule on data it was not tuned on.
+3. Merge alerts for the same fault before re-flying (#3 and #4 are both F2).
+
+**Real flight controller:** run the agent on the TELEM serial port instead of UDP:
+`micro_ros_agent serial --dev /dev/ttyTHS1 -b 921600`, with `UXRCE_DDS_CFG` set to that port on PX4. Test OFFBOARD
+on the bench without propellers first.

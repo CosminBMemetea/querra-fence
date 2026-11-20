@@ -1,34 +1,32 @@
-"""HTML inspection report (SVG map + EM voltage profile), English | Romanian with a switch.
+"""HTML inspection report (SVG map + EM voltage profile) in nine languages, with a language menu.
 
-The page opens in the language the mission ran in (GARDIAN_LANG); `#en` or `#ro` in the
-URL, or the EN | RO buttons, switch it.
+The page holds every language (EN RO PL PT DE ES HR BG DA) and shows one. It opens in the language the mission ran in
+(GARDIAN_LANG); `#pl`, `#de`, … in the URL or the language menu switch it, and the choice is remembered.
+Older reports, whose text fields have only English and Romanian, still open: missing languages fall back to English.
 """
 import html
 import json
 
 import i18n
 
-PRIO = {"wire_break": (("Urgent", "Urgent"), "crit"), "post_down": (("Urgent", "Urgent"), "crit"),
-        "branch_short": (("Today", "Azi"), "warn")}
+R = i18n.REPORT
+PRIO = {"wire_break": ("urgent", "crit"), "post_down": ("urgent", "crit"), "branch_short": ("today", "warn")}
 
 
-def L(en, ro=None):
-    """Both languages in the page; CSS shows one."""
-    if ro is None:
-        en, ro = en
-    return '<span class="l-en">%s</span><span class="l-ro">%s</span>' % (html.escape(en), html.escape(ro))
-
-
-def text2(field):
-    """A JSON text field: {"en":..,"ro":..} or a plain string (older reports)."""
+def textN(field):
+    """A text field as {lang: text} for every language: an i18n entry, a JSON dict ({"en":..,"ro":..,...}) or a string."""
     if isinstance(field, dict):
-        return field.get("en", ""), field.get("ro", field.get("en", ""))
-    return field, field
+        return {lang: field.get(lang) or field.get("en", "") for lang in i18n.LANGS}
+    if isinstance(field, (tuple, list)):
+        return {lang: i18n.pick(tuple(field), lang) for lang in i18n.LANGS}
+    return {lang: field for lang in i18n.LANGS}
 
 
-def species2(code):
-    old = {"vacă": "cow", "oaie": "sheep"}
-    return i18n.SPECIES.get(old.get(code, code), (code, code))
+def L(field, **fmt):
+    """Every language in the page; CSS shows the one in <html lang>."""
+    tx = textN(field)
+    return "".join('<span class="l l-%s">%s</span>' % (lang, html.escape(tx[lang].format(**fmt) if fmt else tx[lang]))
+                   for lang in i18n.LANGS)
 
 
 def _map_svg(d):
@@ -52,11 +50,11 @@ def _map_svg(d):
         out.append('<polyline points="%s" fill="none" stroke="#7fd3ff" stroke-width="1.6" stroke-dasharray="5 4" opacity=".85"/>' % " ".join(P(*p) for p in d["track"]))
     out.append('<g transform="translate(%s)"><circle r="7" fill="#0e1c20" stroke="#e6efe9"/><text y="4" text-anchor="middle" font-size="10" fill="#e6efe9" font-weight="700">H</text></g>' % P(0, 0))
     for f in d["faults"]:
-        en, ro = i18n.FAULT_SHORT.get(f["type"], ("", ""))
-        out.append('<g transform="translate(%s)"><circle r="10" fill="none" stroke="#f09a3a" stroke-width="2.5"/><circle r="3" fill="#f09a3a"/>'
-                   '<text class="l-en" x="14" y="4" font-size="12" fill="#f09a3a" font-weight="600">%s %s</text>'
-                   '<text class="l-ro" x="14" y="4" font-size="12" fill="#f09a3a" font-weight="600">%s %s</text></g>'
-                   % (P(f["x"], f["y"]), f["id"], html.escape(en), f["id"], html.escape(ro)))
+        tx = textN(i18n.FAULT_SHORT.get(f["type"], ""))
+        labels = "".join('<text class="l l-%s" x="14" y="4" font-size="12" fill="#f09a3a" font-weight="600">%s %s</text>'
+                         % (lang, f["id"], html.escape(tx[lang])) for lang in i18n.LANGS)
+        out.append('<g transform="translate(%s)"><circle r="10" fill="none" stroke="#f09a3a" stroke-width="2.5"/>'
+                   '<circle r="3" fill="#f09a3a"/>%s</g>' % (P(f["x"], f["y"]), labels))
     for a in d["escaped_animals"]:
         out.append('<g transform="translate(%s)"><circle r="6" fill="#ff5b4f"/><text x="10" y="4" font-size="11" fill="#ff8a80">%s</text></g>' % (P(a["x"], a["y"]), a["id"]))
     out.append("</svg>")
@@ -94,29 +92,38 @@ def write_html(d, path):
     m = d["mission"]
     rows_f = "".join(
         "<tr><td>{id}</td><td>{t}</td><td>{w}</td><td class=m>{lat:.6f}, {lon:.6f}</td><td>{s:.0f} m</td><td><span class='pill {pc}'>{p}</span></td></tr>".format(
-            id=f["id"], t=L(text2(f["label"])), w=L(text2(f["where"])), lat=f["lat"], lon=f["lon"], s=f["fence_s_m"],
-            p=L(PRIO.get(f["type"], (("", ""), ""))[0]), pc=PRIO.get(f["type"], (("", ""), ""))[1]) for f in d["faults"]
-    ) or "<tr><td colspan=6>%s</td></tr>" % L("No faults found.", "Niciun defect găsit.")
+            id=f["id"], t=L(i18n.FAULT.get(f["type"], f["label"])), w=L(f["where"]), lat=f["lat"], lon=f["lon"], s=f["fence_s_m"],
+            p=L(R[PRIO.get(f["type"], ("today", "warn"))[0]]), pc=PRIO.get(f["type"], ("today", "warn"))[1]) for f in d["faults"]
+    ) or "<tr><td colspan=6>%s</td></tr>" % L(R["no_faults"])
     rows_a = "".join(
         "<tr><td>{id}</td><td>{sp}</td><td class=m>{lat:.6f}, {lon:.6f}</td><td>{df:.0f} m</td><td>{nf}</td></tr>".format(
-            id=a["id"], sp=L(species2(a["species"])), lat=a["lat"], lon=a["lon"], df=a["distance_to_fence_m"], nf=L("gate", "poartă") if a["near_fault"] == "gate" else a["near_fault"])
+            id=a["id"], sp=L(i18n.SPECIES.get({"vacă": "cow", "oaie": "sheep"}.get(a["species"], a["species"]), a["species"])),
+            lat=a["lat"], lon=a["lon"], df=a["distance_to_fence_m"],
+            nf=L(R["gate"]) if a["near_fault"] == "gate" else html.escape(str(a["near_fault"])))
         for a in d["escaped_animals"]
-    ) or "<tr><td colspan=5>%s</td></tr>" % L("No animals outside the fence.", "Niciun animal în afara gardului.")
+    ) or "<tr><td colspan=5>%s</td></tr>" % L(R["no_animals"])
     h = d["herd"]
-    lang = d.get("language", "en")
+    lang = d.get("language", "en") if d.get("language") in i18n.LANGS else "en"
+    if d.get("trigger"):
+        reason = textN(d["trigger"]["label"])
+        trig = '<div class="sub" style="color:#7fd3ff;margin-top:4px">%s</div>' % L(
+            {lg: i18n.MSG["trigger"][lg].format(reason=reason[lg]) for lg in i18n.LANGS})
+    else:
+        trig = ""
+    css_langs = ",".join("html[lang=%s] .l-%s" % (lg, lg) for lg in i18n.LANGS)
+    options = "".join('<option value="%s">%s</option>' % (lg, html.escape(i18n.LANG_NAMES[lg])) for lg in i18n.LANGS)
     doc = """<!doctype html><html lang="{lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Fence report · {gen}</title>
+<title>{html_title} · {gen}</title>
 <style>
 :root{{--bg:#0b1517;--card:#0f1d21;--fg:#e6efe9;--mut:#8ea29d;--line:rgba(190,225,214,.14);--volt:#f2c230;--crit:#ff5b4f;--warn:#f09a3a}}
 body{{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 -apple-system,"Helvetica Neue",system-ui,sans-serif}}
-body.ro .l-en, body:not(.ro) .l-ro{{display:none}}
+.l{{display:none}} {css_langs}{{display:inline}}
 main{{max-width:820px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-left,0px)) 48px;display:grid;gap:22px}}
 header{{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}}
 h1{{margin:0;font-size:26px}} h2{{margin:0 0 8px;font-size:16px}} .sub{{color:var(--mut);font-size:13px}}
-.lang{{display:inline-flex;border:1px solid var(--line);border-radius:8px;padding:2px;gap:2px}}
-.lang button{{font:600 12px/1 inherit;color:var(--mut);background:none;border:0;border-radius:6px;padding:7px 10px;cursor:pointer;letter-spacing:.06em}}
-.lang button[aria-pressed=true]{{background:rgba(242,194,48,.16);color:var(--volt)}}
-.lang button:focus-visible{{outline:2px solid var(--volt);outline-offset:2px}}
+.lang{{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--mut)}}
+.lang select{{font:600 13px/1.2 inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 10px;cursor:pointer}}
+.lang select:focus-visible{{outline:2px solid var(--volt);outline-offset:2px}}
 .k{{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}}
 .k div{{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--card)}}
 .k b{{display:block;font:600 20px/1.2 ui-monospace,Menlo,monospace}} .k span{{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}}
@@ -126,10 +133,10 @@ td{{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}} td.m{{f
 .t{{overflow-x:auto}} .pill{{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px}} .crit{{background:rgba(255,91,79,.15);color:var(--crit)}} .warn{{background:rgba(240,154,58,.15);color:var(--warn)}}
 .lg{{display:flex;gap:14px;font-size:12px;color:var(--mut);flex-wrap:wrap}} .lg i{{display:inline-block;width:12px;height:3px;vertical-align:middle;margin-right:5px}}
 .note{{color:var(--mut);font-size:13.5px;max-width:68ch}}
-</style></head><body class="{bodyclass}"><main>
+</style></head><body><main>
 <header>
  <div><h1>{t_title}</h1><div class="sub">{gen} · {drone} · {t_origin} {lat:.5f}, {lon:.5f}</div>{trig}</div>
- <div class="lang" role="group" aria-label="Language"><button type="button" data-l="en">EN</button><button type="button" data-l="ro">RO</button></div>
+ <label class="lang">{t_language}<select id="lang" aria-label="Language">{options}</select></label>
 </header>
 <div class="k">
  <div><span>{t_faults}</span><b style="color:var(--warn)">{nf}</b></div>
@@ -147,45 +154,38 @@ td{{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}} td.m{{f
 </main>
 <script>
 (function () {{
-  var body = document.body, btns = document.querySelectorAll('.lang button');
+  var LANGS = {langs_js}, TITLES = {titles_js}, sel = document.getElementById('lang'), gen = {gen_js};
   function set(l) {{
-    body.classList.toggle('ro', l === 'ro');
-    document.documentElement.lang = l;
-    btns.forEach(function (b) {{ b.setAttribute('aria-pressed', String(b.dataset.l === l)); }});
+    if (LANGS.indexOf(l) < 0) l = 'en';
+    document.documentElement.lang = l; sel.value = l; document.title = TITLES[l] + ' · ' + gen;
   }}
-  var start = (location.hash === '#ro' || location.hash === '#en') ? location.hash.slice(1) : null;
+  var start = LANGS.indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : null;
   if (!start) {{ try {{ start = localStorage.getItem('gardian-lang'); }} catch (e) {{}} }}
   set(start || '{lang}');
-  btns.forEach(function (b) {{ b.addEventListener('click', function () {{
-    set(b.dataset.l); try {{ localStorage.setItem('gardian-lang', b.dataset.l); }} catch (e) {{}}
-  }}); }});
+  sel.addEventListener('change', function () {{
+    set(sel.value); try {{ localStorage.setItem('gardian-lang', sel.value); }} catch (e) {{}}
+    history.replaceState(null, '', '#' + sel.value);
+  }});
 }})();
 </script>
 </body></html>""".format(
-        lang=lang, bodyclass="ro" if lang == "ro" else "",
-        trig=('<div class="sub" style="color:#7fd3ff;margin-top:4px">%s</div>' % L(
-            i18n.MSG["trigger"][0].format(reason=text2(d["trigger"]["label"])[0]),
-            i18n.MSG["trigger"][1].format(reason=text2(d["trigger"]["label"])[1]))) if d.get("trigger") else "",
+        lang=lang, css_langs=css_langs, options=options, trig=trig,
+        html_title=html.escape(R["html_title"][lang]), langs_js=json.dumps(list(i18n.LANGS)),
+        titles_js=json.dumps(R["html_title"], ensure_ascii=False), gen_js=json.dumps(d["generated_at"].replace("T", " ")),
         gen=html.escape(d["generated_at"].replace("T", " ")), drone=html.escape(d["drone"]), lat=d["origin"]["lat"], lon=d["origin"]["lon"],
         nf=len(d["faults"]), ne=len(d["escaped_animals"]), seen=h["seen"], total=h["total"], dm=m["duration_s"] // 60, ds=m["duration_s"] % 60,
         dist=m["distance_m"], fl=m["fence_length_m"], map=_map_svg(d), rf=rows_f, ra=rows_a, em=_em_svg(d, m["fence_length_m"]),
-        t_title=L("Electric fence inspection report", "Raport inspecție gard electric"), t_origin=L("origin", "origine"),
-        t_faults=L("Faults", "Defecte"), t_escaped=L("Escaped animals", "Animale evadate"), t_seen=L("Animals seen", "Animale văzute"),
-        t_time=L("Flight time", "Durată zbor"), t_dist=L("Distance", "Distanță"), t_fence=L("Fence inspected", "Gard inspectat"),
-        t_map=L("Map", "Harta"), t_lg_fence=L("fence", "gard"), t_lg_track=L("drone track", "traseul dronei"),
-        t_lg_fault=L("fault", "defect"), t_lg_animal=L("escaped animal", "animal evadat"),
-        t_faults_found=L("Faults found", "Defecte găsite"), t_what=L("What", "Ce"), t_where=L("Where", "Unde"),
-        t_from=L("From energizer", "De la energizator"), t_prio=L("Priority", "Prioritate"),
-        t_outside=L("Animals outside the fence", "Animale în afara gardului"), t_species=L("Species", "Specie"),
-        t_last=L("Last position", "Ultima poziție"), t_dfence=L("Distance to fence", "Distanță de gard"), t_near=L("Near fault", "Lângă defectul"),
-        t_volt=L("Fence voltage (EM sensor, kV)", "Tensiunea gardului (senzor EM, kV)"),
-        t_top=L("top wire", "fir sus"), t_bottom=L("bottom wire", "fir jos"), t_thr=L("4 kV threshold", "prag 4 kV"),
-        t_note=L("%d animals never entered the camera view: a pass along the fence sees about 15–20 m into the paddock. "
-                 "Counting the whole herd needs an extra grid flight over the middle of the pasture. Detections in the simulation "
-                 "use the true positions from Gazebo; on the real drone they come from a vision model on the camera images." % h["not_seen"],
-                 "%d animale nu au intrat în câmpul camerei: un tur pe lângă gard vede cam 15–20 m spre interior. "
-                 "Pentru numărarea completă a turmei adaugă un zbor în grilă peste mijlocul pășunii. Detecțiile din simulare folosesc "
-                 "pozițiile reale din Gazebo; pe drona reală vin dintr-un model de detecție pe imaginea camerei." % h["not_seen"]),
+        t_title=L(R["title"]), t_origin=L(R["origin"]), t_language=L(R["language"]),
+        t_faults=L(R["faults"]), t_escaped=L(R["escaped"]), t_seen=L(R["seen"]),
+        t_time=L(R["time"]), t_dist=L(R["dist"]), t_fence=L(R["fence"]),
+        t_map=L(R["map"]), t_lg_fence=L(R["lg_fence"]), t_lg_track=L(R["lg_track"]),
+        t_lg_fault=L(R["lg_fault"]), t_lg_animal=L(R["lg_animal"]),
+        t_faults_found=L(R["faults_found"]), t_what=L(R["what"]), t_where=L(R["where"]),
+        t_from=L(R["from"]), t_prio=L(R["prio"]),
+        t_outside=L(R["outside"]), t_species=L(R["species"]),
+        t_last=L(R["last"]), t_dfence=L(R["dfence"]), t_near=L(R["near"]),
+        t_volt=L(R["volt"]), t_top=L(R["top"]), t_bottom=L(R["bottom"]), t_thr=L(R["thr"]),
+        t_note=L(R["note"], n=h["not_seen"]),
     )
     with open(path, "w", encoding="utf-8") as f:
         f.write(doc)

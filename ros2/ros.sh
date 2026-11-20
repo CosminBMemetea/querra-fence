@@ -22,7 +22,7 @@ set -euo pipefail
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 NAME=querra-ros IMAGE=querra-ros:humble BAGS=/ssd/querra/bags
 WS=${QUERRA_ROS_WS:-$HERE}
-TOPICS="/camera/usb/image_raw/compressed /camera/csi/image_raw/compressed /gps/fix /gps/info /radar/targets /radar/points /radar/markers /tf_static /sim/camera/image_raw/compressed /sim/telemetry /sim/gps/fix /detections /detections/image /detections/latency_ms /fence/alerts /fence/alerts/updates /fence/alerts/fix /fence/alerts/count /px4/telemetry /px4/gps/fix /fmu/out/vehicle_global_position /fmu/out/vehicle_local_position_v1 /fmu/out/vehicle_attitude /fmu/out/vehicle_status_v5"
+TOPICS="/camera/usb/image_raw/compressed /camera/csi/image_raw/compressed /gps/fix /gps/info /radar/targets /radar/points /radar/markers /tf_static /sim/camera/image_raw/compressed /sim/telemetry /sim/gps/fix /detections /detections/image /detections/latency_ms /fence/alerts /fence/alerts/updates /fence/alerts/fix /fence/alerts/count /px4/telemetry /px4/gps/fix /fmu/out/vehicle_global_position /fmu/out/vehicle_local_position_v1 /fmu/out/vehicle_attitude /fmu/out/vehicle_status_v5 /fence/refly/status /fence/refly/report"
 running() { [ "$(docker inspect -f '{{.State.Running}}' "$NAME" 2>/dev/null)" = true ]; }
 # LAN address for Foxglove: the source address of the default route (hostname -I can list docker0 or l4tbr0 first).
 lan_ip() { ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<NF;i++) if($i=="src"){print $(i+1); exit}}' | grep . || echo "$(hostname).local"; }

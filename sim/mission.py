@@ -46,9 +46,7 @@ def say(key, color=None, **kw):
     def resolved(lang):
         out = {}
         for k, v in kw.items():
-            if isinstance(v, dict) and set(v) == {"en", "ro"}:
-                v = v[lang]
-            elif isinstance(v, tuple) and len(v) == 2 and all(isinstance(x, str) for x in v):
+            if i18n.is_text(v):            # a translation entry or a JSON text field in several languages
                 v = i18n.pick(v, lang)
             out[k] = v
         return out
