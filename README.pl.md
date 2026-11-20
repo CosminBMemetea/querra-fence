@@ -38,7 +38,7 @@ Współrzędne GPS na tych nagraniach są rozmyte.
 Aplikacja na pulpit: `sudo apt install ./querra-fence-panel_0.6.0_arm64.deb` dodaje ikonę **Querra Fence** do docka
 Jetsona. Ikona otwiera panel (i w razie potrzeby go uruchamia). Zobacz [packaging/deb/](packaging/deb/).
 
-## ROS 2 (fazy 1 i 2)
+## ROS 2 (fazy 1–3)
 
 Czujniki Jetsona są też tematami ROS 2 Humble. Węzły działają w Dockerze na dysku SSD i są klientami usług, które
 obsługują sprzęt: kamery z huba panelu, GPS z gpsd, radar z usługi ld2450-radar. Publikują obrazy `sensor_msgs`,
@@ -53,6 +53,14 @@ co do miejsca na ziemi w promieniu 5 m. `./ros.sh demo` (albo **Demo** w panelu)
 cały łańcuch; `./ros.sh demo tcp://<mac>:5601` używa symulacji na żywo. Układ Foxglove:
 [`ros2/foxglove/querra-layout.json`](ros2/foxglove/querra-layout.json).
 Scenariusz prezentacji: [docs/interview-demo.md](docs/interview-demo.md).
+
+Faza 3 podłącza samo PX4: `./ros.sh demo tcp://<mac>:5601 px4:=true` uruchamia agenta micro-ROS na UDP 8888. Klient
+uXRCE-DDS w PX4 publikuje do niego `/fmu/out/*`, a `px4_pose` zamienia własną pozycję i kurs drona w `/px4/telemetry`,
+na podstawie którego umieszczane są alerty. Na Macu `tools/uxrce_relay.py <jetson>` przekazuje klienta PX4 SITL do
+Jetsona, więc w PX4 nic się nie zmienia. W jednym symulowanym locie pozycja z PX4 zgadzała się z telemetrią symulatora
+z dokładnością 0,6 m (mediana), a trzy prawdziwe usterki zostały zgłoszone 2,4 m, 3,0 m i 4,2 m od ich prawdziwych
+pozycji. Następny krok to ponowny przelot nad potwierdzoną usterką (offboard). Szczegóły:
+[docs/ros2.md](docs/ros2.md#phase-3-px4-over-uxrce-dds).
 
 ```mermaid
 flowchart LR
@@ -79,7 +87,8 @@ flowchart LR
     DET["fence_detector<br/>YOLO11n v0.3 TensorRT FP16"]
     CONF["alert_confirm<br/>5 z 8 klatek · 5 m · conf 0.7"]
     ST["querra_stats"]
-    XRCE["MicroXRCEAgent<br/>(faza 3)"]
+    XRCE["agent micro-ROS<br/>UDP 8888 (px4:=true)"]
+    PXP["px4_pose"]
   end
   subgraph TOP["Tematy"]
     T1["/camera/{usb,csi}/image_raw[/compressed]"]
@@ -106,7 +115,7 @@ flowchart LR
   TS -- "telemetria" --> CONF
   CONF --> T5
   PX4["Kontroler lotu PX4<br/>(TELEM / SITL UDP 8888)"] <--> XRCE <--> T6
-  T6 -. "faza 3: pozycja" .-> CONF
+  T6 --> PXP -- "/px4/telemetry" --> CONF
   T1 & T2 & T3 & TS & T4 & T5 --> BAG["rosbag2 MCAP<br/>/ssd/querra/bags"]
   T1 & T2 & T3 & TS & T4 & T5 --> FOX["foxglove_bridge<br/>ws://jetson:8765"]
   ST -. "stats.json" .-> HUB

@@ -4,6 +4,7 @@
 # and deleted files also trigger a build.
 set -e
 source /opt/ros/humble/setup.bash
+[ -f /opt/uros/install/setup.bash ] && source /opt/uros/install/setup.bash   # micro-ROS agent (phase 3)
 cd /ws
 hash=$(find src -type f ! -name '*.pyc' ! -path '*/__pycache__/*' -print0 | sort -z | xargs -0 sha1sum | sha1sum | cut -d' ' -f1)
 if [ "$(cat install/.built 2>/dev/null)" != "$hash" ]; then

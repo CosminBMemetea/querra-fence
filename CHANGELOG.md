@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.7.0 · 2026-11-20 · ROS 2 phase 3, part 1: PX4 over uXRCE-DDS
+
+- **micro-ROS agent** in the ROS 2 image: a Micro-XRCE-DDS agent built against Humble's Fast DDS. `px4:=true` starts
+  it on UDP 8888, and `./ros.sh doctor` checks it.
+- **`px4_msgs`** (minimal): eight messages copied unchanged from the PX4 tree the simulation runs (v1.18 beta). They
+  cover the pose, the status and the offboard messages for the next step.
+- **`px4_pose` node**: PX4's global position, local position and status become two topics:
+  - `/px4/telemetry` (position, altitude, heading, speed, flight phase);
+  - `/px4/gps/fix`.
+  With `px4:=true`, `alert_confirm` places alerts with this pose.
+- **`tools/uxrce_relay.py`** forwards PX4 SITL's client from the Mac to the Jetson. `start.sh` exports
+  `ROS_DOMAIN_ID=42`. PX4 itself is unchanged.
+- **`./ros.sh demo tcp://MAC:5601 px4:=true`** passes extra launch arguments, and the PX4 topics are recorded in bags.
+- **Tested in one full simulated flight**:
+  - the PX4 pose matched the simulator's telemetry within 0.62 m (median) and 2.2 m (max);
+  - the three real faults were alerted 2.4 m, 3.0 m and 4.2 m from their true positions.
+- **Docs and project page**: phase 3 part 1 is marked done. Next is re-flying a confirmed fault (offboard).
+
 ## v0.6.0 · 2026-11-20 · safe fence: new icon, project page, bug fixes
 
 - **Project page** on GitHub Pages (`docs/index.html`): what works today, sensors in and alerts out (live, simulated,

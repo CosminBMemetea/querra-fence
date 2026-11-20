@@ -4,6 +4,9 @@ Phase 1 (always): cameras from the panel hub, GPS from gpsd, LD2450 radar, stati
 Phase 2 (detector:=sim or detector:=usb): YOLO11n v0.3 TensorRT detector + 5-of-8 GPS alert confirmation.
   detector:=sim  replays the recorded Gazebo mission (sim_source:=/sim/m1, or tcp://<mac>:5601 for the live sim)
   detector:=usb  runs on the real USB camera with gpsd as the position source (bench use: no fence, no alerts)
+Phase 3 (px4:=true): the micro-ROS agent on UDP 8888 bridges PX4's uXRCE-DDS client into ROS 2 (/fmu/out/*), and
+  px4_pose turns the vehicle's own position and heading into /px4/telemetry, which alert_confirm then uses
+  instead of the simulator's telemetry.
 """
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
@@ -22,6 +25,9 @@ def generate_launch_description():
     panel, det = LaunchConfiguration("panel"), LaunchConfiguration("detector")
     is_sim = IfCondition(PythonExpression(["'", det, "' == 'sim'"]))
     is_usb = IfCondition(PythonExpression(["'", det, "' == 'usb'"]))
+    px4 = LaunchConfiguration("px4")
+    is_px4 = IfCondition(px4)
+    telemetry = PythonExpression(["'/px4/telemetry' if '", px4, "'.lower() in ('true', '1') else '/sim/telemetry'"])
     cams = [Node(package="querra_fence_ros", executable="hub_camera", name=f"{c}_camera", namespace=f"camera/{c}",
                  parameters=[{"camera": c, "url": ["http://", panel, f"/stream/{c}.mjpg"]}], output="screen")
             for c in ("usb", "csi")]
@@ -31,6 +37,8 @@ def generate_launch_description():
         DeclareLaunchArgument("foxglove", default_value="true"),
         DeclareLaunchArgument("detector", default_value="none", description="none | sim | usb"),
         DeclareLaunchArgument("sim_source", default_value="/sim/m1", description="recording dir or tcp://host:port"),
+        DeclareLaunchArgument("px4", default_value="false", description="true: PX4 over uXRCE-DDS (agent on UDP px4_port)"),
+        DeclareLaunchArgument("px4_port", default_value="8888"),
         *cams,
         Node(package="querra_fence_ros", executable="stats", name="querra_stats", output="log"),
         Node(package="querra_fence_ros", executable="gpsd_gps", name="gps", output="screen"),
@@ -48,7 +56,11 @@ def generate_launch_description():
         Node(package="querra_fence_ros", executable="detector", name="fence_detector", condition=is_sim,
              parameters=[{"image": "/sim/camera/image_raw/compressed"}], output="screen"),
         Node(package="querra_fence_ros", executable="alerts", name="alert_confirm", condition=is_sim,
-             parameters=[{"telemetry": "/sim/telemetry"}], output="screen"),
+             parameters=[{"telemetry": telemetry}], output="screen"),
+        # ---- phase 3: PX4 over uXRCE-DDS (SITL on the Mac through tools/uxrce_relay.py, or the flight controller) ----
+        Node(package="micro_ros_agent", executable="micro_ros_agent", name="xrce_agent", condition=is_px4,
+             arguments=["udp4", "-p", LaunchConfiguration("px4_port")], output="log"),
+        Node(package="querra_fence_ros", executable="px4_pose", name="px4_pose", condition=is_px4, output="screen"),
         # ---- phase 2 on the real USB camera (1280x720 frames from the hub are 640x360 live view) ----
         Node(package="querra_fence_ros", executable="detector", name="fence_detector", condition=is_usb,
              parameters=[{"image": "/camera/usb/image_raw/compressed"}], output="screen"),

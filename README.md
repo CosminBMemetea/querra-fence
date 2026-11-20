@@ -36,7 +36,7 @@ GPS coordinates are blurred in these captures.
 Desktop launcher: `sudo apt install ./querra-fence-panel_0.6.0_arm64.deb` adds a **Querra Fence** icon to the Jetson's
 dock that reopens the panel (and starts it if needed). See [packaging/deb/](packaging/deb/).
 
-## ROS 2 (phases 1 and 2)
+## ROS 2 (phases 1–3)
 
 The Jetson's sensors are also ROS 2 Humble topics. The nodes run in Docker on the SSD and are clients of the services
 that own the hardware: cameras from the panel hub, GPS from gpsd, radar from the ld2450-radar service. They publish
@@ -50,6 +50,13 @@ annotated image. `alert_confirm` turns detections into `/fence/alerts` only when
 on the ground. `./ros.sh demo` (or **Demo** in the panel) replays a recorded Gazebo mission through the whole chain;
 `./ros.sh demo tcp://<mac>:5601` uses the live simulation. Foxglove layout: [`ros2/foxglove/querra-layout.json`](ros2/foxglove/querra-layout.json).
 Interview walkthrough: [docs/interview-demo.md](docs/interview-demo.md).
+
+Phase 3 connects PX4 itself: `./ros.sh demo tcp://<mac>:5601 px4:=true` starts a micro-ROS agent on UDP 8888. PX4's
+uXRCE-DDS client publishes `/fmu/out/*` to it, and `px4_pose` turns the vehicle's own position and heading into
+`/px4/telemetry`, which then places the alerts. On the Mac, `tools/uxrce_relay.py <jetson>` forwards PX4 SITL's client
+to the Jetson, so nothing in PX4 changes. In one simulated flight, the PX4 pose agreed with the simulator's telemetry
+within 0.6 m (median), and the three real faults were alerted 2.4 m, 3.0 m and 4.2 m from their true positions.
+Re-flying a confirmed fault (offboard) is next. Details: [docs/ros2.md](docs/ros2.md#phase-3-px4-over-uxrce-dds).
 
 ```mermaid
 flowchart LR
@@ -76,7 +83,8 @@ flowchart LR
     DET["fence_detector<br/>YOLO11n v0.3 TensorRT FP16"]
     CONF["alert_confirm<br/>5 of 8 frames · 5 m · conf 0.7"]
     ST["querra_stats"]
-    XRCE["MicroXRCEAgent<br/>(phase 3)"]
+    XRCE["micro-ROS agent<br/>UDP 8888 (px4:=true)"]
+    PXP["px4_pose"]
   end
   subgraph TOP["Topics"]
     T1["/camera/{usb,csi}/image_raw[/compressed]"]
@@ -103,7 +111,7 @@ flowchart LR
   TS -- "telemetry" --> CONF
   CONF --> T5
   PX4["PX4 flight controller<br/>(TELEM / SITL UDP 8888)"] <--> XRCE <--> T6
-  T6 -. "phase 3: pose" .-> CONF
+  T6 --> PXP -- "/px4/telemetry" --> CONF
   T1 & T2 & T3 & TS & T4 & T5 --> BAG["rosbag2 MCAP<br/>/ssd/querra/bags"]
   T1 & T2 & T3 & TS & T4 & T5 --> FOX["foxglove_bridge<br/>ws://jetson:8765"]
   ST -. "stats.json" .-> HUB
