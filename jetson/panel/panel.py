@@ -8,7 +8,7 @@ the radar through the ld2450-radar service. Field mode takes its USB frames and 
 stream (127.0.0.1:5602), so live view keeps working while data is collected.
 PIN protection is off by default ("require_pin" in config.json). The panel never starts field capture by itself.
 """
-import hmac, json, os, re, secrets, shutil, signal, subprocess, tarfile, threading, time, urllib.parse
+import hmac, json, os, re, secrets, select, shutil, signal, socket, subprocess, tarfile, threading, time, urllib.parse
 import hub
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -150,18 +150,24 @@ def temps():
     return out
 
 
-def crontab():
+def _crontab_now():
     rc, out = run("crontab -l")
     return out if rc == 0 else ""
 
 
+def crontab():
+    """Cached for 5 s: every /api/state poll reads it twice (field and ROS autostart)."""
+    return cached("crontab", 5, _crontab_now)
+
+
 def set_cron(tag, line, on):
-    lines = [l for l in crontab().splitlines() if f"# {tag}" not in l and l.strip() and not l.startswith("no crontab")]
+    lines = [l for l in _crontab_now().splitlines() if f"# {tag}" not in l and l.strip() and not l.startswith("no crontab")]
     if on:
         lines.append(line)
     p = subprocess.run(["crontab", "-"], input="\n".join(lines) + "\n" if lines else "", text=True, capture_output=True, env=ENV)
     if not lines:
         run("crontab -r")
+    _cache.pop("crontab", None)
     return p.returncode == 0
 
 
@@ -533,14 +539,26 @@ class H(BaseHTTPRequestHandler):
                 cam.want_view()
                 with cam.cond:
                     cam.cond.wait_for(lambda: cam.live_seq != seq, timeout=1.0)
-                    jpeg, s2 = cam.live, cam.live_seq
-                if jpeg is None or s2 == seq:
+                    jpeg, s2, t2 = cam.live, cam.live_seq, cam.live_t
+                if jpeg is None or s2 == seq or time.time() - t2 > 3:
+                    # nothing new (or only an old cached frame, which a client would take as live): nothing is
+                    # written, so check whether the client left instead of holding the thread for up to an hour
+                    if self._client_gone():
+                        return
                     continue
                 seq = s2
                 self.wfile.write(b"--qframe\r\nContent-Type: image/jpeg\r\nContent-Length: %d\r\n\r\n" % len(jpeg) + jpeg + b"\r\n")
                 self.wfile.flush()
         except (BrokenPipeError, ConnectionResetError, OSError):
             pass
+
+    def _client_gone(self):
+        """True when the client closed the connection (readable with EOF) or the socket is broken."""
+        try:
+            r, _, _ = select.select([self.connection], [], [], 0)
+            return bool(r) and self.connection.recv(1, socket.MSG_PEEK) == b""
+        except (OSError, ValueError):
+            return True
 
     def radar_events(self):
         """Relays the ld2450-radar SSE stream (it owns /dev/ttyUSB0; it sends no CORS headers) to the page."""

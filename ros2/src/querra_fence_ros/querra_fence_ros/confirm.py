@@ -6,13 +6,13 @@ with a flat-ground pinhole model: drone GPS + altitude + heading, camera pitched
 640x400. Sightings within merge_m (10 m) of an existing alert update it. If heading or altitude are missing it falls back to the drone position. One spot alerts once; later
 sightings only update its count and best confidence.
 
-    from querra_scout.confirm import AlertConfirmer
+    from querra_fence_ros.confirm import AlertConfirmer
     c = AlertConfirmer(n=5, m=8, radius_m=5.0, conf=0.7)
     for alert in c.update(frame_dets, lat, lon, alt_m, heading_deg): ...
 
-Offline: python3 confirm.py detections.jsonl [--n 5 --m 8 --radius 5 --conf 0.7]
+For offline runs over a detections log, use tools/confirm.py (this module has no command line).
 """
-import argparse, collections, json, math
+import collections, math
 
 FAULTS = ("wire_break", "fallen_post", "branch")
 M_PER_DEG_LAT = 111132.0

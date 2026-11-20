@@ -36,7 +36,7 @@ flowchart LR
     T3["/radar/targets · /radar/points · /radar/markers"]
     TS["/sim/camera/image_raw/compressed<br/>/sim/telemetry · /sim/gps/fix"]
     T4["/detections · /detections/image<br/>/detections/latency_ms"]
-    T5["/fence/alerts · /fence/alerts/fix<br/>/fence/alerts/count"]
+    T5["/fence/alerts · /fence/alerts/updates<br/>/fence/alerts/fix · /fence/alerts/count"]
     T6["/fmu/out/* · /fmu/in/*"]
   end
   USB --> HUB
@@ -126,9 +126,11 @@ From a shell on the Jetson, in `/ssd/querra/ros2`:
   engine and `querra_scout` are mounted read-only from JetPack on the host; the image only adds `vision_msgs` and Pillow.
 - **`alert_confirm`** is `tools/confirm.py` on ROS 2: it projects each box centre to the ground with the position,
   altitude, heading and camera pitch from `Telemetry`, needs 5 of the last 8 frames to agree within 5 m at conf ≥ 0.7, and
-  merges alerts within 10 m. It publishes `/fence/alerts` (`FenceAlert`: id, class, lat/lon, max conf, frames, sightings,
-  new or update), `/fence/alerts/fix` (`NavSatFix` per new alert, for Foxglove's Map) and `/fence/alerts/count`. All three
-  are transient-local, so a late subscriber (Foxglove, a bag) still gets every alert.
+  merges alerts within 10 m. It publishes `/fence/alerts` (`FenceAlert`: id, class, lat/lon, max conf, frames,
+  sightings; one message per confirmed alert), `/fence/alerts/fix` (`NavSatFix` per new alert, for Foxglove's Map) and
+  `/fence/alerts/count`. All three are transient-local, so a late subscriber (Foxglove, a bag) still gets every alert.
+  Re-sightings of a known alert go to `/fence/alerts/updates` (volatile), so they never push earlier alerts out of the
+  latched history.
 - **Launch:** `detector:=none` (default, phase 1 only), `detector:=sim` (sim camera → detector → confirmation) or
   `detector:=usb` (the detector on the real USB camera; no confirmation, since a bench has no fence).
 

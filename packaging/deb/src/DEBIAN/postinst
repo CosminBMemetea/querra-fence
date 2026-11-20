@@ -3,17 +3,19 @@ set -e
 command -v update-desktop-database >/dev/null && update-desktop-database -q /usr/share/applications || true
 command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor || true
 # Pin to the GNOME dock for the panel user, in the running session if there is one.
+# Only on the first install ($2, the previously configured version, is empty): an upgrade keeps the user's choice.
 U=mmx
-if [ "$1" = configure ] && id "$U" >/dev/null 2>&1 && command -v gsettings >/dev/null; then
-  UID_=$(id -u "$U"); BUS=/run/user/$UID_/bus
+gs() { runuser -u "$U" -- env DBUS_SESSION_BUS_ADDRESS="unix:path=$BUS" gsettings "$@"; }
+if [ "$1" = configure ] && [ -z "${2:-}" ] && id "$U" >/dev/null 2>&1 && command -v gsettings >/dev/null; then
+  BUS=/run/user/$(id -u "$U")/bus
   if [ -S "$BUS" ]; then
-    CUR=$(runuser -u "$U" -- env DBUS_SESSION_BUS_ADDRESS=unix:path=$BUS gsettings get org.gnome.shell favorite-apps 2>/dev/null || true)
+    CUR=$(gs get org.gnome.shell favorite-apps 2>/dev/null || true)
     case "$CUR" in
       *querra-fence.desktop*) ;;
       "["*"]") NEW=$(printf '%s' "$CUR" | sed "s/]\$/, 'querra-fence.desktop']/; s/\[, /[/")
-               runuser -u "$U" -- env DBUS_SESSION_BUS_ADDRESS=unix:path=$BUS gsettings set org.gnome.shell favorite-apps "$NEW" || true
+               gs set org.gnome.shell favorite-apps "$NEW" || true
                echo "Querra Fence added to the dock for $U." ;;
-      "@as []") runuser -u "$U" -- env DBUS_SESSION_BUS_ADDRESS=unix:path=$BUS gsettings set org.gnome.shell favorite-apps "['querra-fence.desktop']" || true ;;
+      "@as []") gs set org.gnome.shell favorite-apps "['querra-fence.desktop']" || true ;;
     esac
   else
     echo "No desktop session for $U: open Activities, search 'Querra Fence', right-click > Add to Favorites."

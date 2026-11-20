@@ -1,6 +1,8 @@
 """Stats node: measures every QUERRA topic's rate and writes /ws/stats.json every 2 s for the panel's ROS 2 card.
 
-Subscribes with raw=True (no deserialisation) and skips */image_raw so it never triggers the camera nodes' JPEG decode.
+Subscribes with raw=True (no deserialisation). It skips on-demand topics, whose publishers only do the work while
+someone subscribes: */image_raw (the camera nodes' JPEG decode) and /detections/image (the detector's annotation and
+JPEG encode). Measuring them would make that work run all the time.
 """
 import json, os, time
 from collections import deque
@@ -10,6 +12,7 @@ from rclpy.qos import qos_profile_sensor_data, QoSProfile, DurabilityPolicy
 from rosidl_runtime_py.utilities import get_message
 
 SKIP = ("/parameter_events", "/rosout")
+ON_DEMAND = ("/image_raw", "/camera_info", "/detections/image")   # name suffixes
 
 
 class Stats(Node):
@@ -27,14 +30,15 @@ class Stats(Node):
         from querra_fence_msgs.msg import FenceAlert
         self.create_subscription(Detection2DArray, "/detections", self._on_dets, 10)
         self.create_subscription(Float32, "/detections/latency_ms", lambda m: self.p2.update(latency_ms=round(m.data, 1)), 10)
-        self.create_subscription(FenceAlert, "/fence/alerts", self._on_alert, QoSProfile(depth=50, durability=DurabilityPolicy.TRANSIENT_LOCAL))
+        # /fence/alerts carries only confirmed alerts (updates go to /fence/alerts/updates), so last_alert is the latest one
+        self.create_subscription(FenceAlert, "/fence/alerts", self._on_alert, QoSProfile(depth=200, durability=DurabilityPolicy.TRANSIENT_LOCAL))
         self.create_timer(3.0, self._discover)
         self.create_timer(2.0, self._write)
         self._discover()
 
     def _discover(self):
         for name, types in self.get_topic_names_and_types():
-            if name in self.subs or name in SKIP or name.startswith("/events/") or name.endswith("/image_raw") or name.endswith("/camera_info"):
+            if name in self.subs or name in SKIP or name.startswith("/events/") or name.endswith(ON_DEMAND):
                 continue
             try:
                 cls = get_message(types[0])
@@ -47,6 +51,8 @@ class Stats(Node):
         self.p2["frames"] += 1; self.p2["last_boxes"] = len(m.detections); self.p2["boxes"] += len(m.detections)
 
     def _on_alert(self, m):
+        if not m.is_new:
+            return
         self.alerts[m.id] = m.class_name
         self.p2.update(alerts=len(self.alerts), last_alert=f"#{m.id} {m.class_name} {m.max_conf:.2f} ({m.frames} frames)")
 

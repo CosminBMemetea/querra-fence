@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#090d12">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>QUERRA Fence</title>
+<link rel="icon" type="image/svg+xml" href="/static/icon.svg">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
 <style>
 :root{--bg:#090d12;--bg2:#0d131a;--card:#111821;--card2:#17202b;--line:#1f2b38;--txt:#e8eef5;--mut:#8796a8;--acc:#f5c518;--acc2:#ffdf5d;--ok:#2fd27a;--bad:#ff5a5f;--warn:#ffad42;--blue:#52a8ff;--rad:#2fd27a}
 *{box-sizing:border-box}
@@ -215,7 +217,7 @@ footer{text-align:center;color:var(--mut);font-size:12px;padding:4px 0 24px}
 <div id="toast"></div>
 
 <script>
-const T={en:{rosDemo:"Demo: sim + detector",p2Frames:"detector frames",p2Boxes:"boxes now",p2Lat:"latency (decode+TRT+post)",p2Alerts:"confirmed alerts",p2Last:"last alert",clear:"Clear",rosStart:"Start ROS 2",rosStop:"Stop",recordBag:"Record bag",openFox:"Open in Foxglove ↗",foxNote:"(Foxglove app or app.foxglove.dev; the web app needs internet)",rosAuto:"Start ROS 2 at boot",rosAutoSub:"Runs the ROS 2 container when the Jetson powers on",rosRunning:"running",rosStopped:"stopped",rosStartingT:"starting…",rosStoppingT:"stopping…",rosRecT:"recording… {s} s left",noBags:"No bags yet.",rosNoStats:"waiting for topic rates…",msgs:"msgs",ros_starting:"ROS 2 is starting (about 20 s).",ros_stopping:"Stopping ROS 2.",ros_recording:"Recording a bag.",ros_busy:"ROS 2 is busy, try again in a moment.",ros_not_running:"Start ROS 2 first.",ros_autostart_on:"ROS 2 at boot: ON",ros_autostart_off:"ROS 2 at boot: off",radar:"Radar",cams:"Cameras",live:"Live cameras",collection:"Data collection",start:"START",startSub:"camera + GPS + detector",stop:"STOP",stopSub:"save and close",
+const T={en:{rosDemo:"Demo: sim + detector",p2Frames:"detector frames",p2Boxes:"boxes now",p2Lat:"latency (decode+TRT+post)",p2Alerts:"confirmed alerts",p2Last:"last alert",clear:"Clear",rosStart:"Start ROS 2",rosStop:"Stop",recordBag:"Record bag",openFox:"Open in Foxglove ↗",foxNote:"(Foxglove app or app.foxglove.dev; the web app needs internet)",rosAuto:"Start ROS 2 at boot",rosAutoSub:"Runs the ROS 2 container when the Jetson powers on",rosRunning:"running",rosStopped:"stopped",rosStartingT:"starting…",rosStoppingT:"stopping…",rosRecT:"recording… {s} s left",noBags:"No bags yet.",rosNoStats:"waiting for topic rates…",rosStale:"No fresh topic rates: the querra_stats node is silent (restart ROS 2).",msgs:"msgs",ros_starting:"ROS 2 is starting (about 20 s).",ros_stopping:"Stopping ROS 2.",ros_recording:"Recording a bag.",ros_busy:"ROS 2 is busy, try again in a moment.",ros_not_running:"Start ROS 2 first.",ros_autostart_on:"ROS 2 at boot: ON",ros_autostart_off:"ROS 2 at boot: off",radar:"Radar",cams:"Cameras",live:"Live cameras",collection:"Data collection",start:"START",startSub:"camera + GPS + detector",stop:"STOP",stopSub:"save and close",
 elapsed:"Elapsed",frames:"Frames",size:"Run size",alertsShort:"Alerts",diskLeft:"Disk left",lastDet:"Last detections",autostart:"Start at boot",autostartSub:"Collection starts by itself when the Jetson powers on",
 model:"Detector model",modelSub:"Change only while collection is stopped",vision:"Vision demo",visionSub:"Uses both cameras; live view pauses while it runs",sats:"Satellites",sinceFix:"Since fix",position:"Position",altitude:"Altitude",speed:"Speed",heading:"Heading",
 system:"System",power:"Power mode",uptime:"Uptime",ssd:"SSD free",root:"System disk free",shutdown:"Safe Jetson shutdown",alerts:"Confirmed alerts",runs:"Recent runs",
@@ -230,7 +232,7 @@ ok_started:"Collection is starting (camera + GPS + detector).",ok_stopping:"Stop
 autostart_on:"Start at boot: ON",autostart_off:"Start at boot: off",model_set:"Field model:",vision_on:"Vision demo started; live view paused.",vision_off:"Vision demo stopped; cameras back in the panel.",
 needs_sudo:"Shutdown needs the admin password. In a terminal: <code>sudo poweroff</code>, or hold the power button once it says Safe to power off.",confirmOff:"Power off the Jetson now?",confirmAuto:"Start data collection automatically every time the Jetson powers on?",
 pwrDirect:"Shuts the Jetson down from here.",pwrSafe:"Safe to unplug now (or sudo poweroff over SSH).",pwrStop:"Stop data collection first.",updated:"updated",error:"Error",offline:"NO CONNECTION"},
-pl:{rosDemo:"Demo: symulacja + detektor",p2Frames:"klatki detektora",p2Boxes:"obiekty teraz",p2Lat:"opóźnienie (dekod.+TRT+post)",p2Alerts:"potwierdzone alarmy",p2Last:"ostatni alarm",clear:"Wyczyść",rosStart:"Uruchom ROS 2",rosStop:"Zatrzymaj",recordBag:"Nagraj bag",openFox:"Otwórz w Foxglove ↗",foxNote:"(aplikacja Foxglove lub app.foxglove.dev; wersja web wymaga internetu)",rosAuto:"ROS 2 przy uruchomieniu",rosAutoSub:"Uruchamia kontener ROS 2 po włączeniu Jetsona",rosRunning:"działa",rosStopped:"zatrzymany",rosStartingT:"uruchamianie…",rosStoppingT:"zatrzymywanie…",rosRecT:"nagrywanie… zostało {s} s",noBags:"Brak nagrań.",rosNoStats:"czekam na częstotliwości tematów…",msgs:"wiad.",ros_starting:"ROS 2 się uruchamia (ok. 20 s).",ros_stopping:"Zatrzymuję ROS 2.",ros_recording:"Nagrywam bag.",ros_busy:"ROS 2 jest zajęty, spróbuj za chwilę.",ros_not_running:"Najpierw uruchom ROS 2.",ros_autostart_on:"ROS 2 przy uruchomieniu: WŁ.",ros_autostart_off:"ROS 2 przy uruchomieniu: wył.",radar:"Radar",cams:"Kamery",live:"Kamery na żywo",collection:"Zbieranie danych",start:"START",startSub:"kamera + GPS + detektor",stop:"STOP",stopSub:"zapisz i zamknij",
+pl:{rosDemo:"Demo: symulacja + detektor",p2Frames:"klatki detektora",p2Boxes:"obiekty teraz",p2Lat:"opóźnienie (dekod.+TRT+post)",p2Alerts:"potwierdzone alarmy",p2Last:"ostatni alarm",clear:"Wyczyść",rosStart:"Uruchom ROS 2",rosStop:"Zatrzymaj",recordBag:"Nagraj bag",openFox:"Otwórz w Foxglove ↗",foxNote:"(aplikacja Foxglove lub app.foxglove.dev; wersja web wymaga internetu)",rosAuto:"ROS 2 przy uruchomieniu",rosAutoSub:"Uruchamia kontener ROS 2 po włączeniu Jetsona",rosRunning:"działa",rosStopped:"zatrzymany",rosStartingT:"uruchamianie…",rosStoppingT:"zatrzymywanie…",rosRecT:"nagrywanie… zostało {s} s",noBags:"Brak nagrań.",rosNoStats:"czekam na częstotliwości tematów…",rosStale:"Brak świeżych częstotliwości: węzeł querra_stats milczy (uruchom ponownie ROS 2).",msgs:"wiad.",ros_starting:"ROS 2 się uruchamia (ok. 20 s).",ros_stopping:"Zatrzymuję ROS 2.",ros_recording:"Nagrywam bag.",ros_busy:"ROS 2 jest zajęty, spróbuj za chwilę.",ros_not_running:"Najpierw uruchom ROS 2.",ros_autostart_on:"ROS 2 przy uruchomieniu: WŁ.",ros_autostart_off:"ROS 2 przy uruchomieniu: wył.",radar:"Radar",cams:"Kamery",live:"Kamery na żywo",collection:"Zbieranie danych",start:"START",startSub:"kamera + GPS + detektor",stop:"STOP",stopSub:"zapisz i zamknij",
 elapsed:"Czas",frames:"Klatki",size:"Rozmiar",alertsShort:"Alarmy",diskLeft:"Wolne miejsce",lastDet:"Ostatnie wykrycia",autostart:"Start przy uruchomieniu",autostartSub:"Zbieranie rusza samo po włączeniu Jetsona",
 model:"Model detektora",modelSub:"Zmiana tylko przy zatrzymanym zbieraniu",vision:"Demo Vision",visionSub:"Zajmuje obie kamery; podgląd na żywo jest wstrzymany",sats:"Satelity",sinceFix:"Od pozycji",position:"Pozycja",altitude:"Wysokość",speed:"Prędkość",heading:"Kurs",
 system:"System",power:"Tryb zasilania",uptime:"Czas pracy",ssd:"Wolne na SSD",root:"Wolne na dysku systemowym",shutdown:"Bezpieczne wyłączenie Jetsona",alerts:"Potwierdzone alarmy",runs:"Ostatnie sesje",
@@ -306,7 +308,8 @@ function renderRos(r){if(!r)return;const st=$('rosStat');
   $('rosRecT').textContent=r.busy==='record'?t('rosRecT').replace('{s}',r.recording_s):'';
   const fu=`ws://${location.hostname}:${r.foxglove_port}`;$('foxUrl').textContent=fu;$('foxLink').href='https://app.foxglove.dev/~/view?ds=foxglove-websocket&ds.url='+encodeURIComponent(fu);
   const tp=Object.entries(r.topics||{});
-  $('rosTopics').innerHTML=!r.running?'':tp.length?tp.map(([k,v])=>`<span>${k}</span><span class="${v.hz>0.5?'ok':v.age_s!=null&&v.age_s<10?'warn':'mut'}">${v.hz.toFixed(1)} Hz</span>`).join(''):`<span class="mut">${t('rosNoStats')}</span><span></span>`;
+  $('rosTopics').innerHTML=!r.running?'':r.stale?`<span class="warn">${t('rosStale')}</span><span></span>`:tp.length?tp.map(([k,v])=>`<span>${k}</span><span class="${v.hz>0.5?'ok':v.age_s!=null&&v.age_s<10?'warn':'mut'}">${v.hz.toFixed(1)} Hz</span>`).join(''):`<span class="mut">${t('rosNoStats')}</span><span></span>`;
+  if(r.running&&r.stale)$('rosP2').innerHTML='';
   $('rosNodes').innerHTML=r.running?(r.nodes||[]).map(n=>`<span>${n}</span>`).join(''):'';
   if(r.busy!==renderRos.lastBusy){renderRos.lastBusy=r.busy;bags()}}
 async function bags(){try{const b=await(await fetch('/api/ros/bags')).json();
@@ -347,7 +350,7 @@ function radarDraw(){const cv=$('rad'),x=cv.getContext('2d'),W=cv.width,H=cv.hei
   x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,rr,sa-0.12,sa+0.12);x.closePath();x.fillStyle='rgba(47,210,122,.10)';x.fill();
   x.beginPath();x.moveTo(cx,cy);x.lineTo(cx+rr*Math.cos(sa),cy+rr*Math.sin(sa));x.strokeStyle='rgba(47,210,122,.55)';x.lineWidth=2;x.stroke();
   const P=(gx,gy)=>[cx+gx/RMAX*rr,cy-gy/RMAX*rr];
-  const fresh=R&&R.connected&&performance.now()-rLast<2000;
+  const fresh=radarLive();
   if(fresh)R.targets.forEach((g,i)=>{const tr=trails[i];if(tr.length>1){x.beginPath();tr.forEach((p,j)=>{const[q,w]=P(p[0],p[1]);j?x.lineTo(q,w):x.moveTo(q,w)});x.strokeStyle=COL[i]+'66';x.lineWidth=3;x.stroke()}
     if(!g)return;const[px,py]=P(g.x,g.y);const gl=x.createRadialGradient(px,py,0,px,py,26);gl.addColorStop(0,COL[i]+'cc');gl.addColorStop(1,COL[i]+'00');x.fillStyle=gl;x.beginPath();x.arc(px,py,26,0,7);x.fill();
     x.fillStyle=COL[i];x.beginPath();x.arc(px,py,9,0,7);x.fill();x.fillStyle='#fff';x.font='bold 20px system-ui';x.fillText('T'+(i+1),px+13,py-11)});
@@ -355,9 +358,12 @@ function radarDraw(){const cv=$('rad'),x=cv.getContext('2d'),W=cv.width,H=cv.hei
   if(!fresh){x.fillStyle='#000a';x.fillRect(0,0,W,H);x.fillStyle='#ff9a9d';x.font='bold 28px system-ui';x.textAlign='center';
     x.fillText(!R||R.service===false?t('radarOffline'):(R.connected===false?'LD2450 '+t('radarDisc'):t('radarNoData')),cx,H/2);x.textAlign='left'}
   requestAnimationFrame(radarDraw)}
-function radarPanel(){const fresh=R&&R.connected&&performance.now()-rLast<2000;
+// The service also sends idle messages (connected=true, fps=0) every second when the LD2450 sends nothing:
+// only a recent message with frames flowing counts as live (same rule as the radar's own page).
+function radarLive(){return !!(R&&R.connected&&performance.now()-rLast<2000&&(R.fps??0)>0.5)}
+function radarPanel(){const fresh=radarLive(),noData=R&&R.connected&&!fresh;
   pill('pRad',!R||R.service===false?'bad':fresh?'ok':'warn');
-  $('rStat').innerHTML=!R||R.service===false?`<span class="bad">${t('radarOffline')}</span>`:fresh?`<span class="ok">● ${t('radarConn')}</span>`:`<span class="warn">${t('radarDisc')}</span>`;
+  $('rStat').innerHTML=!R||R.service===false?`<span class="bad">${t('radarOffline')}</span>`:fresh?`<span class="ok">● ${t('radarConn')}</span>`:noData?`<span class="warn">${t('radarNoData')}</span>`:`<span class="warn">${t('radarDisc')}</span>`;
   const tg=(R&&R.targets)||[null,null,null];
   $('tgts').innerHTML=tg.map((g,i)=>{if(!g||!fresh)return`<div class="tg off" style="border-top-color:${COL[i]}">T${i+1}<b>–</b><span class="mut">${t('noTarget')}</span></div>`;
     const d=Math.hypot(g.x,g.y)/1000,a=Math.atan2(g.x,g.y)*180/Math.PI,v=g.v/100,mv=Math.abs(g.v)<5?t('still'):(g.v>0?t('away'):t('closer'));

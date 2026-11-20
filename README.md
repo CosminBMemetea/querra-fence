@@ -1,5 +1,10 @@
 # Querra Fence · Gardian X500
 
+<img src="docs/assets/icon.svg" width="72" align="right" alt="Querra Fence icon">
+
+**Safe fence: protect your animals from predators.** Project page with the sensors and the roadmap:
+**[cosminbmemetea.github.io/querra-fence](https://cosminbmemetea.github.io/querra-fence/)**
+
 Autonomous electric-fence inspection with a PX4 **Holybro X500**, simulated end to end in **Gazebo Harmonic**.
 The drone flies the fence line on its own, finds faults (broken wire, fallen post, a branch shorting the wires),
 measures where the fence loses voltage, spots animals that got out of the paddock, lands, and writes a report
@@ -26,7 +31,7 @@ starts and stops ROS 2, shows topic rates and records bags.
 
 GPS coordinates are blurred in these captures.
 
-Desktop launcher: `sudo apt install ./querra-fence-panel_0.5.1_arm64.deb` adds a **Querra Fence** icon to the Jetson's
+Desktop launcher: `sudo apt install ./querra-fence-panel_0.6.0_arm64.deb` adds a **Querra Fence** icon to the Jetson's
 dock that reopens the panel (and starts it if needed). See [packaging/deb/](packaging/deb/).
 
 ## ROS 2 (phases 1 and 2)
@@ -76,7 +81,7 @@ flowchart LR
     T3["/radar/targets · /radar/points · /radar/markers"]
     TS["/sim/camera/image_raw/compressed<br/>/sim/telemetry · /sim/gps/fix"]
     T4["/detections · /detections/image<br/>/detections/latency_ms"]
-    T5["/fence/alerts · /fence/alerts/fix<br/>/fence/alerts/count"]
+    T5["/fence/alerts · /fence/alerts/updates<br/>/fence/alerts/fix · /fence/alerts/count"]
     T6["/fmu/out/* · /fmu/in/*"]
   end
   USB --> HUB

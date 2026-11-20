@@ -1,5 +1,43 @@
 # Changelog
 
+## v0.6.0 · 2026-11-20 · safe fence: new icon, project page, bug fixes
+
+- **Project page** on GitHub Pages (`docs/index.html`): what works today, sensors in and alerts out (live, simulated,
+  planned) and the roadmap.
+- **New icon**: a shield around a live electric fence. It is used in the dock (48–512 px) and as the panel's favicon
+  and phone home-screen icon.
+- **Launcher** (`querra-fence-panel_0.6.0_arm64.deb`, which upgrades and replaces 0.5.1):
+  - new **Restart the panel** right-click action, plus `--restart` and `--version`;
+  - opens Chromium with `--disable-gpu` on the Jetson; the GPU initialisation failure left a blank window;
+  - falls back to Firefox when Chromium fails, and logs browser output to `~/.cache/querra-fence.log`;
+  - checks that the panel answers with the cheap `GET /`, and starts it through `restart.sh`;
+  - `--ros-demo` sends the panel PIN when one is required;
+  - `--foxglove` shows the LAN address;
+  - upgrades no longer re-pin the dock icon;
+  - `build.sh` creates the folders it needs, so the package builds from a clean clone.
+- **Alerts**:
+  - `/fence/alerts` carries one message per confirmed alert (transient-local), so a late Foxglove client or bag gets
+    every alert;
+  - re-sightings moved to `/fence/alerts/updates`;
+  - the panel's "last alert" is the latest confirmed one.
+- **ROS 2 nodes**:
+  - `fence_detector` survives a failed frame instead of stopping inference silently;
+  - `sim_camera` retries a missing or empty recording and survives a dropped live stream;
+  - `querra_stats` no longer subscribes to `/detections/image`, so annotation runs only for real viewers.
+- **`ros.sh`**:
+  - asks Docker for the NVIDIA runtime;
+  - mounts host folders only when they exist;
+  - `demo` checks the recording before starting;
+  - `doctor` checks the runtime, the v0.3 engine, the demo recording and `/ssd`, and no longer stops early when `df`
+    fails.
+- **Container rebuild:** the container rebuilds the workspace when the content of `src/` changes, not only its mtimes.
+- **Panel:**
+  - the radar shows "no data" when the sensor is connected but silent;
+  - the ROS 2 card shows when its stats are stale;
+  - MJPEG streams notice clients that left and never send an old frame as live;
+  - the crontab is read at most every 5 s;
+  - `restart.sh` waits for the old panel to exit and reports whether the new one answers.
+
 ## v0.5.1 · 2026-11-19 · desktop launcher
 
 - `querra-fence-panel_0.5.1_arm64.deb`: **Querra Fence** in the GNOME dock; opens the panel in an app window and starts
