@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+- **One benchmark for every model** (`ml/benchmark/`): model-v0.1 to v0.4 on the same 9 held-out sets in both world
+  looks, and on the same recorded mission replayed through the live 5-of-8 confirmation. model-v0.2 reproduces its
+  published numbers exactly; model-v0.1 is scored from its ONNX export.
+- **Charts** from the registry (`tools/model_charts.py`):
+  - `docs/img/model-evolution.png` shows every model on that benchmark, with one copy per model highlighted for its
+    release page;
+  - `docs/img/release-map.png` shows the platform and model releases over time, and which model each platform
+    release used.
+- **Consistent releases:**
+  - every release from v0.1.0 to v0.10.0 and model-v0.1 to model-v0.4 now has its text in
+    `docs/release-notes/<tag>.md`, on one template per track;
+  - images are pinned to a commit, and every attached file is listed with its SHA-256;
+  - `tools/release_notes.py` checks the files and publishes or verifies them with `gh`.
+- `tools/eval_mission.py`: `--imgsz` for a static-shape ONNX export, and the live setting in the results.
+
 ## v0.10.0 · 2026-11-20 · model-v0.4 (both world looks) and a model registry
 
 - **model-v0.4**, fine-tuned from v0.3 on 7,200 frames: half in the rich look, half classic, with re-fly close-ups.
