@@ -21,7 +21,7 @@
    "summary": "+ flight poses, stream JPEG",
    "date": "2026-11-21",
    "parent": "model-v0.4",
-   "code": "38b8990",
+   "code": "2f04ece",
    "release": "model-v0.5",
    "run": "ml/runs/model-v0.5",
    "used_for": [
@@ -180,7 +180,7 @@
    "summary": "+ rich look, re-fly poses",
    "date": "2026-11-20",
    "parent": "model-v0.3",
-   "code": "fb6ff9f",
+   "code": "b3f2a4f",
    "release": "model-v0.4",
    "run": "ml/runs/model-v0.4",
    "used_for": [
@@ -320,7 +320,7 @@
    "summary": "+ dead-strand farms",
    "date": "2026-11-19",
    "parent": "model-v0.2",
-   "code": "513f162",
+   "code": "c51aa61",
    "release": "model-v0.3",
    "run": null,
    "used_for": [
@@ -434,7 +434,7 @@
    "summary": "25 epochs, 3,500 frames",
    "date": "2026-11-19",
    "parent": "yolo11n.pt (COCO)",
-   "code": "b37ef60",
+   "code": "1b8a3ab",
    "release": "model-v0.2",
    "run": null,
    "used_for": [
@@ -527,7 +527,7 @@
    "summary": "epoch-2 checkpoint",
    "date": "2026-11-19",
    "parent": "yolo11n.pt (COCO)",
-   "code": "b37ef60",
+   "code": "1b8a3ab",
    "release": "model-v0.1",
    "run": null,
    "used_for": [],

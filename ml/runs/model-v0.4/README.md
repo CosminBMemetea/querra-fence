@@ -5,7 +5,7 @@
 | Status | **live-sim**: live Gazebo flights on the Jetson (`ros.sh demo tcp://…`); model-v0.3 stays the default |
 | Date | 2026-11-20 |
 | Parent | model-v0.3 (fine-tuned) |
-| Code | `fb6ff9f` (dataset generator, mix, eval and training scripts as used) |
+| Code | `b3f2a4f` (dataset generator, mix, eval and training scripts as used) |
 | Files | `fence-yolo11n-v0.4.pt`, `.onnx` (416×640), Jetson engine `fence-yolo11n-v0.4-fp16.engine`; sha256 in [models.json](../../models.json) |
 
 ## Why

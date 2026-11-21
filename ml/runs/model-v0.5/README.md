@@ -5,7 +5,7 @@
 | Status | **default** from platform v0.11.0: the replay demo, live Gazebo flights, the ROS 2 detector and field mode |
 | Date | 2026-11-21 |
 | Parent | model-v0.4 (fine-tuned) |
-| Code | `38b8990` (flight poses, dataset generator style v4, stream-like JPEG copies, eval and training scripts as used) |
+| Code | `2f04ece` (flight poses, dataset generator style v4, stream-like JPEG copies, eval and training scripts as used) |
 | Files | `fence-yolo11n-v0.5.pt`, `.onnx` (416×640), Jetson engine `fence-yolo11n-v0.5-fp16.engine`; sha256 in [models.json](../../models.json) |
 
 ## Why

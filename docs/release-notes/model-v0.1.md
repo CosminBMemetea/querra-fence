@@ -1,6 +1,6 @@
 # model-v0.1 · Preliminary checkpoint
 
-![Fence detector: how each model scored](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/58d36ee/docs/img/model-evolution/model-v0.1.png)
+![Fence detector: how each model scored](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/8bce25c/docs/img/model-evolution/model-v0.1.png)
 
 The first fence detector. It is the checkpoint after epoch 2 of the run that became model-v0.2, exported early to
 test the whole loop on the Jetson: Gazebo → LAN → TensorRT → GPS-tagged log. It is a pre-release.
@@ -10,7 +10,7 @@ test the whole loop on the Jetson: Gazebo → LAN → TensorRT → GPS-tagged lo
 | Role | Jetson pipeline test only, never a platform default |
 | Parent | `yolo11n.pt` (COCO) |
 | Trained on | 3,500 frames from 10 random farms (`fence_yolo`), 700 frames from 2 more farms for validation |
-| Code | `b37ef60` |
+| Code | `1b8a3ab` |
 | Registry | [ml/models.json](https://github.com/CosminBMemetea/querra-fence/blob/main/ml/models.json) |
 
 ## What changed
@@ -19,7 +19,7 @@ test the whole loop on the Jetson: Gazebo → LAN → TensorRT → GPS-tagged lo
   geometry, so no frame was labelled by hand. 7 classes: post, wire, broken wire, fallen post, branch, cow, sheep.
 - **Training:** YOLO11n at 640 px on the CPU, stopped after 2 epochs.
 
-![Auto-generated labels on training frames](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/58d36ee/docs/img/dataset-auto-labels.jpg)
+![Auto-generated labels on training frames](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/8bce25c/docs/img/dataset-auto-labels.jpg)
 
 ## Scores
 
@@ -45,7 +45,7 @@ Scored from the ONNX export, because the `.pt` was not kept.
 
 There were 72 false `wire_break` frames more than 45 m from F1.
 
-![v0.1 on the Jetson near F1](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/58d36ee/docs/img/v0.1-jetson-prelim-F1.jpg)
+![v0.1 on the Jetson near F1](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/8bce25c/docs/img/v0.1-jetson-prelim-F1.jpg)
 
 ## Known limits
 

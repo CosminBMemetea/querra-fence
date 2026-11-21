@@ -1,6 +1,6 @@
 # model-v0.5 · Flight poses and the camera stream's JPEG
 
-![Fence detector: how each model scored](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/80f439a/docs/img/model-evolution/model-v0.5.png)
+![Fence detector: how each model scored](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/be3d649/docs/img/model-evolution/model-v0.5.png)
 
 Fine-tuned from model-v0.4 on frames posed like the inspection flight and compressed like the camera stream. It is
 the first model with no false alert in any flight: the live classic and rich flights on the Jetson and the recorded
@@ -11,7 +11,7 @@ mission replay. It finds all three faults in each.
 | Role | Default from platform v0.11.0: the replay demo, live Gazebo flights, the ROS 2 detector and field mode |
 | Parent | model-v0.4 |
 | Trained on | 9,600 frames: 4,800 new flight-pose frames (2,400 classic, 2,400 rich) + 4,800 from earlier datasets; 6,119 compressed like the stream |
-| Code | `38b8990` |
+| Code | `2f04ece` |
 | Run record | [ml/runs/model-v0.5](https://github.com/CosminBMemetea/querra-fence/tree/main/ml/runs/model-v0.5) |
 
 ## What changed

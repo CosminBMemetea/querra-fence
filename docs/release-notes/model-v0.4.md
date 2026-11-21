@@ -1,6 +1,6 @@
 # model-v0.4 · Both world looks
 
-![Fence detector: how each model scored](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/58d36ee/docs/img/model-evolution/model-v0.4.png)
+![Fence detector: how each model scored](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/8bce25c/docs/img/model-evolution/model-v0.4.png)
 
 Fine-tuned from model-v0.3 on both simulation looks. In the rich world it finds all three faults where v0.3 found
 one. On the classic mission it raises more false broken-wire alerts, so it runs the live Gazebo flights and v0.3 stays
@@ -11,7 +11,7 @@ the default.
 | Role | Live Gazebo flights from platform v0.10.0 (`ros.sh demo tcp://…`); selectable in field mode |
 | Parent | model-v0.3 |
 | Trained on | 7,200 frames: 3,600 rich-look + 1,200 classic re-fly-pose + 1,400 v2 + 1,000 v1 frames |
-| Code | `fb6ff9f` |
+| Code | `b3f2a4f` |
 | Run record | [ml/runs/model-v0.4](https://github.com/CosminBMemetea/querra-fence/tree/main/ml/runs/model-v0.4) |
 
 ## What changed
@@ -61,7 +61,7 @@ The false alerts land in the same places in every flight, with both models:
 The offline tests use random camera poses and did not show this; only the flight did. The next model trains on
 inspection-flight poses.
 
-![False alerts on the mission fence](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/58d36ee/docs/img/v0.4-false-alert-map.png)
+![False alerts on the mission fence](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/8bce25c/docs/img/v0.4-false-alert-map.png)
 
 ## Files
 

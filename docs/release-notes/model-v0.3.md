@@ -1,6 +1,6 @@
 # model-v0.3 · Targeted data for the false broken wire
 
-![Fence detector: how each model scored](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/58d36ee/docs/img/model-evolution/model-v0.3.png)
+![Fence detector: how each model scored](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/8bce25c/docs/img/model-evolution/model-v0.3.png)
 
 Fine-tuned from model-v0.2 on farms full of broken and dead strands, and paired with multi-frame GPS confirmation.
 False alerts on the mission fall from 33 to 6, with all three faults still found.
@@ -10,7 +10,7 @@ False alerts on the mission fall from 33 to 6, with all three faults still found
 | Role | The default detector: field mode from platform v0.3.0, the ROS 2 detector from v0.5.0 |
 | Parent | model-v0.2 |
 | Trained on | 4,800 frames: 2,400 from 8 new dead-strand farms (`fence_yolo_v2`) + 2,400 v0.2 training frames |
-| Code | `513f162` (dataset v2), `9b94252` (confirmation and mission replay) |
+| Code | `c51aa61` (dataset v2), `ba20f26` (confirmation and mission replay) |
 | Registry | [ml/models.json](https://github.com/CosminBMemetea/querra-fence/blob/main/ml/models.json) |
 
 ## What changed
@@ -27,7 +27,7 @@ False alerts on the mission fall from 33 to 6, with all three faults still found
    altitude, heading and camera angle. An alert is raised only when 5 of the last 8 frames put the same fault class
    within 5 m, at conf ≥ 0.7.
 
-![v2 training frames: dead strands in other colours labelled wire (yellow), breaks in red](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/58d36ee/docs/img/v0.3-dataset-v2.jpg)
+![v2 training frames: dead strands in other colours labelled wire (yellow), breaks in red](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/8bce25c/docs/img/v0.3-dataset-v2.jpg)
 
 ## Scores
 
@@ -75,7 +75,7 @@ Later flights through ROS 2 with PX4's own pose (2026-11-20):
   ending.
 - **Classic look only.** In the rich world (textured grass, hills) it finds 1 of 3 faults. model-v0.4 fixes that.
 
-![Remaining false broken wires in the mission pasture](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/58d36ee/docs/img/v0.3-remaining-false-wire-break.jpg)
+![Remaining false broken wires in the mission pasture](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/8bce25c/docs/img/v0.3-remaining-false-wire-break.jpg)
 
 ## Files
 

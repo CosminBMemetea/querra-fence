@@ -6,7 +6,7 @@
    "look": "classic",
    "style": "v1",
    "created": "2026-11-19",
-   "code": "b22c195",
+   "code": "d7a5330",
    "command": "tools/make_dataset.sh --layouts 12 --val-layouts 2 --frames 350",
    "size": "104 MB",
    "splits": {
@@ -20,7 +20,7 @@
    "look": "classic",
    "style": "v2",
    "created": "2026-11-19",
-   "code": "513f162",
+   "code": "c51aa61",
    "command": "tools/make_dataset.sh --style v2 (layouts 20-29, 300 frames; tests: layouts 40-42, 250 frames; --mission-world layout 90, 400 frames)",
    "size": "95 MB",
    "splits": {
@@ -36,7 +36,7 @@
    "look": "rich",
    "style": "v3 (test: v2)",
    "created": "2026-11-20",
-   "code": "fb6ff9f",
+   "code": "b3f2a4f",
    "command": "tools/make_dataset.sh --seed 100 --look rich --style v3 --start 200 --layouts 212 --split train --frames 300 (val: --start 212 --layouts 214; test: --style v2 --start 40 --layouts 43 --frames 250; mission: --mission-world --start 90 --layouts 91 --frames 400)",
    "size": "1.7 GB",
    "splits": {
@@ -52,7 +52,7 @@
    "look": "classic",
    "style": "v3",
    "created": "2026-11-20",
-   "code": "fb6ff9f",
+   "code": "b3f2a4f",
    "command": "tools/make_dataset.sh --seed 100 --look classic --style v3 --start 220 --layouts 224 --split train --frames 300",
    "size": "29 MB",
    "splits": {
@@ -65,7 +65,7 @@
    "look": "classic",
    "style": "v3, re-fly poses only",
    "created": "2026-11-20",
-   "code": "fb6ff9f",
+   "code": "b3f2a4f",
    "command": "tools/make_dataset.sh --seed 100 --look classic --style v3 --refly-share 1 --start 50 --layouts 52 --split test --frames 200",
    "size": "11 MB",
    "splits": {
@@ -78,7 +78,7 @@
    "look": "rich",
    "style": "v3, re-fly poses only",
    "created": "2026-11-20",
-   "code": "fb6ff9f",
+   "code": "b3f2a4f",
    "command": "tools/make_dataset.sh --seed 100 --look rich --style v3 --refly-share 1 --start 50 --layouts 52 --split test --frames 200",
    "size": "142 MB",
    "splits": {
@@ -91,7 +91,7 @@
    "look": "classic",
    "style": "v4 (inspection-flight poses)",
    "created": "2026-11-21",
-   "code": "38b8990",
+   "code": "2f04ece",
    "command": "tools/make_dataset.sh --seed 100 --look classic --style v4 --start 230 --layouts 238 --split train --frames 300 (val: --start 238 --layouts 240; test: --flight-share 1 --start 60 --layouts 63 --frames 250; mission: --mission-world --start 92 --layouts 93 --frames 400)",
    "size": "94 MB",
    "splits": {
@@ -107,7 +107,7 @@
    "look": "rich",
    "style": "v4 (inspection-flight poses)",
    "created": "2026-11-21",
-   "code": "38b8990",
+   "code": "2f04ece",
    "command": "tools/make_dataset.sh --seed 100 --look rich --style v4 --start 240 --layouts 248 --split train --frames 300 (val: --start 248 --layouts 250; test: --flight-share 1 --start 60 --layouts 63 --frames 250; mission: --mission-world --start 92 --layouts 93 --frames 400)",
    "size": "1.3 GB",
    "splits": {
@@ -123,7 +123,7 @@
    "look": "classic",
    "style": "copy of fence_yolo_flight_classic:train, stream-like JPEG",
    "created": "2026-11-21",
-   "code": "38b8990",
+   "code": "2f04ece",
    "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_flight_classic train ~/querra-data/fence_yolo_flight_classic_stream --share 0.75 --seed 1",
    "derived_from": "fence_yolo_flight_classic:train",
    "splits": {
@@ -136,7 +136,7 @@
    "look": "rich",
    "style": "copy of fence_yolo_flight_rich:train, stream-like JPEG",
    "created": "2026-11-21",
-   "code": "38b8990",
+   "code": "2f04ece",
    "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_flight_rich train ~/querra-data/fence_yolo_flight_rich_stream --share 0.75 --seed 1",
    "derived_from": "fence_yolo_flight_rich:train",
    "splits": {
@@ -149,7 +149,7 @@
    "look": "rich",
    "style": "copy of fence_yolo_rich:train, stream-like JPEG",
    "created": "2026-11-21",
-   "code": "38b8990",
+   "code": "2f04ece",
    "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_rich train ~/querra-data/fence_yolo_rich_stream --share 0.5 --seed 2",
    "derived_from": "fence_yolo_rich:train",
    "splits": {
@@ -162,7 +162,7 @@
    "look": "classic",
    "style": "copy of fence_yolo_v3c:train, stream-like JPEG",
    "created": "2026-11-21",
-   "code": "38b8990",
+   "code": "2f04ece",
    "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_v3c train ~/querra-data/fence_yolo_v3c_stream --share 0.5 --seed 3",
    "derived_from": "fence_yolo_v3c:train",
    "splits": {
@@ -175,7 +175,7 @@
    "look": "classic",
    "style": "copy of fence_yolo_v2:train, stream-like JPEG",
    "created": "2026-11-21",
-   "code": "38b8990",
+   "code": "2f04ece",
    "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_v2 train ~/querra-data/fence_yolo_v2_stream --share 0.5 --seed 4",
    "derived_from": "fence_yolo_v2:train",
    "splits": {
@@ -188,7 +188,7 @@
    "look": "classic",
    "style": "copy of fence_yolo:train, stream-like JPEG",
    "created": "2026-11-21",
-   "code": "38b8990",
+   "code": "2f04ece",
    "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo train ~/querra-data/fence_yolo_stream --share 0.5 --seed 5",
    "derived_from": "fence_yolo:train",
    "splits": {
@@ -201,7 +201,7 @@
    "look": "classic",
    "style": "copy of fence_yolo_flight_classic, every frame at the stream's JPEG quality",
    "created": "2026-11-21",
-   "code": "38b8990",
+   "code": "2f04ece",
    "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_flight_classic SPLIT ~/querra-data/fence_yolo_flight_classic_q4 --quality 4 --share 1",
    "derived_from": "fence_yolo_flight_classic",
    "splits": {
@@ -216,7 +216,7 @@
    "look": "rich",
    "style": "copy of fence_yolo_flight_rich, every frame at the stream's JPEG quality",
    "created": "2026-11-21",
-   "code": "38b8990",
+   "code": "2f04ece",
    "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_flight_rich SPLIT ~/querra-data/fence_yolo_flight_rich_q4 --quality 4 --share 1",
    "derived_from": "fence_yolo_flight_rich",
    "splits": {
@@ -231,7 +231,7 @@
    "look": "classic",
    "style": "copy of fence_yolo_v2, every frame at the stream's JPEG quality",
    "created": "2026-11-21",
-   "code": "38b8990",
+   "code": "2f04ece",
    "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_v2 SPLIT ~/querra-data/fence_yolo_v2_q4 --quality 4 --share 1",
    "derived_from": "fence_yolo_v2",
    "splits": {
@@ -244,7 +244,7 @@
    "look": "rich",
    "style": "copy of fence_yolo_rich, every frame at the stream's JPEG quality",
    "created": "2026-11-21",
-   "code": "38b8990",
+   "code": "2f04ece",
    "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_rich SPLIT ~/querra-data/fence_yolo_rich_q4 --quality 4 --share 1",
    "derived_from": "fence_yolo_rich",
    "splits": {
@@ -257,7 +257,7 @@
    "look": "classic",
    "style": "recorded flight",
    "created": "2026-11-19",
-   "code": "9b94252",
+   "code": "ba20f26",
    "command": "tools/cam_record.py during ./start.sh (the default mission over fence.json)",
    "size": "19 MB",
    "splits": {

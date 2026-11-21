@@ -1,6 +1,6 @@
 # model-v0.2 · First full model
 
-![Fence detector: how each model scored](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/58d36ee/docs/img/model-evolution/model-v0.2.png)
+![Fence detector: how each model scored](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/8bce25c/docs/img/model-evolution/model-v0.2.png)
 
 The first fully trained fence detector: 25 epochs on the same farms as model-v0.1. It finds all three faults in the
 simulated mission, but it also calls an intact fence a broken wire far too often.
@@ -10,7 +10,7 @@ simulated mission, but it also calls an intact fence a broken wire far too often
 | Role | Jetson tests; selectable in the panel's field mode from platform v0.3.0 |
 | Parent | `yolo11n.pt` (COCO) |
 | Trained on | 3,500 frames from 10 random farms (`fence_yolo`), 700 frames from 2 more farms for validation |
-| Code | `b37ef60` |
+| Code | `1b8a3ab` |
 | Registry | [ml/models.json](https://github.com/CosminBMemetea/querra-fence/blob/main/ml/models.json) |
 
 ## What changed
@@ -21,7 +21,7 @@ simulated mission, but it also calls an intact fence a broken wire far too often
   posts, 1–2 branches), herd, sun angle and grass colour. The camera varies in height (5–20 m), tilt (35–80°),
   heading and roll.
 
-![Training curves](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/58d36ee/docs/img/v0.2-training-curves.jpg)
+![Training curves](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/8bce25c/docs/img/v0.2-training-curves.jpg)
 
 ## Scores
 
@@ -49,7 +49,7 @@ per frame (29.4 ms at p95), and the mission ran at 13.3 fps against the camera's
 | F2 fallen post | 223 | 58 (26%) | 0.96 |
 | F3 branch | 162 | 14 (9%) | 0.84 |
 
-![v0.2 on the Jetson: F1 broken wire, F2 fallen post, F3 branch, and a false broken wire](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/58d36ee/docs/img/v0.2-jetson-faults.jpg)
+![v0.2 on the Jetson: F1 broken wire, F2 fallen post, F3 branch, and a false broken wire](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/8bce25c/docs/img/v0.2-jetson-faults.jpg)
 
 ## Known limits
 
@@ -69,7 +69,7 @@ A higher threshold trades false alarms for missed faults; it is not a fix:
 | 0.7 | 192 | 46 |
 | 0.8 | 89 | 16 |
 
-![False broken wire: intact fence with a grey (dead) top strand](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/58d36ee/docs/img/v0.2-false-wire-break.jpg)
+![False broken wire: intact fence with a grey (dead) top strand](https://raw.githubusercontent.com/CosminBMemetea/querra-fence/8bce25c/docs/img/v0.2-false-wire-break.jpg)
 
 ## Files
 
