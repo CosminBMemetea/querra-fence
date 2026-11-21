@@ -12,6 +12,7 @@ Occlusion is ignored (a post behind a tree keeps its box); boxes come from dense
 """
 import argparse
 import copy
+import json
 import math
 import os
 import random
@@ -49,7 +50,12 @@ WORLD = "pasture"
 
 
 # ---------------------------------------------------------------- layouts
-STYLE = {"v": "v1", "mission": False, "refly": 0.2}
+STYLE = {"v": "v1", "mission": False, "refly": 0.2, "flight": 0.7}
+# v4 flight poses come from ml/flight_poses.json: offset, heading against the route, camera pitch (55 deg minus the body
+# pitch), roll and distance to the nearest corner, measured in PX4 logs of real mission flights
+# (tools/flight_poses_from_ulog.py). A share of the frames fly the route the other way round.
+FLIGHT_POSES = os.path.join(ROOT, "ml", "flight_poses.json")
+FLIGHT = {"reverse": 0.1, "route_offset_m": 2.5}
 DEAD_COLOURS = {"grey": (0.35, 0.33, 0.30), "live": None, "dull": (0.62, 0.58, 0.45), "dark": (0.22, 0.22, 0.22)}
 
 
@@ -139,7 +145,7 @@ def random_layout(seed):
                 used.add(k)
                 return k
         return None
-    for i in range(rnd.randint(3, 4) if STYLE["v"] in ("v2", "v3") else rnd.randint(2, 3)):
+    for i in range(rnd.randint(3, 4) if STYLE["v"] in ("v2", "v3", "v4") else rnd.randint(2, 3)):
         k = pick()
         if k is not None:
             faults.append({"id": "B%d" % i, "type": "wire_break", "segment": k, "strand": rnd.randint(0, 1)})
@@ -152,7 +158,7 @@ def random_layout(seed):
         if k is not None:
             faults.append({"id": "T%d" % i, "type": "branch_short", "segment": k})
     cfg["faults"] = faults
-    if STYLE["v"] in ("v2", "v3"):
+    if STYLE["v"] in ("v2", "v3", "v4"):
         cfg["_render"] = {"dead": rnd.choice(["grey", "grey", "live", "live", "dull", "dark"]),
                           "break_styles": {str(f["segment"]): rnd.choice(["hang", "ground", "one_end"]) for f in faults if f["type"] == "wire_break"}}
     else:
@@ -363,9 +369,59 @@ def tree_spots(cfg, f):
     return out
 
 
+_ROUTES = {}
+
+
+def flight_route(cfg, f):
+    """The inspection route of this farm (geo.mission_path: outside the fence, rounded corners), every 0.5 m, and the
+    route indices closest to the fence corners."""
+    if id(f) not in _ROUTES:
+        pts = geo.mission_path(cfg, f)
+        dense = []
+        for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+            n = max(1, int(math.hypot(bx - ax, by - ay) / 0.5))
+            dense += [(ax + (bx - ax) * j / n, ay + (by - ay) * j / n) for j in range(n)]
+        corners = [min(range(len(dense)), key=lambda i: math.hypot(dense[i][0] - cx, dense[i][1] - cy)) for cx, cy in f.poly]
+        _ROUTES[id(f)] = (dense, corners)
+    return _ROUTES[id(f)]
+
+
+_SAMPLES = []
+
+
+def flight_pose(rnd, f, cfg):
+    """Like the real inspection flight. A measured sample (ml/flight_poses.json) sets the offset from the fence, the
+    heading against the route, the camera pitch, the roll and the distance to the nearest corner. It is placed on this
+    farm's route at that distance from a random corner (48% of the samples are within 12 m of one)."""
+    if not _SAMPLES:
+        _SAMPLES.extend(json.load(open(FLIGHT_POSES))["samples"])
+    route, corners = flight_route(cfg, f)
+    n = len(route)
+    s = rnd.choice(_SAMPLES)
+    if s["corner_m"] < 12:
+        along = math.sqrt(max(0.0, s["corner_m"] ** 2 - s["offset_m"] ** 2))
+        i = (rnd.choice(corners) + int(rnd.choice((-1, 1)) * along / 0.5)) % n
+    else:
+        for _ in range(50):
+            i = rnd.randrange(n)
+            if min(math.hypot(route[i][0] - cx, route[i][1] - cy) for cx, cy in f.poly) >= 12:
+                break
+    d = -1 if rnd.random() < FLIGHT["reverse"] else 1
+    (ax, ay), (bx, by) = route[(i - 2 * d) % n], route[(i + 2 * d) % n]
+    tx, ty = bx - ax, by - ay
+    ox, oy = f.outward(tx, ty)
+    shift = s["offset_m"] - FLIGHT["route_offset_m"]
+    x, y = route[i][0] + ox * shift, route[i][1] + oy * shift
+    yaw = math.atan2(ty, tx) - math.radians(s["heading_dev_deg"])   # compass deviation -> ENU yaw
+    return (x, y, s["alt_m"] + rnd.uniform(-0.5, 0.5), math.radians(s["roll_deg"]),
+            math.radians(s["cam_pitch_deg"] + rnd.uniform(-1, 1)), yaw)
+
+
 def sample_pose(rnd, f, cfg, animals):
     P = f.posts
-    if STYLE["v"] == "v3" and not STYLE["mission"] and rnd.random() < STYLE["refly"]:
+    if STYLE["v"] == "v4" and (STYLE["mission"] or rnd.random() < STYLE["flight"]):
+        return flight_pose(rnd, f, cfg)
+    if STYLE["v"] in ("v3", "v4") and not STYLE["mission"] and rnd.random() < STYLE["refly"]:
         # like the re-fly hover (fence_refly): ~6 m up, stopped alt/tan(55 deg) short of an alert, from any direction
         if cfg["faults"] and rnd.random() < 0.7:
             tx, ty, _ = f.fault_anchor(rnd.choice(cfg["faults"]))
@@ -381,7 +437,7 @@ def sample_pose(rnd, f, cfg, animals):
             if all(math.hypot(x - a, y - b) > 6.5 for a, b in trees):
                 break
         return x, y, alt, math.radians(rnd.uniform(-4, 4)), pitch, yaw
-    if STYLE["mission"] or rnd.random() < (0.6 if STYLE["v"] in ("v2", "v3") else 0.45):  # like the inspection flight: outside the fence, flying along it
+    if STYLE["mission"] or rnd.random() < (0.6 if STYLE["v"] in ("v2", "v3", "v4") else 0.45):  # like the inspection flight: outside the fence, flying along it
         k = rnd.randrange(len(P) - 1)
         a, b = P[k], P[k + 1]
         t = rnd.random()
@@ -526,7 +582,8 @@ def main():
     ap.add_argument("--seed", type=int, default=100)
     ap.add_argument("--start", type=int, default=0)
     ap.add_argument("--settle", type=int, default=3, help="frames to wait after moving the camera")
-    ap.add_argument("--style", choices=("v1", "v2", "v3"), default="v1", help="v2: 3-4 breaks, varied dead-wire colour, varied break shapes, more flight-like poses; v3: v2 plus re-fly hover poses (4.5-8 m, see --refly-share)")
+    ap.add_argument("--style", choices=("v1", "v2", "v3", "v4"), default="v1", help="v2: 3-4 breaks, varied dead-wire colour, varied break shapes, more flight-like poses; v3: v2 plus re-fly hover poses (4.5-8 m, see --refly-share); v4: v3 farms with inspection-flight poses on the mission route, half near corners (see --flight-share)")
+    ap.add_argument("--flight-share", type=float, default=0.7, help="v4: share of inspection-flight poses (the rest as v3)")
     ap.add_argument("--refly-share", type=float, default=0.2, help="v3: share of re-fly hover poses (1.0 for a re-fly test set)")
     ap.add_argument("--look", choices=("classic", "rich"), default=gen_world.LOOK, help="world look (default classic, or GARDIAN_DATASET_LOOK)")
     ap.add_argument("--split", choices=("train", "val", "test"), help="force every layout into this split")
@@ -540,7 +597,7 @@ def main():
                  "".join("  %d: %s\n" % (i, c) for i, c in enumerate(CLASSES)))
     for li in range(args.start, args.layouts):
         split = args.split or ("val" if li >= args.layouts - args.val_layouts else "train")
-        STYLE.update(v=args.style, mission=args.mission_world, refly=args.refly_share)
+        STYLE.update(v=args.style, mission=args.mission_world, refly=args.refly_share, flight=args.flight_share)
         for attempt in range(3):
             try:
                 run_layout(li, args.seed + li, args.frames, split, args.out, args)

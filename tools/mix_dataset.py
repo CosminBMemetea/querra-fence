@@ -8,7 +8,7 @@ Example (model-v0.4):
         --train ~/querra-data/fence_yolo_rich:train ~/querra-data/fence_yolo_v3c:train \\
                 ~/querra-data/fence_yolo_v2:train ~/querra-data/fence_yolo:train@1800 \\
         --val ~/querra-data/fence_yolo_rich:val ~/querra-data/fence_yolo_v2:val ~/querra-data/fence_yolo:val
-Labels are found the YOLO way (/images/ -> /labels/, .png -> .txt).
+Labels are found the YOLO way (/images/ -> /labels/, .png or .jpg -> .txt).
 """
 import argparse
 import glob
@@ -23,7 +23,8 @@ def images(spec, rnd):
     parts = spec.split(":")
     root, split = os.path.expanduser(parts[0]), parts[1]
     prefixes = parts[2].split(",") if len(parts) > 2 else [""]
-    out = sorted(p for pre in prefixes for p in glob.glob(os.path.join(root, "images", split, pre + "*.png")))
+    out = sorted(p for pre in prefixes for ext in ("png", "jpg")
+                 for p in glob.glob(os.path.join(root, "images", split, pre + "*." + ext)))
     if not out:
         raise SystemExit("no images for %s" % spec)
     if n:
