@@ -163,16 +163,20 @@ def release_map(models, out):
         ax.text(xs[t], MY - 0.1, t.replace("model-", ""), ha="center", va="top", fontsize=9, fontweight="bold", color=INK)
         ax.text(xs[t], MY - 0.25, "\n".join(textwrap.wrap(m.get("summary", ""), 12)), ha="center", va="top", fontsize=7.6, color=INK2)
     # which model each platform release used: bands under the platform lane, a dotted link from the model release
-    lanes = [("default_from", "default detector", 0.62), ("live_sim_from", "live simulation", 0.45)]
+    # a role runs from its *_from platform release to its *_until release (the next model's), or to today
+    lanes = [("default", "default detector", 0.62), ("live_sim", "live simulation", 0.45)]
     end = xs[plat[-1]] + 0.45
     for m in models:
         for key, what, y in lanes:
-            start = (m.get("platform") or {}).get(key)
+            pf = m.get("platform") or {}
+            start, until = pf.get(key + "_from"), pf.get(key + "_until")
             if not start or start not in xs:
                 continue
-            ax.plot([xs[start], end], [y, y], color=MODEL, lw=5, solid_capstyle="butt", zorder=2, alpha=0.85)
-            near_end = end - xs[start] < 3
-            ax.text(end if near_end else xs[start] + 0.08, y + 0.05, "%s: %s" % (what, m["id"]), fontsize=8, color=INK,
+            stop = xs[until] - 0.08 if until in xs else end
+            ax.plot([xs[start], stop], [y, y], color=MODEL, lw=5, solid_capstyle="butt", zorder=2,
+                    alpha=0.85 if until is None else 0.45)
+            near_end = stop - xs[start] < 3
+            ax.text(stop if near_end else xs[start] + 0.08, y + 0.05, "%s: %s" % (what, m["id"]), fontsize=8, color=INK,
                     va="bottom", ha="right" if near_end else "left")
             ax.plot([xs[m["id"]], xs[start]], [MY + 0.07, y - 0.02], color=MODEL, lw=1.2, ls=(0, (2, 2)), zorder=1)
     # day separators
