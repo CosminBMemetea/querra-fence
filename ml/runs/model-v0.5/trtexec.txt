@@ -1,0 +1,12 @@
+&&&& RUNNING TensorRT.trtexec [TensorRT v100300] # /usr/src/tensorrt/bin/trtexec --onnx=fence-yolo11n-v0.5.onnx --saveEngine=fence-yolo11n-v0.5-fp16.engine --fp16
+[I] Model: fence-yolo11n-v0.5.onnx
+[I] TensorRT version: 10.3.0
+[I] [TRT] Input filename:   fence-yolo11n-v0.5.onnx
+[I] === Performance summary ===
+[I] Throughput: 292.219 qps
+[I] Latency: min = 3.57812 ms, max = 4.15112 ms, mean = 3.6518 ms, median = 3.62683 ms, percentile(90%) = 3.64282 ms, percentile(95%) = 4.06332 ms, percentile(99%) = 4.10661 ms
+[I] H2D Latency: min = 0.188477 ms, max = 0.330444 ms, mean = 0.211513 ms, median = 0.206055 ms, percentile(90%) = 0.21521 ms, percentile(95%) = 0.290863 ms, percentile(99%) = 0.306244 ms
+[I] GPU Compute Time: min = 3.3584 ms, max = 3.80389 ms, mean = 3.41506 ms, median = 3.39606 ms, percentile(90%) = 3.4068 ms, percentile(95%) = 3.73999 ms, percentile(99%) = 3.76062 ms
+[I] D2H Latency: min = 0.0124512 ms, max = 0.0716553 ms, mean = 0.0252278 ms, median = 0.0252075 ms, percentile(90%) = 0.0302734 ms, percentile(95%) = 0.0314941 ms, percentile(99%) = 0.0465088 ms
+[I] Total GPU Compute Time: 3.00526 s
+&&&& PASSED TensorRT.trtexec [TensorRT v100300] # /usr/src/tensorrt/bin/trtexec --onnx=fence-yolo11n-v0.5.onnx --saveEngine=fence-yolo11n-v0.5-fp16.engine --fp16

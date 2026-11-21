@@ -50,7 +50,7 @@ Faza 2 uruchamia detektor ogrodzenia w ROS 2: `fence_detector` wykonuje silnik T
 Jetsona (około 15 Hz, 20–30 ms na klatkę od JPEG do ramek) i publikuje `vision_msgs/Detection2DArray` oraz obraz
 z zaznaczeniami. `alert_confirm` zamienia wykrycia w `/fence/alerts` tylko wtedy, gdy 5 z ostatnich 8 klatek zgadza się
 co do miejsca na ziemi w promieniu 5 m. `./ros.sh demo` (albo **Demo** w panelu) odtwarza nagraną misję z Gazebo przez
-cały łańcuch; `./ros.sh demo tcp://<mac>:5601` (model-v0.4) używa symulacji na żywo. Układ Foxglove:
+cały łańcuch; `./ros.sh demo tcp://<mac>:5601` używa symulacji na żywo. Układ Foxglove:
 [`ros2/foxglove/querra-layout.json`](ros2/foxglove/querra-layout.json).
 
 Faza 3 podłącza samo PX4: `./ros.sh demo tcp://<mac>:5601 px4:=true` uruchamia agenta micro-ROS na UDP 8888. Klient
@@ -86,7 +86,7 @@ flowchart LR
     GPSN["gpsd_gps"]
     LDN["ld2450"]
     SIMC["sim_camera"]
-    DET["fence_detector<br/>YOLO11n v0.3 / v0.4 TensorRT FP16"]
+    DET["fence_detector<br/>YOLO11n v0.5 TensorRT FP16"]
     CONF["alert_confirm<br/>5 z 8 klatek · 5 m · conf 0.7"]
     ST["querra_stats"]
     XRCE["agent micro-ROS<br/>UDP 8888 (px4:=true)"]
@@ -295,6 +295,7 @@ sieć LAN (`tools/cam_stream.py`), gdy PX4 wykonuje misję, i zapisuje każde wy
 | v0.2 · 25 epok | 0.921 | 13.3 kl./s; F1, F2, F3 znalezione (0.94 / 0.96 / 0.84); 385 klatek z fałszywym zerwanym drutem | `model-v0.2` |
 | v0.3 · dostrojony na celowanych danych | 0.916 (zbiór testowy 0.912) | `wire_break` test mAP50 0.58 → 0.68; z potwierdzeniem GPS 5 z 8 fałszywe alarmy 33 → 6, wszystkie usterki znalezione | `model-v0.3` |
 | v0.4 · oba wyglądy świata | 0.956 (zbiór testowy 0.938 classic, 0.938 rich) | świat rich: 3 z 3 usterek (v0.3: 1 z 3); misja classic: 13 fałszywych alarmów (v0.3: 5), więc służy tylko do lotów na żywo w Gazebo | `model-v0.4` |
+| v0.5 · pozy z lotu, JPEG strumienia | 0.952 (zbiór testowy 0.937 classic, 0.937 rich) | uczony na klatkach ustawionych jak w locie i skompresowanych jak strumień kamery: 3 z 3 usterek i 0 fałszywych alarmów w obu lotach na żywo (v0.4: 13 classic, 6 rich); model domyślny | `model-v0.5` |
 
 ![v0.2 na Jetsonie: zerwany drut, przewrócony słupek, gałąź i fałszywy zerwany drut, który v0.3 ogranicza](docs/img/v0.2-jetson-faults.jpg)
 

@@ -50,7 +50,7 @@ GPS координатите в тези записи са размазани.
 на графичния процесор на Jetson (около 15 Hz, 20–30 ms на кадър от JPEG до рамките) и публикува
 `vision_msgs/Detection2DArray` и анотирано изображение. `alert_confirm` превръща откриванията в `/fence/alerts` само
 когато 5 от последните 8 кадъра съвпаднат в рамките на 5 м на земята. `./ros.sh demo` (или **Demo** в таблото)
-възпроизвежда записана мисия от Gazebo през цялата верига; `./ros.sh demo tcp://<mac>:5601` (model-v0.4) използва симулацията на
+възпроизвежда записана мисия от Gazebo през цялата верига; `./ros.sh demo tcp://<mac>:5601` използва симулацията на
 живо. Подредба за Foxglove: [`ros2/foxglove/querra-layout.json`](ros2/foxglove/querra-layout.json).
 
 Фаза 3 свързва самия PX4: `./ros.sh demo tcp://<mac>:5601 px4:=true` пуска micro-ROS агент на UDP 8888. uXRCE-DDS
@@ -85,7 +85,7 @@ flowchart LR
     GPSN["gpsd_gps"]
     LDN["ld2450"]
     SIMC["sim_camera"]
-    DET["fence_detector<br/>YOLO11n v0.3 / v0.4 TensorRT FP16"]
+    DET["fence_detector<br/>YOLO11n v0.5 TensorRT FP16"]
     CONF["alert_confirm<br/>5 of 8 frames · 5 m · conf 0.7"]
     ST["querra_stats"]
     XRCE["micro-ROS agent<br/>UDP 8888 (px4:=true)"]
@@ -292,6 +292,7 @@ flowchart LR
 | v0.2 · 25 епохи | 0.921 | 13.3 fps; F1, F2, F3 открити (0.94 / 0.96 / 0.84); 385 кадъра с фалшива скъсана жица | `model-v0.2` |
 | v0.3 · дообучен с целеви данни | 0.916 (отделен тест 0.912) | `wire_break` тест mAP50 0.58 → 0.68; с GPS потвърждаване 5 от 8 фалшивите сигнали 33 → 6, всички повреди открити | `model-v0.3` |
 | v0.4 · двата вида на света | 0.956 (отделен тест 0.938 classic, 0.938 rich) | свят rich: 3 от 3 повреди (v0.3: 1 от 3); мисия classic: 13 фалшиви сигнала (v0.3: 5), затова се ползва само за полети на живо в Gazebo | `model-v0.4` |
+| v0.5 · пози от полета, JPEG на потока | 0.952 (отделен тест 0.937 classic, 0.937 rich) | обучен на кадри в пози от полета, компресирани като потока от камерата: 3 от 3 повреди и 0 фалшиви сигнала в двата полета на живо (v0.4: 13 classic, 6 rich); моделът по подразбиране | `model-v0.5` |
 
 ![v0.2 на Jetson: скъсана жица, паднал стълб, клон и фалшивата скъсана жица, която v0.3 намалява](docs/img/v0.2-jetson-faults.jpg)
 

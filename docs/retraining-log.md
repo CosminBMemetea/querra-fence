@@ -282,12 +282,77 @@ alerts. A model is not better until it flies better.
 - v0.4 runs the **live Gazebo flights** (`ros.sh demo tcp://…`), because the rich look is the default world.
 - **v0.3 stays the default** for the ROS 2 detector, the classic replay demo and field mode.
 
-## v0.5 · planned
+## v0.5 · flight poses and the stream's JPEG (`model-v0.5`)
 
-- **Inspection-flight poses.** Frames posed like the flight: 12 m, along the fence, turning through corners. Use new
-  farm seeds with long dead stretches, in both looks.
-- **Hard negatives.** Corners and live/dead strand pairs, with their true labels.
-- **Re-fly budget.** Visit every alert, or rank by confidence, not only by distance (8 nearest missed two real faults
-  among 18 alerts).
+Full run record: [ml/runs/model-v0.5](../ml/runs/model-v0.5/README.md).
+
+**What we found first.** v0.4 was better than v0.3 on every held-out set and worse in the classic flight. Two
+differences between the tests and the flight explain it:
+
+1. **JPEG.** The camera reaches the Jetson as MJPEG (`-q:v 4`, 4:2:0 colour); the models were trained on lossless
+   PNG. The wires are 1–2 px wide at 12 m, and JPEG blocks cut them into pieces. The same synthetic flight frames,
+   scored as PNG and as stream-like JPEG, against the recorded flight:
+
+   | Frames with a false broken wire, conf ≥ 0.7 | v0.3 | v0.4 |
+   |---|---|---|
+   | Synthetic flight over the mission pasture, PNG | 1.0% | 0.2% |
+   | The same frames, JPEG like the stream | 8.2% | 14.8% |
+   | The recorded mission flight (real stream) | 7.7% | 12.9% |
+
+   Compressed like the stream, the synthetic frames predict the flight within a percentage point. v0.4 is more
+   sensitive to JPEG than v0.3.
+2. **Attitude.** The camera is mounted at 55°, but the drone noses down to fly. PX4 logs of the mission
+   (`tools/flight_poses_from_ulog.py`) give a camera pitch of 48–67° (median 58°), 2.4 m outside the fence, roll down
+   to −12° in the corners, and 48% of the time within 12 m of a corner.
+
+**What we changed.**
+
+1. **Flight-pose data** (`--style v4`). 70% of the poses fly each farm's inspection route at an attitude drawn from
+   the measured flight. 16 new farms, 8 in each look (4,800 frames), plus flight-pose test sets: 3 new seeds and the
+   mission pasture, in both looks.
+2. **Stream-like JPEG** (`tools/jpeg_like_stream.py`). 75% of the new frames and 50% of the old ones are compressed
+   like the stream at a random quality. Validation and the new test sets use the stream's own `-q:v 4`.
+3. **Fine-tuned from v0.4** for 6 epochs on 9,600 frames, half new flight poses and half old data. CPU, 3.4 h, in
+   three sessions with 15-minute cooling breaks (`tools/train_with_breaks.py`).
+4. **A new offline score**, `wb_false`: the share of frames with a false broken wire at conf ≥ 0.7
+   (`tools/eval_sets.py`). On the stream-like flight sets it matches the false alerts of a real flight.
+
+### Scores, v0.4 → v0.5
+
+| Set | All classes (mAP50) | `wire_break` (mAP50) | Frames with a false `wire_break` |
+|---|---|---|---|
+| **Flight poses, mission pasture, stream JPEG, classic (400)** | 0.884 → **0.963** | 0.26 → **0.79** | 14.8% → **0.0%** |
+| **Flight poses, mission pasture, stream JPEG, rich (400)** | 0.887 → **0.954** | 0.34 → **0.77** | 9.8% → **0.0%** |
+| Flight poses, test seeds, stream JPEG, classic (750) | 0.860 → **0.926** | 0.27 → **0.62** | 6.8% → **0.4%** |
+| Flight poses, test seeds, stream JPEG, rich (750) | 0.856 → **0.914** | 0.21 → **0.52** | 9.2% → **0.3%** |
+| Held-out test, classic, PNG (750) | 0.938 → 0.937 | 0.822 → 0.808 | |
+| Held-out test, rich, PNG (750) | 0.938 → 0.937 | 0.789 → 0.783 | |
+
+On the old PNG sets v0.5 equals v0.4. Its `wire_break` precision is equal or higher on every set, and its recall a
+little lower.
+
+### In flight: no false alerts
+
+| | v0.3 | v0.4 | v0.5 |
+|---|---|---|---|
+| Live flight, rich | 1 of 3 faults, 0 false alerts | 3 of 3, 6 | **3 of 3, 0** |
+| Live flight, classic | 3 of 3, 5 | 3 of 3, 13 | **3 of 3, 0** |
+| Recorded mission replay | 3 of 3, 6 | 3 of 3, 12 | **3 of 3, 0** |
+| False `wire_break` frames in the replay, conf ≥ 0.7 | 153 | 257 | **1** |
+
+**Re-fly.** In both looks it verified the broken wire and the fallen post. It did not see the branch up close: both
+branch alerts sat about 4 m from the branch. In the rich look, hovering over the fallen post, it raised one broken-wire
+alert on the loose wires there.
+
+**Decision.** **v0.5 is the default for everything** from platform v0.11.0: the replay demo, live Gazebo flights, the
+ROS 2 detector and field mode. v0.3 and v0.4 are retired and stay selectable.
+
+## v0.6 · planned
+
+- **Broken-wire margin.** v0.5 sees the recorded broken wire in 66 frames (v0.4: 147), best confidence 0.87. More
+  broken wires at flight poses, or a lower per-frame threshold for `wire_break`.
+- **Branch alert position.** Branch alerts sit about 4 m off, so the re-fly misses the branch.
+- **Fallen post up close.** Loose wires on a fallen post look broken from 6 m.
+- **Re-fly budget.** Visit every alert, or rank by confidence, not only by distance.
 - **Real frames.** Fine-tune on photos from the field mode recorder (`field.sh`). Reality matters more than any
   simulation artefact.

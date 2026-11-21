@@ -19,7 +19,7 @@ FIELD_STOP = os.path.join(SCOUT, "field-stop.sh")
 SSD_RUNS = "/ssd/querra/field-runs"
 EMMC_RUNS = os.path.join(SCOUT, "runs")
 ENGINES = {"v0.2": "models/fence-yolo/fence-yolo11n-fp16.engine", "v0.3": "models/fence-yolo/fence-yolo11n-v0.3-fp16.engine",
-           "v0.4": "models/fence-yolo/fence-yolo11n-v0.4-fp16.engine"}
+           "v0.4": "models/fence-yolo/fence-yolo11n-v0.4-fp16.engine", "v0.5": "models/fence-yolo/fence-yolo11n-v0.5-fp16.engine"}
 UID = os.getuid()
 ENV = dict(os.environ, XDG_RUNTIME_DIR=f"/run/user/{UID}", DBUS_SESSION_BUS_ADDRESS=f"unix:path=/run/user/{UID}/bus",
            PATH="/usr/local/cuda/bin:/usr/sbin:/usr/bin:/sbin:/bin")

@@ -1,0 +1,110 @@
+{
+ "classic: old validation farms": {
+  "frames": 700,
+  "model-v0.5": {
+   "all": 0.928,
+   "wire_break": 0.85,
+   "wb_p": 0.88,
+   "wb_r": 0.74,
+   "fallen_post": 0.909,
+   "branch": 0.941,
+   "wb_false": 0.0
+  }
+ },
+ "classic: v2 validation farms": {
+  "frames": 600,
+  "model-v0.5": {
+   "all": 0.956,
+   "wire_break": 0.816,
+   "wb_p": 0.95,
+   "wb_r": 0.66,
+   "fallen_post": 0.976,
+   "branch": 0.96,
+   "wb_false": 0.0
+  }
+ },
+ "classic: test seeds 140-142": {
+  "frames": 750,
+  "model-v0.5": {
+   "all": 0.937,
+   "wire_break": 0.808,
+   "wb_p": 0.89,
+   "wb_r": 0.65,
+   "fallen_post": 0.937,
+   "branch": 0.943,
+   "wb_false": 0.1
+  }
+ },
+ "classic: mission pasture": {
+  "frames": 400,
+  "model-v0.5": {
+   "all": 0.976,
+   "wire_break": 0.865,
+   "wb_p": 1.0,
+   "wb_r": 0.72,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.0
+  }
+ },
+ "classic: re-fly close-ups": {
+  "frames": 400,
+  "model-v0.5": {
+   "all": 0.982,
+   "wire_break": 0.972,
+   "wb_p": 0.97,
+   "wb_r": 0.89,
+   "fallen_post": 0.99,
+   "branch": 0.995,
+   "wb_false": 0.2
+  }
+ },
+ "rich: validation farms": {
+  "frames": 600,
+  "model-v0.5": {
+   "all": 0.952,
+   "wire_break": 0.849,
+   "wb_p": 0.9,
+   "wb_r": 0.73,
+   "fallen_post": 0.928,
+   "branch": 0.978,
+   "wb_false": 0.3
+  }
+ },
+ "rich: test seeds 140-142": {
+  "frames": 750,
+  "model-v0.5": {
+   "all": 0.937,
+   "wire_break": 0.783,
+   "wb_p": 0.89,
+   "wb_r": 0.61,
+   "fallen_post": 0.953,
+   "branch": 0.95,
+   "wb_false": 0.0
+  }
+ },
+ "rich: mission pasture": {
+  "frames": 400,
+  "model-v0.5": {
+   "all": 0.976,
+   "wire_break": 0.865,
+   "wb_p": 1.0,
+   "wb_r": 0.72,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.0
+  }
+ },
+ "rich: re-fly close-ups": {
+  "frames": 400,
+  "model-v0.5": {
+   "all": 0.987,
+   "wire_break": 0.969,
+   "wb_p": 0.96,
+   "wb_r": 0.88,
+   "fallen_post": 0.991,
+   "branch": 0.995,
+   "wb_false": 0.5
+  }
+ }
+}

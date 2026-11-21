@@ -50,7 +50,7 @@ Fase 2 kører hegnsdetektoren i ROS 2: `fence_detector` kører TensorRT FP16-mot
 Jetsonens GPU (omkring 15 Hz, 20–30 ms pr. billede fra JPEG til bokse) og udgiver `vision_msgs/Detection2DArray` plus
 et annoteret billede. `alert_confirm` gør kun detektioner til `/fence/alerts`, når 5 af de sidste 8 billeder er enige
 inden for 5 m på jorden. `./ros.sh demo` (eller **Demo** i panelet) afspiller en optaget Gazebo-mission gennem hele
-kæden; `./ros.sh demo tcp://<mac>:5601` (model-v0.4) bruger den levende simulering. Foxglove-layout:
+kæden; `./ros.sh demo tcp://<mac>:5601` bruger den levende simulering. Foxglove-layout:
 [`ros2/foxglove/querra-layout.json`](ros2/foxglove/querra-layout.json).
 
 Fase 3 forbinder selve PX4: `./ros.sh demo tcp://<mac>:5601 px4:=true` starter en micro-ROS-agent på UDP 8888. PX4's
@@ -85,7 +85,7 @@ flowchart LR
     GPSN["gpsd_gps"]
     LDN["ld2450"]
     SIMC["sim_camera"]
-    DET["fence_detector<br/>YOLO11n v0.3 / v0.4 TensorRT FP16"]
+    DET["fence_detector<br/>YOLO11n v0.5 TensorRT FP16"]
     CONF["alert_confirm<br/>5 of 8 frames · 5 m · conf 0.7"]
     ST["querra_stats"]
     XRCE["micro-ROS agent<br/>UDP 8888 (px4:=true)"]
@@ -293,6 +293,7 @@ kører som TensorRT FP16-motor på en Jetson Orin Nano. Jetsonen læser dronens 
 | v0.2 · 25 epoker | 0.921 | 13.3 fps; F1, F2, F3 alle fundet (0.94 / 0.96 / 0.84); 385 billeder med falsk brudt tråd | `model-v0.2` |
 | v0.3 · finjusteret på målrettede data | 0.916 (tilbageholdt test 0.912) | `wire_break` test mAP50 0.58 → 0.68; med GPS-bekræftelse 5 af 8 falske alarmer 33 → 6, alle fejl fundet | `model-v0.3` |
 | v0.4 · begge verdensudseender | 0.956 (tilbageholdt test 0.938 classic, 0.938 rich) | verden rich: 3 af 3 fejl (v0.3: 1 af 3); mission classic: 13 falske alarmer (v0.3: 5), så den bruges kun til flyvninger live i Gazebo | `model-v0.4` |
+| v0.5 · flyvepositioner, stream-JPEG | 0.952 (tilbageholdt test 0.937 classic, 0.937 rich) | trænet på billeder i flyvepositioner, komprimeret som kamerastreamet: 3 af 3 fejl og 0 falske alarmer i begge live-flyvninger (v0.4: 13 classic, 6 rich); standardmodellen | `model-v0.5` |
 
 ![v0.2 på Jetsonen: brudt tråd, væltet pæl, gren og den falske brudte tråd, som v0.3 reducerer](docs/img/v0.2-jetson-faults.jpg)
 

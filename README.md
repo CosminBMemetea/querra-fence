@@ -44,11 +44,11 @@ that own the hardware: cameras from the panel hub, GPS from gpsd, radar from the
 Foxglove connects to `ws://<jetson>:8765`. Use the panel's ROS 2 card or `ros2/ros.sh`. See
 [docs/ros2.md](docs/ros2.md) for the details and the phase 3 plan.
 
-Phase 2 runs the fence detector on ROS 2: `fence_detector` runs the YOLO11n model-v0.3 TensorRT FP16 engine on the
+Phase 2 runs the fence detector on ROS 2: `fence_detector` runs the YOLO11n model-v0.5 TensorRT FP16 engine on the
 Jetson GPU (about 15 Hz, 20–30 ms per frame from JPEG to boxes) and publishes `vision_msgs/Detection2DArray` plus an
 annotated image. `alert_confirm` turns detections into `/fence/alerts` only when 5 of the last 8 frames agree within 5 m
 on the ground. `./ros.sh demo` (or **Demo** in the panel) replays a recorded Gazebo mission through the whole chain;
-`./ros.sh demo tcp://<mac>:5601` (model-v0.4) uses the live simulation. Foxglove layout: [`ros2/foxglove/querra-layout.json`](ros2/foxglove/querra-layout.json).
+`./ros.sh demo tcp://<mac>:5601` uses the live simulation. Foxglove layout: [`ros2/foxglove/querra-layout.json`](ros2/foxglove/querra-layout.json).
 
 Phase 3 connects PX4 itself: `./ros.sh demo tcp://<mac>:5601 px4:=true` starts a micro-ROS agent on UDP 8888. PX4's
 uXRCE-DDS client publishes `/fmu/out/*` to it, and `px4_pose` turns the vehicle's own position and heading into
@@ -82,7 +82,7 @@ flowchart LR
     GPSN["gpsd_gps"]
     LDN["ld2450"]
     SIMC["sim_camera"]
-    DET["fence_detector<br/>YOLO11n v0.3 / v0.4 TensorRT FP16"]
+    DET["fence_detector<br/>YOLO11n v0.5 TensorRT FP16"]
     CONF["alert_confirm<br/>5 of 8 frames · 5 m · conf 0.7"]
     ST["querra_stats"]
     XRCE["micro-ROS agent<br/>UDP 8888 (px4:=true)"]
@@ -291,6 +291,7 @@ a TensorRT FP16 engine on a Jetson Orin Nano. The Jetson reads the simulated dro
 | v0.2 · 25 epochs | 0.921 | 13.3 fps; F1, F2, F3 all found (0.94 / 0.96 / 0.84); 385 false broken-wire frames | `model-v0.2` |
 | v0.3 · fine-tuned on targeted data | 0.916 (held-out test 0.912) | `wire_break` test mAP50 0.58 → 0.68; with 5-of-8 GPS confirmation, false alerts 33 → 6, all faults found | `model-v0.3` |
 | v0.4 · both world looks | 0.956 (held-out test 0.938 classic, 0.938 rich) | rich world: 3 of 3 faults (v0.3: 1 of 3); classic mission: 13 false alerts (v0.3: 5), so it runs only the live Gazebo flights | `model-v0.4` |
+| v0.5 · flight poses, stream JPEG | 0.952 (held-out test 0.937 classic, 0.937 rich) | trained on frames posed like the flight and compressed like the camera stream: 3 of 3 faults and 0 false alerts in both live flights (v0.4: 13 classic, 6 rich); the default model | `model-v0.5` |
 
 ![v0.2 on the Jetson: broken wire, fallen post, branch, and the false broken wire that v0.3 reduces](docs/img/v0.2-jetson-faults.jpg)
 

@@ -1,0 +1,227 @@
+{
+ "setup": "Gazebo (Mac) -> LAN JPEG stream -> Jetson Orin Nano, TensorRT FP16 -> 5-of-8 GPS confirmation (conf >= 0.7, 5 m), PX4 pose over uXRCE-DDS; re-fly: 6 m altitude, 4.2 m stand-off, 5 s hover, up to 8 alerts nearest-first",
+ "rule": "an alert is a real fault when its class matches a fault within 15 m (as tools/eval_mission.py); faults F1 wire_break, F2 post_down, F3 branch_short",
+ "flights": [
+  {
+   "world": "classic",
+   "model": "model-v0.5",
+   "date": "2026-11-21",
+   "summary": {
+    "inspection_alerts": 3,
+    "faults_found": "3 of 3",
+    "false_alerts": 0,
+    "re_fly_alerts": 0
+   },
+   "alerts": [
+    {
+     "id": 1,
+     "class": "wire_break",
+     "conf": 0.75,
+     "phase": "inspection",
+     "nearest_fault": "F1",
+     "distance_m": 1.9,
+     "verdict": "real fault"
+    },
+    {
+     "id": 2,
+     "class": "fallen_post",
+     "conf": 0.9,
+     "phase": "inspection",
+     "nearest_fault": "F2",
+     "distance_m": 3.2,
+     "verdict": "real fault"
+    },
+    {
+     "id": 3,
+     "class": "branch",
+     "conf": 0.8,
+     "phase": "inspection",
+     "nearest_fault": "F3",
+     "distance_m": 4.1,
+     "verdict": "real fault"
+    }
+   ],
+   "re_fly": {
+    "altitude_m": 6.0,
+    "standoff_m": 4.2,
+    "hover_s": 5.0,
+    "results": [
+     {
+      "id": 3,
+      "class": "branch",
+      "alert_conf": 0.8,
+      "verdict": "not seen up close",
+      "frames": 71,
+      "hits": 0,
+      "best_conf": 0.0
+     },
+     {
+      "id": 2,
+      "class": "fallen_post",
+      "alert_conf": 0.9,
+      "verdict": "verified",
+      "frames": 73,
+      "hits": 57,
+      "best_conf": 0.86
+     },
+     {
+      "id": 1,
+      "class": "wire_break",
+      "alert_conf": 0.75,
+      "verdict": "verified",
+      "frames": 67,
+      "hits": 67,
+      "best_conf": 0.91
+     }
+    ]
+   }
+  },
+  {
+   "world": "rich",
+   "model": "model-v0.5",
+   "date": "2026-11-21",
+   "summary": {
+    "inspection_alerts": 4,
+    "faults_found": "3 of 3",
+    "false_alerts": 0,
+    "re_fly_alerts": 1
+   },
+   "alerts": [
+    {
+     "id": 1,
+     "class": "wire_break",
+     "conf": 0.78,
+     "phase": "inspection",
+     "nearest_fault": "F1",
+     "distance_m": 2.2,
+     "verdict": "real fault"
+    },
+    {
+     "id": 2,
+     "class": "fallen_post",
+     "conf": 0.92,
+     "phase": "inspection",
+     "nearest_fault": "F2",
+     "distance_m": 3.2,
+     "verdict": "real fault"
+    },
+    {
+     "id": 3,
+     "class": "fallen_post",
+     "conf": 0.93,
+     "phase": "inspection",
+     "nearest_fault": "F2",
+     "distance_m": 5.0,
+     "verdict": "real fault"
+    },
+    {
+     "id": 4,
+     "class": "branch",
+     "conf": 0.81,
+     "phase": "inspection",
+     "nearest_fault": "F3",
+     "distance_m": 4.2,
+     "verdict": "real fault"
+    },
+    {
+     "id": 5,
+     "class": "wire_break",
+     "conf": 0.72,
+     "phase": "re-fly",
+     "nearest_fault": "F2",
+     "distance_m": 1.7,
+     "verdict": "false"
+    }
+   ],
+   "re_fly": {
+    "altitude_m": 6.0,
+    "standoff_m": 4.2,
+    "hover_s": 5.0,
+    "results": [
+     {
+      "id": 4,
+      "class": "branch",
+      "alert_conf": 0.81,
+      "verdict": "not seen up close",
+      "frames": 74,
+      "hits": 0,
+      "best_conf": 0.0
+     },
+     {
+      "id": 3,
+      "class": "fallen_post",
+      "alert_conf": 0.93,
+      "verdict": "verified",
+      "frames": 56,
+      "hits": 56,
+      "best_conf": 0.93
+     },
+     {
+      "id": 2,
+      "class": "fallen_post",
+      "alert_conf": 0.92,
+      "verdict": "not seen up close",
+      "frames": 76,
+      "hits": 0,
+      "best_conf": 0.0
+     },
+     {
+      "id": 1,
+      "class": "wire_break",
+      "alert_conf": 0.78,
+      "verdict": "verified",
+      "frames": 68,
+      "hits": 68,
+      "best_conf": 0.9
+     }
+    ]
+   }
+  },
+  {
+   "world": "classic",
+   "model": "model-v0.4",
+   "date": "2026-11-20",
+   "summary": {
+    "inspection_alerts": 18,
+    "faults_found": "3 of 3",
+    "false_alerts": 13,
+    "re_fly_alerts": 2
+   },
+   "raw": "../../model-v0.4/live/flights.json"
+  },
+  {
+   "world": "rich",
+   "model": "model-v0.4",
+   "date": "2026-11-20",
+   "summary": {
+    "inspection_alerts": 9,
+    "faults_found": "3 of 3",
+    "false_alerts": 6,
+    "re_fly_alerts": 4
+   },
+   "raw": "../../model-v0.4/live/flights.json"
+  },
+  {
+   "world": "classic",
+   "model": "model-v0.3",
+   "date": "2026-11-20",
+   "summary": {
+    "inspection_alerts": 8,
+    "faults_found": "3 of 3",
+    "false_alerts": 5
+   },
+   "raw": "../../model-v0.4/live/classic_v03_px4_check.txt"
+  },
+  {
+   "world": "rich",
+   "model": "model-v0.3",
+   "date": "2026-11-20",
+   "summary": {
+    "inspection_alerts": 1,
+    "faults_found": "1 of 3",
+    "false_alerts": 0
+   },
+   "raw": "../../model-v0.4/live/rich_v03_px4_check.txt"
+  }
+ ]
+}

@@ -1,7 +1,28 @@
 # Changelog
 
-## Unreleased
+## v0.11.0 · 2026-11-21 · model-v0.5 is the default: no false alerts in flight
 
+- **model-v0.5**, fine-tuned from v0.4 on 9,600 frames posed like the inspection flight and compressed like the
+  camera stream. It is the default for everything: `./ros.sh demo` (replay), `./ros.sh demo tcp://…` (live Gazebo),
+  the ROS 2 detector's `engine` and field mode in the panel. v0.3 and v0.4 are retired and stay selectable.
+  - **Live on the Jetson (TensorRT FP16, 3.65 ms per frame):** 3 of 3 faults and **0 false alerts** in both looks
+    (v0.4: 13 classic, 6 rich).
+  - **Recorded mission replay:** 0 false alerts (v0.3: 6, v0.4: 12); 1 false broken-wire frame at conf ≥ 0.7 (v0.4:
+    257).
+  - **Held-out PNG sets:** as v0.4 (test mAP50 0.937 in both looks).
+- **Why v0.4 flew worse than it tested:** the camera stream is MJPEG (`-q:v 4`, 4:2:0). Compressed the same way,
+  synthetic flight frames give v0.3 and v0.4 8.2% and 14.8% false broken-wire frames, against 7.7% and 12.9% in the
+  recorded flight. As PNG they give 1.0% and 0.2%.
+- **Data tools:**
+  - `tools/flight_poses_from_ulog.py` measures the flight's camera pitch, offset, heading and roll in PX4 logs
+    (`ml/flight_poses.json`: camera 48–67° down, median 58°, 2.4 m outside the fence);
+  - `make_dataset.py --style v4` renders farms from those poses along each farm's route (`--flight-share`);
+  - `tools/jpeg_like_stream.py` makes dataset copies compressed like the stream;
+  - `tools/eval_sets.py` reads `.jpg` sets and reports `wb_false`, the share of frames with a false broken wire;
+  - `tools/train_with_breaks.py` trains in sessions with cooling breaks.
+- **Registry:** model-v0.5, its 12 new datasets and the run record (`ml/runs/model-v0.5/`); a third benchmark file,
+  `ml/benchmark/stream.json`, with 8 stream-like sets for v0.3 to v0.5.
+- `tools/release_notes.py` accepts draft notes for a release that has no tag yet.
 - **One benchmark for every model** (`ml/benchmark/`): model-v0.1 to v0.4 on the same 9 held-out sets in both world
   looks, and on the same recorded mission replayed through the live 5-of-8 confirmation. model-v0.2 reproduces its
   published numbers exactly; model-v0.1 is scored from its ONNX export.

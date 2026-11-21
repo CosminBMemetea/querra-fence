@@ -1,0 +1,7 @@
+/px4/telemetry: 5663 msgs in 400 s (14.2 Hz); phases: ? -> inspection -> loiter -> return -> offboard -> return -> disarmed
+PX4 pose vs sim telemetry (3549 pairs): horizontal median 0.61 m, p95 1.85 m, max 2.44 m
+  altitude diff median 0.03 m; heading diff median 0.4 deg
+alerts (id: class conf -> nearest true fault, distance m):
+  #1: ('wire_break', 0.75, 'F1', 1.9)
+  #2: ('fallen_post', 0.9, 'F2', 3.2)
+  #3: ('branch', 0.8, 'F3', 4.1)

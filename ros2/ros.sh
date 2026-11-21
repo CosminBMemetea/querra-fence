@@ -7,8 +7,8 @@
 #   ./ros.sh demo tcp://MAC:5601 px4:=true
 #                                  phase 3: live simulation, alerts placed with PX4's own pose over uXRCE-DDS
 #                                  (on the Mac: ./start.sh headless, tools/cam_stream.sh, tools/uxrce_relay.py JETSON)
-#                                  model: the replay uses model-v0.3; a live tcp:// source uses model-v0.4 (trained on
-#                                  both world looks). engine:=/models/<file>.engine overrides (ml/README.md lists them)
+#                                  model: model-v0.5 (both world looks, trained on stream-like JPEG) for the replay and
+#                                  live tcp:// sources. engine:=/models/<file>.engine overrides (ml/README.md lists them)
 #   ./ros.sh stop                  stop and remove the container
 #   ./ros.sh status                container state, nodes and topic rates (from the stats node)
 #   ./ros.sh record [SECONDS]      MCAP bag of all QUERRA topics to /ssd/querra/bags (no SECONDS: until Ctrl-C)
@@ -32,7 +32,7 @@ lan_ip() { ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<NF;i++) if($i=="sr
 # the host (nothing is copied to the root disk). /sim holds recorded Gazebo missions for the demo.
 # Host folders are mounted only when they exist: docker -v would otherwise create them empty and root-owned.
 L=/usr/lib/aarch64-linux-gnu Q=${QUERRA_SCOUT:-/home/mmx/querra-scout-20261107} SIM=/ssd/querra/sim
-DEFAULT_ENGINE=fence-yolo11n-v0.3-fp16.engine LIVE_ENGINE=fence-yolo11n-v0.4-fp16.engine   # model registry: ml/README.md
+DEFAULT_ENGINE=fence-yolo11n-v0.5-fp16.engine LIVE_ENGINE=fence-yolo11n-v0.5-fp16.engine   # model registry: ml/README.md
 TRT=(-e NVIDIA_VISIBLE_DEVICES=all -e NVIDIA_DRIVER_CAPABILITIES=all -e PYTHONPATH=/opt/querra_scout
      -e LD_LIBRARY_PATH=/usr/local/cuda-12.6/targets/aarch64-linux/lib:/usr/lib/aarch64-linux-gnu/nvidia)
 mnt() { if [ -e "$1" ]; then TRT+=(-v "$1:$2:ro"); else MISSING+=("$1"); fi; }
@@ -62,7 +62,7 @@ case "${1:-help}" in
   demo)
     src=${2:-/sim/m1}; model=()
     case "$src" in
-      # live Gazebo runs the "rich" look by default, which model-v0.3 barely sees (ml/runs/model-v0.4/README.md)
+      # live Gazebo: LIVE_ENGINE (the same model as the default since model-v0.5; see ml/README.md)
       tcp://*) case " ${*:3} " in *" engine:="*) ;; *) [ -s "$Q/models/fence-yolo/$LIVE_ENGINE" ] && model=(engine:=/models/$LIVE_ENGINE) ;; esac ;;
       /sim/*) [ -s "$SIM/${src#/sim/}/frames.jsonl" ] || { echo "no recording at $SIM/${src#/sim/} (frames.jsonl missing or empty)"; exit 1; } ;;
     esac

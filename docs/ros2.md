@@ -25,7 +25,7 @@ flowchart LR
     GPSN["gpsd_gps"]
     LDN["ld2450"]
     SIMC["sim_camera"]
-    DET["fence_detector<br/>YOLO11n v0.3 / v0.4 TensorRT FP16"]
+    DET["fence_detector<br/>YOLO11n v0.5 TensorRT FP16"]
     CONF["alert_confirm<br/>5 of 8 frames · 5 m · conf 0.7"]
     ST["querra_stats"]
     XRCE["micro-ROS agent<br/>UDP 8888 (px4:=true)"]
@@ -121,9 +121,9 @@ From a shell on the Jetson, in `/ssd/querra/ros2`:
   recording made with `tools/cam_record.py`, replayed at real time and looped. The recorded mission `m1` (171 s, 2,535
   frames, the simulated farm with three faults, no people) is on the Jetson in `/ssd/querra/sim/m1`.
 - **`fence_detector`** runs a YOLO11n TensorRT FP16 engine (640×416) through `querra_scout`'s `YOLODetector`, the same
-  code as field mode. `engine:=` picks the model. The default is model-v0.3. `./ros.sh demo tcp://…` passes model-v0.4,
-  which also knows the rich world look (see [ml/README.md](../ml/README.md)). It always takes the newest frame and drops the rest, so it never builds a
-  queue. It publishes `/detections` (`vision_msgs/Detection2DArray`, same stamp as the image), `/detections/image`
+  code as field mode. `engine:=` picks the model. The default is model-v0.5: it knows both world looks and was trained
+  on frames compressed like this camera stream (see [ml/README.md](../ml/README.md)). It always takes the newest frame
+  and drops the rest, so it never builds a queue. It publishes `/detections` (`vision_msgs/Detection2DArray`, same stamp as the image), `/detections/image`
   (annotated JPEG, only encoded while someone subscribes) and `/detections/latency_ms`. TensorRT 10, CUDA 12.6, the
   engine and `querra_scout` are mounted read-only from JetPack on the host; the image only adds `vision_msgs` and Pillow.
 - **`alert_confirm`** is `tools/confirm.py` on ROS 2: it projects each box centre to the ground with the position,

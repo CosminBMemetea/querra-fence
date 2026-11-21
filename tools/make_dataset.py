@@ -52,7 +52,7 @@ WORLD = "pasture"
 # ---------------------------------------------------------------- layouts
 STYLE = {"v": "v1", "mission": False, "refly": 0.2, "flight": 0.7}
 # v4 flight poses come from ml/flight_poses.json: offset, heading against the route, camera pitch (55 deg minus the body
-# pitch), roll and distance to the nearest corner, measured in PX4 logs of real mission flights
+# pitch), roll and distance to the nearest corner, measured in PX4 SITL logs of mission flights
 # (tools/flight_poses_from_ulog.py). A share of the frames fly the route the other way round.
 FLIGHT_POSES = os.path.join(ROOT, "ml", "flight_poses.json")
 FLIGHT = {"reverse": 0.1, "route_offset_m": 2.5}

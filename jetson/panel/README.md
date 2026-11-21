@@ -40,8 +40,8 @@ field, in English or Polish (EN | PL switch, remembered by the browser), for a p
 
 - **Data collection:** big Start and Stop, run name, elapsed time, frames, fps, run size, alerts, disk left, last
   detections. Stop runs `field-stop.sh` and the page says when it is safe to cut the power.
-- **Settings:** start at boot (a user crontab line tagged `# querra-field`, off by default), the v0.2, v0.3 or v0.4 engine
-  (edits `field.sh` with a backup, only while collection is stopped), and the Vision demo on or off.
+- **Settings:** start at boot (a user crontab line tagged `# querra-field`, off by default), the v0.2, v0.3, v0.4 or
+  v0.5 engine (edits `field.sh` with a backup, only while collection is stopped), and the Vision demo on or off.
 - **GPS:** fix type, satellites used and seen, HDOP, position with a map link, altitude, speed, heading, time since fix.
 - **Radar:** a ±60°, 6 m fan with up to 3 targets and their trails, plus distance, angle and speed per target, and
   fps, frames, bad frames, error and the demo flag. It says "radar service offline" when the service is down.

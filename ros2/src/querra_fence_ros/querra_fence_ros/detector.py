@@ -1,4 +1,4 @@
-"""Fence detector node: YOLO11n TensorRT FP16 engine on the Jetson GPU (model-v0.3 by default, engine:=... to change).
+"""Fence detector node: YOLO11n TensorRT FP16 engine on the Jetson GPU (model-v0.5 by default, engine:=... to change).
 
 Subscribes image (CompressedImage, default /camera/usb/image_raw/compressed), always works on the newest frame,
 publishes /detections (vision_msgs/Detection2DArray, same stamp as the image), /detections/image (annotated JPEG
@@ -21,7 +21,7 @@ FAULTS = ("wire_break", "fallen_post", "branch")
 class Detector(Node):
     def __init__(self):
         super().__init__("fence_detector")
-        engine = self.declare_parameter("engine", "/models/fence-yolo11n-v0.3-fp16.engine").value
+        engine = self.declare_parameter("engine", "/models/fence-yolo11n-v0.5-fp16.engine").value
         self.conf = float(self.declare_parameter("conf", 0.35).value)
         topic = self.declare_parameter("image", "/camera/usb/image_raw/compressed").value
         from querra_scout.detector import YOLODetector

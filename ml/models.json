@@ -16,8 +16,167 @@
  },
  "models": [
   {
+   "id": "model-v0.5",
+   "status": "default",
+   "summary": "+ flight poses, stream JPEG",
+   "date": "2026-11-21",
+   "parent": "model-v0.4",
+   "code": "38b8990",
+   "release": "model-v0.5",
+   "run": "ml/runs/model-v0.5",
+   "used_for": [
+    "ROS 2 detector default",
+    "ROS 2 replay demo (ros.sh demo, classic recording)",
+    "live Gazebo flights on the Jetson: ros.sh demo tcp://MAC:5601",
+    "panel field mode default"
+   ],
+   "platform": {
+    "default_from": "v0.11.0"
+   },
+   "data": {
+    "train": [
+     {
+      "dataset": "fence_yolo_flight_classic_stream",
+      "split": "train",
+      "frames": 2400
+     },
+     {
+      "dataset": "fence_yolo_flight_rich_stream",
+      "split": "train",
+      "frames": 2400
+     },
+     {
+      "dataset": "fence_yolo_rich_stream",
+      "split": "train",
+      "frames": 2000,
+      "sample": "random 2000 of 3600, seed 0"
+     },
+     {
+      "dataset": "fence_yolo_v3c_stream",
+      "split": "train",
+      "frames": 1000,
+      "sample": "random 1000 of 1200, seed 0"
+     },
+     {
+      "dataset": "fence_yolo_v2_stream",
+      "split": "train",
+      "frames": 1000,
+      "sample": "random 1000 of 2400, seed 0"
+     },
+     {
+      "dataset": "fence_yolo_stream",
+      "split": "train",
+      "frames": 800,
+      "sample": "random 800 of 3500, seed 0"
+     }
+    ],
+    "val": [
+     {
+      "dataset": "fence_yolo_flight_classic_q4",
+      "split": "val",
+      "frames": 600
+     },
+     {
+      "dataset": "fence_yolo_flight_rich_q4",
+      "split": "val",
+      "frames": 600
+     },
+     {
+      "dataset": "fence_yolo_v2",
+      "split": "val",
+      "frames": 600
+     }
+    ],
+    "mix": "tools/mix_dataset.py (ml/runs/model-v0.5/data.yaml); 6,119 of the 9,600 training frames are stream-like JPEG"
+   },
+   "training": {
+    "from": "model-v0.4",
+    "epochs": 6,
+    "selected_epoch": 6,
+    "imgsz": 640,
+    "batch": 16,
+    "optimizer": "AdamW lr0 0.000909 (Ultralytics auto), 3 warm-up epochs",
+    "close_mosaic": 3,
+    "device": "CPU, Apple M2 8 GB",
+    "hours": 3.4,
+    "notes": "tools/train_with_breaks.py: 3 sessions of 2 epochs with 15 min cooling breaks, resumed with --resume (optimizer state kept). Ultralytics 8.4.215, torch 2.15."
+   },
+   "scores": {
+    "val_mix_mAP50": 0.952,
+    "test_classic_mAP50": 0.937,
+    "test_classic_wire_break_recall": 0.65,
+    "test_rich_mAP50": 0.937,
+    "test_rich_wire_break_recall": 0.61,
+    "mission_frames_classic_mAP50": 0.976,
+    "mission_frames_rich_mAP50": 0.976,
+    "refly_classic_mAP50": 0.982,
+    "refly_rich_mAP50": 0.987,
+    "stream_q4": {
+     "flight_mission_classic": {
+      "mAP50": 0.963,
+      "wire_break_mAP50": 0.793,
+      "wb_false_pct": 0.0
+     },
+     "flight_mission_rich": {
+      "mAP50": 0.954,
+      "wire_break_mAP50": 0.772,
+      "wb_false_pct": 0.0
+     },
+     "flight_test_classic": {
+      "mAP50": 0.926,
+      "wire_break_mAP50": 0.623,
+      "wb_false_pct": 0.4
+     },
+     "flight_test_rich": {
+      "mAP50": 0.914,
+      "wire_break_mAP50": 0.516,
+      "wb_false_pct": 0.3
+     }
+    }
+   },
+   "mission_replay": {
+    "faults_found": "3 of 3",
+    "false_alerts": 0,
+    "false_wire_break_frames_conf0.7": 1
+   },
+   "live": {
+    "classic": {
+     "faults_found": "3 of 3",
+     "false_alerts": 0
+    },
+    "rich": {
+     "faults_found": "3 of 3",
+     "false_alerts": 0
+    }
+   },
+   "decision": "Default from v0.11.0 for everything: the replay demo, live Gazebo flights, the ROS 2 detector and field mode. 0 false alerts in both live flights and the mission replay (v0.4: 13, 6 and 12), all faults found; the PNG held-out sets score as v0.4. Trade-off: broken-wire recall per frame is a little lower (fewer frames see F1 in the replay), which the 5-of-8 confirmation absorbs.",
+   "jetson": {
+    "engine_gpu_ms": 3.65,
+    "trtexec": "TensorRT 10.3 FP16, 292 inferences/s"
+   },
+   "artefacts": [
+    {
+     "file": "fence-yolo11n-v0.5.pt",
+     "bytes": 5485530,
+     "sha256": "aada10a358b504fac95baa873ae6e037ca5f115768ea2095bb4ce2af940cb0bc"
+    },
+    {
+     "file": "fence-yolo11n-v0.5.onnx",
+     "bytes": 10610501,
+     "sha256": "24be9ad3d4279d09d5153e243469d72d897b65c3898fea5e6a860dc6ff422601"
+    },
+    {
+     "file": "fence-yolo11n-v0.5-fp16.engine",
+     "bytes": 8051628,
+     "sha256": "8881e48ac065168ee8e697d2dcc04cf1d8417cf7a150f7568391d3f436169915",
+     "where": "Jetson only"
+    }
+   ],
+   "benchmark": "ml/benchmark"
+  },
+  {
    "id": "model-v0.4",
-   "status": "live-sim",
+   "status": "retired",
    "summary": "+ rich look, re-fly poses",
    "date": "2026-11-20",
    "parent": "model-v0.3",
@@ -25,11 +184,11 @@
    "release": "model-v0.4",
    "run": "ml/runs/model-v0.4",
    "used_for": [
-    "live Gazebo flights on the Jetson: ros.sh demo tcp://MAC:5601 (the rich look is the default world)",
     "panel field mode: selectable"
    ],
    "platform": {
-    "live_sim_from": "v0.10.0"
+    "live_sim_from": "v0.10.0",
+    "live_sim_until": "v0.11.0"
    },
    "data": {
     "train": [
@@ -91,7 +250,29 @@
     "mission_frames_classic_mAP50": 0.981,
     "mission_frames_rich_mAP50": 0.977,
     "refly_classic_mAP50": 0.981,
-    "refly_rich_mAP50": 0.984
+    "refly_rich_mAP50": 0.984,
+    "stream_q4": {
+     "flight_mission_classic": {
+      "mAP50": 0.884,
+      "wire_break_mAP50": 0.264,
+      "wb_false_pct": 14.8
+     },
+     "flight_mission_rich": {
+      "mAP50": 0.887,
+      "wire_break_mAP50": 0.34,
+      "wb_false_pct": 9.8
+     },
+     "flight_test_classic": {
+      "mAP50": 0.86,
+      "wire_break_mAP50": 0.267,
+      "wb_false_pct": 6.8
+     },
+     "flight_test_rich": {
+      "mAP50": 0.856,
+      "wire_break_mAP50": 0.207,
+      "wb_false_pct": 9.2
+     }
+    }
    },
    "mission_replay": {
     "faults_found": "3 of 3",
@@ -108,7 +289,7 @@
      "false_alerts": 6
     }
    },
-   "decision": "Live-sim model only. Big gain on the rich look (finds 3 of 3 faults where v0.3 found 1), but twice the false broken-wire alerts on the classic mission (dead strand, corners), so the classic replay demo stays on v0.3.",
+   "decision": "Live-sim model only. Big gain on the rich look (finds 3 of 3 faults where v0.3 found 1), but twice the false broken-wire alerts on the classic mission (dead strand, corners), so the classic replay demo stays on v0.3. Retired by v0.5 (v0.11.0): the stream's JPEG compression caused its false alerts, and v0.5 is trained on it.",
    "jetson": {
     "engine_gpu_ms": 3.64,
     "trtexec": "TensorRT 10.3 FP16, 293 inferences/s"
@@ -135,7 +316,7 @@
   },
   {
    "id": "model-v0.3",
-   "status": "default",
+   "status": "retired",
    "summary": "+ dead-strand farms",
    "date": "2026-11-19",
    "parent": "model-v0.2",
@@ -143,12 +324,11 @@
    "release": "model-v0.3",
    "run": null,
    "used_for": [
-    "ROS 2 detector default",
-    "ROS 2 replay demo (ros.sh demo, classic recording)",
-    "panel field mode default"
+    "panel field mode: selectable"
    ],
    "platform": {
-    "default_from": "v0.3.0"
+    "default_from": "v0.3.0",
+    "default_until": "v0.11.0"
    },
    "data": {
     "train": [
@@ -185,7 +365,29 @@
     "mission_frames_classic_mAP50": 0.958,
     "mission_frames_rich_mAP50": 0.657,
     "refly_classic_mAP50": 0.97,
-    "refly_rich_mAP50": 0.584
+    "refly_rich_mAP50": 0.584,
+    "stream_q4": {
+     "flight_mission_classic": {
+      "mAP50": 0.896,
+      "wire_break_mAP50": 0.405,
+      "wb_false_pct": 8.2
+     },
+     "flight_mission_rich": {
+      "mAP50": 0.591,
+      "wire_break_mAP50": 0.172,
+      "wb_false_pct": 0.0
+     },
+     "flight_test_classic": {
+      "mAP50": 0.85,
+      "wire_break_mAP50": 0.207,
+      "wb_false_pct": 7.3
+     },
+     "flight_test_rich": {
+      "mAP50": 0.592,
+      "wire_break_mAP50": 0.036,
+      "wb_false_pct": 0.1
+     }
+    }
    },
    "mission_replay": {
     "faults_found": "3 of 3",
@@ -202,7 +404,7 @@
      "false_alerts": 0
     }
    },
-   "decision": "Default since 2026-11-19: fewer false broken wires than v0.2, all faults found with 5-of-8 confirmation. Trained on the classic look only.",
+   "decision": "Default since 2026-11-19: fewer false broken wires than v0.2, all faults found with 5-of-8 confirmation. Trained on the classic look only. Retired by v0.5 (v0.11.0): 6 false alerts on the mission replay against 0.",
    "jetson": {
     "engine_gpu_ms": 4.9
    },

@@ -50,7 +50,7 @@ Phase 2 bringt den Zaundetektor nach ROS 2: `fence_detector` führt die TensorRT
 auf der Jetson-GPU aus (etwa 15 Hz, 20–30 ms pro Bild von JPEG bis zu den Boxen) und veröffentlicht
 `vision_msgs/Detection2DArray` sowie ein annotiertes Bild. `alert_confirm` macht aus Erkennungen nur dann
 `/fence/alerts`, wenn 5 der letzten 8 Bilder am Boden auf 5 m übereinstimmen. `./ros.sh demo` (oder **Demo** im Panel)
-spielt eine aufgezeichnete Gazebo-Mission durch die ganze Kette ab; `./ros.sh demo tcp://<mac>:5601` (model-v0.4) nutzt die
+spielt eine aufgezeichnete Gazebo-Mission durch die ganze Kette ab; `./ros.sh demo tcp://<mac>:5601` nutzt die
 Live-Simulation. Foxglove-Layout: [`ros2/foxglove/querra-layout.json`](ros2/foxglove/querra-layout.json).
 
 Phase 3 bindet PX4 selbst an: `./ros.sh demo tcp://<mac>:5601 px4:=true` startet einen micro-ROS-Agenten auf UDP 8888.
@@ -211,6 +211,7 @@ Drohnenkamera über das LAN (`tools/cam_stream.py`), während PX4 die Mission fl
 | v0.2 · 25 Epochen | 0.921 | 13.3 fps; F1, F2, F3 alle gefunden (0.94 / 0.96 / 0.84); 385 Bilder mit falschem gerissenem Draht | `model-v0.2` |
 | v0.3 · mit gezielten Daten feinjustiert | 0.916 (Testset 0.912) | `wire_break` Test-mAP50 0.58 → 0.68; mit GPS-Bestätigung 5 von 8 Fehlalarme 33 → 6, alle Schäden gefunden | `model-v0.3` |
 | v0.4 · beide Weltansichten | 0.956 (Testset 0.938 classic, 0.938 rich) | Welt rich: 3 von 3 Schäden (v0.3: 1 von 3); Mission classic: 13 Fehlalarme (v0.3: 5), daher nur für Live-Flüge in Gazebo | `model-v0.4` |
+| v0.5 · Flugposen, Stream-JPEG | 0.952 (Testset 0.937 classic, 0.937 rich) | trainiert auf Bildern in Flugpose, komprimiert wie der Kamerastream: 3 von 3 Schäden und 0 Fehlalarme in beiden Live-Flügen (v0.4: 13 classic, 6 rich); das Standardmodell | `model-v0.5` |
 
 ![v0.2 auf dem Jetson: gerissener Draht, umgefallener Pfahl, Ast und der falsche gerissene Draht, den v0.3 reduziert](docs/img/v0.2-jetson-faults.jpg)
 

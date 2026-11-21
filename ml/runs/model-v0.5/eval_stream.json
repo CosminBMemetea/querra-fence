@@ -1,0 +1,242 @@
+{
+ "classic flight: mission pasture q4": {
+  "frames": 400,
+  "model-v0.3": {
+   "all": 0.896,
+   "wire_break": 0.405,
+   "wb_p": 0.34,
+   "wb_r": 0.62,
+   "fallen_post": 0.976,
+   "branch": 0.995,
+   "wb_false": 8.2
+  },
+  "model-v0.4": {
+   "all": 0.884,
+   "wire_break": 0.264,
+   "wb_p": 0.19,
+   "wb_r": 0.67,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 14.8
+  },
+  "model-v0.5": {
+   "all": 0.963,
+   "wire_break": 0.793,
+   "wb_p": 1.0,
+   "wb_r": 0.69,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.0
+  }
+ },
+ "rich flight: mission pasture q4": {
+  "frames": 400,
+  "model-v0.3": {
+   "all": 0.591,
+   "wire_break": 0.172,
+   "wb_p": 0.33,
+   "wb_r": 0.21,
+   "fallen_post": 0.541,
+   "branch": 0.337,
+   "wb_false": 0.0
+  },
+  "model-v0.4": {
+   "all": 0.887,
+   "wire_break": 0.34,
+   "wb_p": 0.21,
+   "wb_r": 0.58,
+   "fallen_post": 0.993,
+   "branch": 0.995,
+   "wb_false": 9.8
+  },
+  "model-v0.5": {
+   "all": 0.954,
+   "wire_break": 0.772,
+   "wb_p": 0.93,
+   "wb_r": 0.71,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.0
+  }
+ },
+ "classic flight: test seeds 160-162 q4": {
+  "frames": 750,
+  "model-v0.3": {
+   "all": 0.85,
+   "wire_break": 0.207,
+   "wb_p": 0.22,
+   "wb_r": 0.39,
+   "fallen_post": 0.949,
+   "branch": 0.938,
+   "wb_false": 7.3
+  },
+  "model-v0.4": {
+   "all": 0.86,
+   "wire_break": 0.267,
+   "wb_p": 0.3,
+   "wb_r": 0.44,
+   "fallen_post": 0.966,
+   "branch": 0.936,
+   "wb_false": 6.8
+  },
+  "model-v0.5": {
+   "all": 0.926,
+   "wire_break": 0.623,
+   "wb_p": 0.71,
+   "wb_r": 0.58,
+   "fallen_post": 0.987,
+   "branch": 0.975,
+   "wb_false": 0.4
+  }
+ },
+ "rich flight: test seeds 160-162 q4": {
+  "frames": 750,
+  "model-v0.3": {
+   "all": 0.592,
+   "wire_break": 0.036,
+   "wb_p": 0.31,
+   "wb_r": 0.02,
+   "fallen_post": 0.855,
+   "branch": 0.483,
+   "wb_false": 0.1
+  },
+  "model-v0.4": {
+   "all": 0.856,
+   "wire_break": 0.207,
+   "wb_p": 0.26,
+   "wb_r": 0.33,
+   "fallen_post": 0.974,
+   "branch": 0.927,
+   "wb_false": 9.2
+  },
+  "model-v0.5": {
+   "all": 0.914,
+   "wire_break": 0.516,
+   "wb_p": 0.73,
+   "wb_r": 0.33,
+   "fallen_post": 0.991,
+   "branch": 0.949,
+   "wb_false": 0.3
+  }
+ },
+ "classic: test seeds 140-142 q4": {
+  "frames": 750,
+  "model-v0.3": {
+   "all": 0.819,
+   "wire_break": 0.269,
+   "wb_p": 0.27,
+   "wb_r": 0.44,
+   "fallen_post": 0.817,
+   "branch": 0.847,
+   "wb_false": 15.5
+  },
+  "model-v0.4": {
+   "all": 0.834,
+   "wire_break": 0.292,
+   "wb_p": 0.3,
+   "wb_r": 0.45,
+   "fallen_post": 0.855,
+   "branch": 0.885,
+   "wb_false": 12.9
+  },
+  "model-v0.5": {
+   "all": 0.91,
+   "wire_break": 0.671,
+   "wb_p": 0.76,
+   "wb_r": 0.54,
+   "fallen_post": 0.899,
+   "branch": 0.943,
+   "wb_false": 1.2
+  }
+ },
+ "rich: test seeds 140-142 q4": {
+  "frames": 750,
+  "model-v0.3": {
+   "all": 0.694,
+   "wire_break": 0.155,
+   "wb_p": 0.51,
+   "wb_r": 0.09,
+   "fallen_post": 0.763,
+   "branch": 0.649,
+   "wb_false": 0.1
+  },
+  "model-v0.4": {
+   "all": 0.862,
+   "wire_break": 0.396,
+   "wb_p": 0.36,
+   "wb_r": 0.55,
+   "fallen_post": 0.874,
+   "branch": 0.931,
+   "wb_false": 9.2
+  },
+  "model-v0.5": {
+   "all": 0.92,
+   "wire_break": 0.705,
+   "wb_p": 0.8,
+   "wb_r": 0.52,
+   "fallen_post": 0.928,
+   "branch": 0.947,
+   "wb_false": 0.4
+  }
+ },
+ "classic flight: mission pasture PNG": {
+  "frames": 400,
+  "model-v0.3": {
+   "all": 0.953,
+   "wire_break": 0.793,
+   "wb_p": 0.86,
+   "wb_r": 0.71,
+   "fallen_post": 0.989,
+   "branch": 0.989,
+   "wb_false": 1.0
+  },
+  "model-v0.4": {
+   "all": 0.969,
+   "wire_break": 0.844,
+   "wb_p": 1.0,
+   "wb_r": 0.75,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.2
+  },
+  "model-v0.5": {
+   "all": 0.974,
+   "wire_break": 0.863,
+   "wb_p": 1.0,
+   "wb_r": 0.68,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.0
+  }
+ },
+ "rich flight: mission pasture PNG": {
+  "frames": 400,
+  "model-v0.3": {
+   "all": 0.62,
+   "wire_break": 0.17,
+   "wb_p": 0.96,
+   "wb_r": 0.12,
+   "fallen_post": 0.466,
+   "branch": 0.559,
+   "wb_false": 0.0
+  },
+  "model-v0.4": {
+   "all": 0.966,
+   "wire_break": 0.836,
+   "wb_p": 0.93,
+   "wb_r": 0.75,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.0
+  },
+  "model-v0.5": {
+   "all": 0.969,
+   "wire_break": 0.867,
+   "wb_p": 1.0,
+   "wb_r": 0.78,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.0
+  }
+ }
+}

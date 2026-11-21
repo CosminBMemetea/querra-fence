@@ -87,6 +87,172 @@
    "notes": "The same farms and poses as fence_yolo_refly_classic, in the rich look."
   },
   {
+   "id": "fence_yolo_flight_classic",
+   "look": "classic",
+   "style": "v4 (inspection-flight poses)",
+   "created": "2026-11-21",
+   "code": "38b8990",
+   "command": "tools/make_dataset.sh --seed 100 --look classic --style v4 --start 230 --layouts 238 --split train --frames 300 (val: --start 238 --layouts 240; test: --flight-share 1 --start 60 --layouts 63 --frames 250; mission: --mission-world --start 92 --layouts 93 --frames 400)",
+   "size": "94 MB",
+   "splits": {
+    "train": {"layouts": "230-237", "seeds": "330-337", "frames": 2400, "role": "train"},
+    "val": {"layouts": "238-239", "seeds": "338-339", "frames": 600, "role": "val"},
+    "test": {"layouts": "60-62", "seeds": "160-162", "frames": 750, "role": "test", "prefix": "L60,L61,L62"},
+    "test_mission": {"layouts": "92", "world": "fence.json (the mission pasture)", "frames": 400, "role": "test", "split_dir": "test", "prefix": "L92"}
+   },
+   "notes": "70% of the poses (100% in the test splits) fly the farm's inspection route at the attitudes measured in PX4 SITL logs of the simulated mission flights (ml/flight_poses.json: 2.5 m outside the fence, camera 48-67 deg down, roll in the corners, half the frames within 12 m of a corner, 10% flown the other way round); the rest as style v3. New farm seeds."
+  },
+  {
+   "id": "fence_yolo_flight_rich",
+   "look": "rich",
+   "style": "v4 (inspection-flight poses)",
+   "created": "2026-11-21",
+   "code": "38b8990",
+   "command": "tools/make_dataset.sh --seed 100 --look rich --style v4 --start 240 --layouts 248 --split train --frames 300 (val: --start 248 --layouts 250; test: --flight-share 1 --start 60 --layouts 63 --frames 250; mission: --mission-world --start 92 --layouts 93 --frames 400)",
+   "size": "1.3 GB",
+   "splits": {
+    "train": {"layouts": "240-247", "seeds": "340-347", "frames": 2400, "role": "train"},
+    "val": {"layouts": "248-249", "seeds": "348-349", "frames": 600, "role": "val"},
+    "test": {"layouts": "60-62", "seeds": "160-162", "frames": 750, "role": "test", "prefix": "L60,L61,L62"},
+    "test_mission": {"layouts": "92", "world": "fence.json (the mission pasture)", "frames": 400, "role": "test", "split_dir": "test", "prefix": "L92"}
+   },
+   "notes": "70% of the poses (100% in the test splits) fly the farm's inspection route at the attitudes measured in PX4 SITL logs of the simulated mission flights (ml/flight_poses.json: 2.5 m outside the fence, camera 48-67 deg down, roll in the corners, half the frames within 12 m of a corner, 10% flown the other way round); the rest as style v3. New farm seeds."
+  },
+  {
+   "id": "fence_yolo_flight_classic_stream",
+   "look": "classic",
+   "style": "copy of fence_yolo_flight_classic:train, stream-like JPEG",
+   "created": "2026-11-21",
+   "code": "38b8990",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_flight_classic train ~/querra-data/fence_yolo_flight_classic_stream --share 0.75 --seed 1",
+   "derived_from": "fence_yolo_flight_classic:train",
+   "splits": {
+    "train": {"frames": 2400, "role": "train"}
+   },
+   "notes": "1828 of 2400 frames compressed like the live camera stream (MJPEG, 4:2:0) at a random ffmpeg -q:v of 2, 3, 4, 5, 6 or 8; the rest are hard links to the PNGs. Same labels."
+  },
+  {
+   "id": "fence_yolo_flight_rich_stream",
+   "look": "rich",
+   "style": "copy of fence_yolo_flight_rich:train, stream-like JPEG",
+   "created": "2026-11-21",
+   "code": "38b8990",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_flight_rich train ~/querra-data/fence_yolo_flight_rich_stream --share 0.75 --seed 1",
+   "derived_from": "fence_yolo_flight_rich:train",
+   "splits": {
+    "train": {"frames": 2400, "role": "train"}
+   },
+   "notes": "1828 of 2400 frames compressed like the live camera stream (MJPEG, 4:2:0) at a random ffmpeg -q:v of 2, 3, 4, 5, 6 or 8; the rest are hard links to the PNGs. Same labels."
+  },
+  {
+   "id": "fence_yolo_rich_stream",
+   "look": "rich",
+   "style": "copy of fence_yolo_rich:train, stream-like JPEG",
+   "created": "2026-11-21",
+   "code": "38b8990",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_rich train ~/querra-data/fence_yolo_rich_stream --share 0.5 --seed 2",
+   "derived_from": "fence_yolo_rich:train",
+   "splits": {
+    "train": {"frames": 3600, "role": "train"}
+   },
+   "notes": "1831 of 3600 frames compressed like the live camera stream (MJPEG, 4:2:0) at a random ffmpeg -q:v of 2, 3, 4, 5, 6 or 8; the rest are hard links to the PNGs. Same labels."
+  },
+  {
+   "id": "fence_yolo_v3c_stream",
+   "look": "classic",
+   "style": "copy of fence_yolo_v3c:train, stream-like JPEG",
+   "created": "2026-11-21",
+   "code": "38b8990",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_v3c train ~/querra-data/fence_yolo_v3c_stream --share 0.5 --seed 3",
+   "derived_from": "fence_yolo_v3c:train",
+   "splits": {
+    "train": {"frames": 1200, "role": "train"}
+   },
+   "notes": "650 of 1200 frames compressed like the live camera stream (MJPEG, 4:2:0) at a random ffmpeg -q:v of 2, 3, 4, 5, 6 or 8; the rest are hard links to the PNGs. Same labels."
+  },
+  {
+   "id": "fence_yolo_v2_stream",
+   "look": "classic",
+   "style": "copy of fence_yolo_v2:train, stream-like JPEG",
+   "created": "2026-11-21",
+   "code": "38b8990",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_v2 train ~/querra-data/fence_yolo_v2_stream --share 0.5 --seed 4",
+   "derived_from": "fence_yolo_v2:train",
+   "splits": {
+    "train": {"frames": 2400, "role": "train"}
+   },
+   "notes": "1178 of 2400 frames compressed like the live camera stream (MJPEG, 4:2:0) at a random ffmpeg -q:v of 2, 3, 4, 5, 6 or 8; the rest are hard links to the PNGs. Same labels."
+  },
+  {
+   "id": "fence_yolo_stream",
+   "look": "classic",
+   "style": "copy of fence_yolo:train, stream-like JPEG",
+   "created": "2026-11-21",
+   "code": "38b8990",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo train ~/querra-data/fence_yolo_stream --share 0.5 --seed 5",
+   "derived_from": "fence_yolo:train",
+   "splits": {
+    "train": {"frames": 3500, "role": "train"}
+   },
+   "notes": "1750 of 3500 frames compressed like the live camera stream (MJPEG, 4:2:0) at a random ffmpeg -q:v of 2, 3, 4, 5, 6 or 8; the rest are hard links to the PNGs. Same labels."
+  },
+  {
+   "id": "fence_yolo_flight_classic_q4",
+   "look": "classic",
+   "style": "copy of fence_yolo_flight_classic, every frame at the stream's JPEG quality",
+   "created": "2026-11-21",
+   "code": "38b8990",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_flight_classic SPLIT ~/querra-data/fence_yolo_flight_classic_q4 --quality 4 --share 1",
+   "derived_from": "fence_yolo_flight_classic",
+   "splits": {
+    "val": {"frames": 600, "role": "val"},
+    "test": {"layouts": "60-62", "seeds": "160-162", "frames": 750, "role": "test", "prefix": "L60,L61,L62"},
+    "test_mission": {"layouts": "92", "world": "fence.json (the mission pasture)", "frames": 400, "role": "test", "split_dir": "test", "prefix": "L92"}
+   },
+   "notes": "The validation and test splits of fence_yolo_flight_classic, every frame compressed like the live stream (ffmpeg -c:v mjpeg -q:v 4 -pix_fmt yuvj420p). The val split selects nothing (the last epoch is kept) but is watched during training. The best offline stand-in for a live flight: on test_mission, wb_false matches the recorded flight."
+  },
+  {
+   "id": "fence_yolo_flight_rich_q4",
+   "look": "rich",
+   "style": "copy of fence_yolo_flight_rich, every frame at the stream's JPEG quality",
+   "created": "2026-11-21",
+   "code": "38b8990",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_flight_rich SPLIT ~/querra-data/fence_yolo_flight_rich_q4 --quality 4 --share 1",
+   "derived_from": "fence_yolo_flight_rich",
+   "splits": {
+    "val": {"frames": 600, "role": "val"},
+    "test": {"layouts": "60-62", "seeds": "160-162", "frames": 750, "role": "test", "prefix": "L60,L61,L62"},
+    "test_mission": {"layouts": "92", "world": "fence.json (the mission pasture)", "frames": 400, "role": "test", "split_dir": "test", "prefix": "L92"}
+   },
+   "notes": "The validation and test splits of fence_yolo_flight_rich, every frame compressed like the live stream (ffmpeg -c:v mjpeg -q:v 4 -pix_fmt yuvj420p). The val split selects nothing (the last epoch is kept) but is watched during training. The best offline stand-in for a live flight: on test_mission, wb_false matches the recorded flight."
+  },
+  {
+   "id": "fence_yolo_v2_q4",
+   "look": "classic",
+   "style": "copy of fence_yolo_v2, every frame at the stream's JPEG quality",
+   "created": "2026-11-21",
+   "code": "38b8990",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_v2 SPLIT ~/querra-data/fence_yolo_v2_q4 --quality 4 --share 1",
+   "derived_from": "fence_yolo_v2",
+   "splits": {
+    "test": {"layouts": "40-42", "seeds": "140-142", "frames": 750, "role": "test", "prefix": "L40,L41,L42"}
+   },
+   "notes": "fence_yolo_v2's test farms (seeds 140-142), every frame at the stream's JPEG quality."
+  },
+  {
+   "id": "fence_yolo_rich_q4",
+   "look": "rich",
+   "style": "copy of fence_yolo_rich, every frame at the stream's JPEG quality",
+   "created": "2026-11-21",
+   "code": "38b8990",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/fence_yolo_rich SPLIT ~/querra-data/fence_yolo_rich_q4 --quality 4 --share 1",
+   "derived_from": "fence_yolo_rich",
+   "splits": {
+    "test": {"layouts": "40-42", "seeds": "140-142", "frames": 750, "role": "test", "prefix": "L40,L41,L42"}
+   },
+   "notes": "fence_yolo_rich's test farms (seeds 140-142), every frame at the stream's JPEG quality."
+  },
+  {
    "id": "mission-rec/m1",
    "look": "classic",
    "style": "recorded flight",

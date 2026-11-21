@@ -4,7 +4,10 @@
     python3 tools/release_notes.py --apply [TAG ...]   # gh release edit: title and notes (every tag by default)
     python3 tools/release_notes.py --verify            # compare the GitHub releases with the files
 
-Checks: every release tag has a file and every file a tag; the title starts with the tag; the sections of its track
+A file without a tag is a draft: the notes of a release that is not published yet (gh release create makes the tag).
+Drafts get the same checks; --apply and --verify skip them.
+
+Checks: every release tag has a file; the title starts with the tag; the sections of its track
 are present (platform vX.Y.Z or model model-vX.Y, see ml/README.md); no {{placeholder}} is left; images from
 raw.githubusercontent.com are pinned to a commit or tag, not to main. --verify also checks that every file attached to
 a release is listed in its Files table. Tags are never moved.
@@ -47,9 +50,9 @@ def read(tag):
 def check():
     tags = sorted((t for t in run("git", "tag").stdout.split() if track(t)), key=tag_key)
     files = sorted(f[:-3] for f in os.listdir(NOTES) if f.endswith(".md"))
+    drafts = [f for f in files if f not in tags and track(f)]
     errs = ["%s: no notes file" % t for t in tags if t not in files]
-    errs += ["%s.md: no such tag" % f for f in files if f not in tags and track(f)]
-    for t in tags:
+    for t in tags + drafts:
         if t not in files:
             continue
         title, body = read(t)
@@ -62,7 +65,7 @@ def check():
             errs.append("%s: placeholder left: %s" % (t, re.search(r"\{\{[^}]*\}\}", body).group(0)))
         for url in re.findall(r"https://raw\.githubusercontent\.com/[^/]+/[^/]+/main/[^\s)\"']+", body):
             errs.append("%s: image not pinned to a commit: %s" % (t, url))
-    return tags, errs
+    return tags, drafts, errs
 
 
 def apply(tags):
@@ -104,7 +107,7 @@ def main():
     ap.add_argument("--apply", nargs="*", metavar="TAG", help="edit these releases on GitHub (all when none given)")
     ap.add_argument("--verify", action="store_true", help="compare GitHub with the files")
     a = ap.parse_args()
-    tags, errs = check()
+    tags, drafts, errs = check()
     for e in errs:
         print("error:", e)
     if errs:
@@ -114,6 +117,8 @@ def main():
     if a.verify:
         sys.exit(0 if verify(tags) else 1)
     print("%d release notes checked: %s" % (len(tags), ", ".join(tags)))
+    if drafts:
+        print("drafts (no tag yet, checked too): " + ", ".join(drafts))
 
 
 if __name__ == "__main__":

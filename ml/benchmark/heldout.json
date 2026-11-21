@@ -1,6 +1,6 @@
 {
  "tool": "tools/eval_sets.py: Ultralytics val at 640 px (416x640 letterbox), PyTorch .pt on CPU; model-v0.1 from its ONNX export (the .pt was not kept; on model-v0.2 the ONNX scores about 0.003 lower than the .pt)",
- "metric": "all = mAP50 over all classes; wire_break, fallen_post, branch = per-class mAP50; wb_p / wb_r = wire_break precision / recall",
+ "metric": "all = mAP50 over all classes; wire_break, fallen_post, branch = per-class mAP50; wb_p / wb_r = wire_break precision / recall; wb_false = % of frames with a false wire_break at conf >= 0.7 (scored from model-v0.5 on)",
  "sets": {
   "classic: old validation farms": {
    "frames": 700,
@@ -35,6 +35,15 @@
     "wb_r": 0.75,
     "fallen_post": 0.911,
     "branch": 0.942
+   },
+   "model-v0.5": {
+    "all": 0.928,
+    "wire_break": 0.85,
+    "wb_p": 0.88,
+    "wb_r": 0.74,
+    "fallen_post": 0.909,
+    "branch": 0.941,
+    "wb_false": 0.0
    }
   },
   "classic: v2 validation farms": {
@@ -70,6 +79,15 @@
     "wb_r": 0.67,
     "fallen_post": 0.977,
     "branch": 0.961
+   },
+   "model-v0.5": {
+    "all": 0.956,
+    "wire_break": 0.816,
+    "wb_p": 0.95,
+    "wb_r": 0.66,
+    "fallen_post": 0.976,
+    "branch": 0.96,
+    "wb_false": 0.0
    }
   },
   "classic: test seeds 140-142": {
@@ -105,6 +123,15 @@
     "wb_r": 0.69,
     "fallen_post": 0.934,
     "branch": 0.941
+   },
+   "model-v0.5": {
+    "all": 0.937,
+    "wire_break": 0.808,
+    "wb_p": 0.89,
+    "wb_r": 0.65,
+    "fallen_post": 0.937,
+    "branch": 0.943,
+    "wb_false": 0.1
    }
   },
   "classic: mission pasture": {
@@ -140,6 +167,15 @@
     "wb_r": 0.79,
     "fallen_post": 0.995,
     "branch": 0.995
+   },
+   "model-v0.5": {
+    "all": 0.976,
+    "wire_break": 0.865,
+    "wb_p": 1.0,
+    "wb_r": 0.72,
+    "fallen_post": 0.995,
+    "branch": 0.995,
+    "wb_false": 0.0
    }
   },
   "classic: re-fly close-ups": {
@@ -175,6 +211,15 @@
     "wb_r": 0.88,
     "fallen_post": 0.991,
     "branch": 0.995
+   },
+   "model-v0.5": {
+    "all": 0.982,
+    "wire_break": 0.972,
+    "wb_p": 0.97,
+    "wb_r": 0.89,
+    "fallen_post": 0.99,
+    "branch": 0.995,
+    "wb_false": 0.2
    }
   },
   "rich: validation farms": {
@@ -210,6 +255,15 @@
     "wb_r": 0.76,
     "fallen_post": 0.922,
     "branch": 0.976
+   },
+   "model-v0.5": {
+    "all": 0.952,
+    "wire_break": 0.849,
+    "wb_p": 0.9,
+    "wb_r": 0.73,
+    "fallen_post": 0.928,
+    "branch": 0.978,
+    "wb_false": 0.3
    }
   },
   "rich: test seeds 140-142": {
@@ -245,6 +299,15 @@
     "wb_r": 0.68,
     "fallen_post": 0.946,
     "branch": 0.962
+   },
+   "model-v0.5": {
+    "all": 0.937,
+    "wire_break": 0.783,
+    "wb_p": 0.89,
+    "wb_r": 0.61,
+    "fallen_post": 0.953,
+    "branch": 0.95,
+    "wb_false": 0.0
    }
   },
   "rich: mission pasture": {
@@ -280,6 +343,15 @@
     "wb_r": 0.84,
     "fallen_post": 0.995,
     "branch": 0.995
+   },
+   "model-v0.5": {
+    "all": 0.976,
+    "wire_break": 0.865,
+    "wb_p": 1.0,
+    "wb_r": 0.72,
+    "fallen_post": 0.995,
+    "branch": 0.995,
+    "wb_false": 0.0
    }
   },
   "rich: re-fly close-ups": {
@@ -315,6 +387,15 @@
     "wb_r": 0.89,
     "fallen_post": 0.989,
     "branch": 0.995
+   },
+   "model-v0.5": {
+    "all": 0.987,
+    "wire_break": 0.969,
+    "wb_p": 0.96,
+    "wb_r": 0.88,
+    "fallen_post": 0.991,
+    "branch": 0.995,
+    "wb_false": 0.5
    }
   }
  }
