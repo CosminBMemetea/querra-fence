@@ -29,7 +29,7 @@ the nodes that combine streams (pointcloud_to_laserscan, slam_toolbox) run with 
 In:  /ugv/cmd_vel (geometry_msgs/Twist), /ugv/reset (std_msgs/Empty: back to the spawn pose, odometry zeroed),
      /ugv/patrol/status (forwarded to the relay's log, so a patrol can be scored from one file).
 """
-import json, math, socket, struct, threading, time
+import array, json, math, socket, struct, threading, time
 import numpy as np
 import rclpy
 from rclpy.node import Node
@@ -92,6 +92,7 @@ class UgvBridge(Node):
         self.dirs = None
         self.last_status = None
         self.t_pose_sent = 0.0
+        self.create_timer(2.0, self.publish_trails)
         if self.slam:
             self.tf_buffer = Buffer()
             # its own thread: /tf traffic must not delay the velocity commands on this node's executor
@@ -194,7 +195,7 @@ class UgvBridge(Node):
         elif kind == "L":
             self.on_lidar(h, payload)
         elif kind == "C":
-            m = CompressedImage(format="jpeg", data=payload)
+            m = CompressedImage(format="jpeg", data=array.array("B", payload))   # array("B"): see on_lidar
             m.header.stamp, m.header.frame_id = self.sim_stamp(h), "ugv_camera_optical"
             self.pub["cam"].publish(m)
         elif kind == "I":
@@ -303,7 +304,9 @@ class UgvBridge(Node):
         m.height, m.width = 1, data.shape[0]
         m.fields = [PointField(name=nm, offset=4 * i, datatype=PointField.FLOAT32, count=1) for i, nm in enumerate(("x", "y", "z", "ring"))]
         m.is_bigendian, m.point_step, m.row_step, m.is_dense = False, 16, 16 * data.shape[0], True
-        m.data = data.tobytes()
+        # array('B'), not bytes: rclpy checks a bytes value one element at a time in Python (230 KB, 10 times a
+        # second); an array of the right type is taken as is
+        m.data = array.array("B", data.tobytes())
         self.pub["cloud"].publish(m)
 
     def on_imu(self, h):
@@ -357,10 +360,15 @@ class UgvBridge(Node):
         ps.pose.position.x, ps.pose.position.y, ps.pose.position.z = float(x), float(y), 0.05
         ps.pose.orientation.w = 1.0
         tr.poses.append(ps)
-        if len(tr.poses) > 4000:
-            del tr.poses[:1000]
+        if len(tr.poses) > 2000:
+            del tr.poses[:500]
         tr.header.stamp, tr.header.frame_id = stamp, "ugv_map"
-        self.pub["trail_" + key].publish(tr)
+
+    def publish_trails(self):
+        """The trails are for looking at: every 2 s is enough (each publish converts every pose in Python)."""
+        for key, tr in self.trails.items():
+            if tr.poses:
+                self.pub["trail_" + key].publish(tr)
 
     def on_gps(self, h):
         stamp = self.sim_stamp(h)

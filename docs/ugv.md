@@ -163,6 +163,7 @@ flowchart LR
 | Teach 3: simulation time + outdoor tuning | 1.08 / 4.6 m, **0.01 m after the loop closed** | 14.8 m | The loop closed at the start. The map was saved after the closure |
 | Repeat 1: localisation against that map, patrol on the SLAM pose | 0.84 / 6.3 m over the first 275 m | 7 m | Passed the tight spots at 95 m and 107 m where odometry stopped. For 400 s localisation held steady: 1.1–1.3 m from the truth, heading within 0.3°. Then the Wi-Fi link between the Mac and the Jetson stalled (4–5 s gaps from 414 s); localisation lost its heading in the last 10 s, and the link carried nothing for about 13 minutes. The patrol held still on its stale pose, as it should |
 | Teach 4: 5 GHz link; the route saved as the map sees it | 1.01 / 2.41 m, 0.38 m at the end | 4.5 m | No link gaps. The saved route (the pose graph after the loop closed, 1,536 points) lies 0.13 m from the true route on median, 0.39 m at most |
+| Repeat 3: as repeat 2, with the localisation and bridge lighter on the CPU (below); Wi-Fi power saving off | 0.26 / 0.83 m, 0.05 m at the end | 4.3 m | The whole loop: 99.7% in 832 s (0.62 m/s), no obstacle stops, 5 of 5 faults through the camera's view. Off the true route: 0.01 m median, 0.18 m p95, 0.62 m max. No link gaps |
 | **Repeat 2: localisation, patrol on the SLAM pose along the taught route** | 0.30 / 1.13 m, 0.02 m at the end | 4.2 m | **The whole loop: 99.7% in 735 s (0.70 m/s), no obstacle stops, 5 of 5 faults through the camera's view. Off the true route: 0.01 m median, 0.17 m p95, 0.60 m max.** One 3.3 s link gap, ridden out |
 
 **On the Orin Nano** during the repeat run: the localisation node used about two CPU cores, `ugv_bridge` 60–75% of
@@ -184,19 +185,33 @@ after the loop closes, in `/ws/maps/forest.route.json`), the route and the SLAM 
 repeat 2 the SLAM pose was 0.30 m from the truth on median, yet the robot drove 0.01 m from the true route on median
 and 0.17 m at the 95th percentile: the map's warp cancels out.
 
+**CPU on the Orin Nano** (`./ros.sh cpu 120`, two minutes into a repeat patrol, % of one core; the board has six):
+
+| Process | Before | After | What changed |
+|---|---|---|---|
+| slam_toolbox localisation | 194% | **39%** | The localisation config only (the mapping one is unchanged): a scan every 0.5 m instead of 0.3 m, a shorter local chain, a smaller per-step window, 2° coarse angles, an 8 m window to match back to the map |
+| `ugv_bridge` | 77% | **33%** | The point cloud and JPEGs go to ROS as `array('B')`. rclpy checks a `bytes` value one element at a time in Python, which for the cloud is 230 KB ten times a second. The visualisation trails are published every 2 s, capped at 2,000 points |
+| stats | 39% | 28% | The ground robot's launch skips `/clock`, `/tf`, `/map` (14 MB), the eval and trail topics |
+| `ugv_patrol` | 12% | 12% | |
+| pointcloud_to_laserscan | 5% | 6% | |
+| **All, in the container** | **327%** | **119%** | the board 57% → 22% busy overall |
+
+Accuracy did not suffer: repeat 3 (after) against repeat 2 (before): 0.18 against 0.17 m p95 off the route, SLAM error
+0.26 against 0.30 m median, and its maximum went from 1.13 to 0.83 m. The robot drove a little slower (0.62 against
+0.70 m/s).
+
 Open:
 - ten repeat patrols, against the 9-of-10 goal;
-- Wi-Fi power saving on the Jetson (it adds latency spikes up to about 0.3 s on 5 GHz);
-- the CPU load on the Orin Nano.
+- the stats node (28%) and the patrol's point-cloud check, if the CPU is needed for the detector.
 
 ## Phase 0 goals
 
 | Goal | Status |
 |---|---|
 | The whole chain runs (Gazebo → relay → ROS 2 on the Jetson → commands back), every sensor at its rate | done |
-| The robot completes the loop autonomously in at least 9 of 10 patrols | on SLAM (teach and repeat): 1 of 1 so far; ten to run. On wheel odometry: no, blocked at about 100 m in 2 of 2 patrols. On ground truth: yes |
+| The robot completes the loop autonomously in at least 9 of 10 patrols | on SLAM (teach and repeat): 2 of 2 so far; ten to run. On wheel odometry: no, blocked at about 100 m in 2 of 2 patrols. On ground truth: yes |
 | At least 4 of 5 faults found, at most 1 false alert per patrol | not yet. All 5 pass through the camera's view, but model-v0.5 knows only the drone's 55° view; the ground view needs its own data and model |
-| Localisation error under 1 m with poor GNSS, on the Orin Nano | in repeat 2: 0.30 m median, 0.61 m p95, 1.13 m max against the truth, and 0.17 m p95 off the true route; the max is above 1 m, and the localisation node takes about two CPU cores |
+| Localisation error under 1 m with poor GNSS, on the Orin Nano | yes in repeat 3: 0.26 m median, 0.43 m p95, 0.83 m max against the truth (0.18 m p95 off the true route), with the whole ground-robot stack at 119% of one core of six (localisation 39%) |
 
 ## Next steps
 

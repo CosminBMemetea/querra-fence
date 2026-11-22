@@ -15,6 +15,7 @@
 #                                  and repeat: slam:=mapping saves /ws/maps/forest, slam:=localization pose:=slam uses it
 #   ./ros.sh stop                  stop and remove the container
 #   ./ros.sh status                container state, nodes and topic rates (from the stats node)
+#   ./ros.sh cpu [SECONDS]         CPU use of every process in the container over SECONDS (default 60)
 #   ./ros.sh record [SECONDS]      MCAP bag of all QUERRA topics to /ssd/querra/bags (no SECONDS: until Ctrl-C)
 #   ./ros.sh bags                  list recorded bags
 #   ./ros.sh doctor                check docker, image, disk, panel hub, gpsd, radar service and ports
@@ -93,6 +94,7 @@ print("nodes:", " ".join(s["nodes"]))
 for k, v in s["topics"].items(): print(f"  {v['hz']:6.1f} Hz  {k}  ({v['type']})")
 PY
     ;;
+  cpu) need; python3 "$HERE/cpu_usage.py" "${2:-60}" $(docker top "$NAME" -eo pid | tail -n +2) ;;
   record)
     need; secs=${2:-0}; out="/bags/querra-$(date +%Y%m%d-%H%M%S)"
     if [ "$secs" -gt 0 ]; then ex "timeout -s INT $secs ros2 bag record -s mcap -o $out $TOPICS" >/dev/null 2>&1 || true
@@ -133,5 +135,5 @@ PY
     r=$(df -BG --output=avail / 2>/dev/null | tail -1 | tr -dc 0-9) || true
     [ "${r:-0}" -gt 2 ] && ok "root disk free ${r} GB (ROS uses none)" || bad "root disk free ${r:-?} GB"
     echo "  bags: $(ls "$BAGS" 2>/dev/null | wc -l) in $BAGS ($(du -sh "$BAGS" 2>/dev/null | cut -f1))" ;;
-  help|-h|--help|*) sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//' ;;
+  help|-h|--help|*) sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//' ;;
 esac

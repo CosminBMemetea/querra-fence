@@ -23,7 +23,12 @@
       735 s, 0.17 m p95 off the true route, no obstacle stops, 5 of 5 faults through the camera's view.
     - `ugv_eval` reports link gaps, so a stalled link shows in the score instead of looking like a SLAM failure.
 
-    What remains: ten repeat patrols, Wi-Fi power saving on the Jetson, and the CPU load.
+    - **CPU on the Orin Nano:** the ground-robot stack went from 327% to 119% of one core (of six) with the same
+      accuracy. Changes: a lighter localisation config (194% → 39%); the bridge hands byte arrays to rclpy instead of
+      `bytes`, which rclpy checks byte by byte, and publishes the trails every 2 s (77% → 33%); the stats node skips
+      the high-rate and bulky topics. `./ros.sh cpu [SECONDS]` measures it.
+
+    What remains: ten repeat patrols.
 
 - **Ground robot (UGV), phase 0: simulation** ([docs/ugv.md](docs/ugv.md)). A ground robot patrols a fenced forest
   enclosure, where the drone cannot see the fence and GNSS is poor. The Mac plays the robot's body and the Jetson

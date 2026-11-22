@@ -19,6 +19,8 @@ class Stats(Node):
     def __init__(self):
         super().__init__("querra_stats")
         self.path = self.declare_parameter("path", "/ws/stats.json").value
+        # topic name prefixes not to measure (the ground robot's launch passes its high-rate and bulky ones)
+        self.skip = tuple(p for p in self.declare_parameter("skip_prefixes", [""]).value if p)
         self.window = 5.0
         self.subs, self.stamps, self.types = {}, {}, {}
         self.started = time.time()
@@ -38,7 +40,8 @@ class Stats(Node):
 
     def _discover(self):
         for name, types in self.get_topic_names_and_types():
-            if name in self.subs or name in SKIP or name.startswith("/events/") or name.endswith(ON_DEMAND):
+            if (name in self.subs or name in SKIP or name.startswith("/events/") or name.endswith(ON_DEMAND)
+                    or (self.skip and name.startswith(self.skip))):
                 continue
             try:
                 cls = get_message(types[0])

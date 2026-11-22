@@ -43,7 +43,11 @@ def generate_launch_description():
         DeclareLaunchArgument("patrol", default_value="true"),
         DeclareLaunchArgument("speed", default_value="0.8"),
         DeclareLaunchArgument("foxglove", default_value="true"),
-        Node(package="querra_fence_ros", executable="stats", name="querra_stats", output="log"),
+        # the panel's topic rates, without the high-rate and bulky topics (each message costs a Python callback;
+        # /map is a 14 MB occupancy grid)
+        Node(package="querra_fence_ros", executable="stats", name="querra_stats", output="log",
+             parameters=[{"skip_prefixes": ["/clock", "/tf", "/map", "/slam_toolbox/", "/ugv/eval/", "/ugv/trail/",
+                                            "/ugv/patrol/target", "/ugv/cmd_vel", "/ugv/odom_map"]}]),
         Node(package="querra_fence_ros", executable="ugv_bridge", name="ugv_bridge",
              parameters=[{"source": LaunchConfiguration("source"), "slam": slam_on}], output="screen"),
         Node(package="pointcloud_to_laserscan", executable="pointcloud_to_laserscan_node", name="ugv_scan",
