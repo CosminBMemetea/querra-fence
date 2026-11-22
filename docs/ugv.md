@@ -154,6 +154,18 @@ flowchart LR
   control once. When the patrol is done, `ugv_patrol` asks slam_toolbox to save the map.
 - **Repeat:** `slam:=localization pose:=slam`. The patrol drives on the SLAM pose, localised against that map.
 
+**What the LiDAR sees.** These are 209 scans from 33 m of a repeat patrol through the densest part of the forest,
+each placed with the simulator's true pose. Orange is the band 0.33–1.68 m above the ground, the slice that becomes
+the 2D scan SLAM matches against its map. It cuts every trunk, every fence post and the wires, and leaves out the
+ground and the crowns, which move with the wind and the seasons on a real site.
+
+![The forest strip in the ground robot's LiDAR, seen from ahead of the robot: tree trunks banded orange where they cross the SLAM slice, the fence wire as an orange line, crowns overhead, the path driven in white](media/ugv-lidar-forest.jpg)
+
+![The same cloud from above and to the side: trunks as columns with the SLAM slice in orange, the fence posts and wires, the path ending at the robot](media/ugv-lidar-above.jpg)
+
+`tools/ugv_lidar_view.sh [SECONDS]` makes both from the running simulation. It only listens to Gazebo, so it does not
+disturb a patrol.
+
 **Results so far (2026-11-22):**
 
 | Run | SLAM error (median / max / at the end) | Wheel odometry drift | Notes |

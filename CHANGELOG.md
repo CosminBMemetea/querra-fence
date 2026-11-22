@@ -32,6 +32,9 @@
       true path, the SLAM position and wheel odometry, with close-ups of the worst SLAM moment and the end of the
       loop, and charts each estimate's error against the distance driven. Both figures for repeat 3 are in
       docs/ugv.md.
+    - **What the LiDAR sees:** `tools/ugv_lidar_view.sh [SECONDS]` listens to the running simulation and renders the
+      accumulated point cloud in 3D, with the 0.33–1.68 m band that SLAM matches in orange. Two views of the dense
+      forest strip are in docs/ugv.md.
 
     What remains: ten repeat patrols.
 
