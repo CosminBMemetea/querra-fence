@@ -166,6 +166,18 @@ ground and the crowns, which move with the wind and the seasons on a real site.
 `tools/ugv_lidar_view.sh [SECONDS]` makes both from the running simulation. It only listens to Gazebo, so it does not
 disturb a patrol.
 
+**The map it localises against.** This is slam_toolbox's occupancy grid from the teach run, as the Jetson holds it
+during a repeat patrol, placed in the world through the spawn pose, with the true trunk positions on top. The trunks
+the LiDAR saw sit in their rings, around the whole loop: from each true trunk centre to the nearest occupied cell is
+0.10 m on median and 0.32 m at the 95th percentile over 739 trunks, about a trunk's radius (0.14–0.32 m). The map from
+teach 3 (in the table below) measured 0.56 and 1.57 m, about a metre off at the far side of the loop: the warp that
+repeat 1 ran into.
+
+![The SLAM map against the true forest: occupied cells in black, true trunk positions as orange rings, the taught route in blue; close-ups at the start and at the far side of the loop show the trunks inside their rings and the fence line through the true posts](media/ugv-slam-map.png)
+
+`tools/ugv_slam_map.sh` makes it while SLAM runs (`./ros.sh ugv … slam:=localization pose:=slam patrol:=false` is
+enough): `ros2/grab_map.py` saves `/map` on the Jetson, and `tools/ugv_slam_map.py` draws it and measures the fit.
+
 **Results so far (2026-11-22):**
 
 | Run | SLAM error (median / max / at the end) | Wheel odometry drift | Notes |
@@ -177,6 +189,7 @@ disturb a patrol.
 | Teach 4: 5 GHz link; the route saved as the map sees it | 1.01 / 2.41 m, 0.38 m at the end | 4.5 m | No link gaps. The saved route (the pose graph after the loop closed, 1,536 points) lies 0.13 m from the true route on median, 0.39 m at most |
 | Repeat 3: as repeat 2, with the localisation and bridge lighter on the CPU (below); Wi-Fi power saving off | 0.26 / 0.83 m, 0.05 m at the end | 4.3 m | The whole loop: 99.7% in 832 s (0.62 m/s), no obstacle stops, 5 of 5 faults through the camera's view. Off the true route: 0.01 m median, 0.18 m p95, 0.62 m max. No link gaps |
 | **Repeat 2: localisation, patrol on the SLAM pose along the taught route** | 0.30 / 1.13 m, 0.02 m at the end | 4.2 m | **The whole loop: 99.7% in 735 s (0.70 m/s), no obstacle stops, 5 of 5 faults through the camera's view. Off the true route: 0.01 m median, 0.17 m p95, 0.60 m max.** One 3.3 s link gap, ridden out |
+| **Series: 8 repeat patrols in a row, each from a clean start** (`tools/ugv_series.sh 8`, as repeat 3) | 0.25–0.27 m median, 0.42–0.44 m p95, 0.82–0.98 m max per patrol | 1.8–4.3 m | **8 of 8 completed the loop:** 99.7–99.8% in 717–751 s, 0.18–0.19 m p95 off the true route (0.59–0.61 m max), no obstacle stops, no link gaps, 5 of 5 faults through the camera's view in every patrol |
 
 **Repeat 3 from above.** Black is where the robot really drove, blue is where SLAM on the Jetson placed it, and
 orange is where wheel odometry alone would have placed it. Blue covers black the whole way round; orange drifts up to
@@ -227,27 +240,27 @@ Accuracy did not suffer: repeat 3 (after) against repeat 2 (before): 0.18 agains
 0.26 against 0.30 m median, and its maximum went from 1.13 to 0.83 m. The robot drove a little slower (0.62 against
 0.70 m/s).
 
-Open:
-- ten repeat patrols, against the 9-of-10 goal;
-- the stats node (28%) and the patrol's point-cloud check, if the CPU is needed for the detector.
+Open: the stats node (28%) and the patrol's point-cloud check, if the CPU is needed for the detector.
 
 ## Phase 0 goals
 
 | Goal | Status |
 |---|---|
 | The whole chain runs (Gazebo → relay → ROS 2 on the Jetson → commands back), every sensor at its rate | done |
-| The robot completes the loop autonomously in at least 9 of 10 patrols | on SLAM (teach and repeat): 2 of 2 so far; ten to run. On wheel odometry: no, blocked at about 100 m in 2 of 2 patrols. On ground truth: yes |
+| The robot completes the loop autonomously in at least 9 of 10 patrols | **yes on SLAM (teach and repeat): 10 of 10.** Repeats 2 and 3, then 8 of 8 in a row from clean starts (2026-11-22). On wheel odometry: no, blocked at about 100 m in 2 of 2 patrols. On ground truth: yes |
 | At least 4 of 5 faults found, at most 1 false alert per patrol | not yet. All 5 pass through the camera's view, but model-v0.5 knows only the drone's 55° view; the ground view needs its own data and model |
-| Localisation error under 1 m with poor GNSS, on the Orin Nano | yes in repeat 3: 0.26 m median, 0.43 m p95, 0.83 m max against the truth (0.18 m p95 off the true route), with the whole ground-robot stack at 119% of one core of six (localisation 39%) |
+| Localisation error under 1 m with poor GNSS, on the Orin Nano | yes: in the 9 patrols since the CPU cut, 0.25–0.27 m median, 0.42–0.44 m p95, and under 1 m at every moment (worst 0.98 m), with the whole ground-robot stack at 119% of one core of six (localisation 39%). Repeat 2, before the cut, peaked at 1.13 m. GNSS under the canopy: 4.3 m median |
 
 ## Next steps
 
-1. **Localisation.** LiDAR SLAM (KISS-ICP or slam_toolbox on a 2D slice) fused with odometry, the IMU and GNSS in
-   an EKF (`robot_localization`). The patrol already takes its pose from a topic, so it switches without code
-   changes. Measure against the same goals: 9 of 10 loops, under 1 m error.
+1. **Localisation robustness.** Teach and repeat on slam_toolbox meets the goals in simulation (10 of 10 loops,
+   under 1 m). Next, test it against a forest that changed after the teach run (trees and bushes added or removed),
+   and fuse the IMU and GNSS in an EKF (`robot_localization`) so the pose holds when scan matching weakens. The
+   patrol takes its pose from a topic, so it switches without code changes.
 2. **Ground-view detector.** Render fence frames from the robot's camera pose (0.7 m up, 1.9 m from the fence,
    looking sideways), train and score as for the drone models, then run it on `/ugv/camera`.
-3. **Ten patrols per change**, scored with `tools/ugv_eval.py`, as with the drone's models.
+3. **Ten patrols per change** with `tools/ugv_series.sh 10` (each from a clean start, scored with
+   `tools/ugv_eval.py`), as with the drone's models.
 4. **The real walk.** Walk a real forest fence with the Jetson, the camera at 0.7 m and the u-blox logging its
    accuracy. That calibrates the GNSS and odometry models and gives the first real ground-view images.
 

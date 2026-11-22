@@ -35,6 +35,14 @@
     - **What the LiDAR sees:** `tools/ugv_lidar_view.sh [SECONDS]` listens to the running simulation and renders the
       accumulated point cloud in 3D, with the 0.33–1.68 m band that SLAM matches in orange. Two views of the dense
       forest strip are in docs/ugv.md.
+    - **The SLAM map against the true forest:** `tools/ugv_slam_map.sh` saves `/map` on the Jetson
+      (`ros2/grab_map.py`), draws it with the true trunks and the taught route, and measures the fit: 0.10 m median
+      from each true trunk centre to the nearest occupied cell (739 trunks), against 0.56 m for teach 3's map.
+
+    - **Phase 0 goal met: 10 of 10 loops on SLAM.** `tools/ugv_series.sh N` runs N repeat patrols unattended, each
+      from a clean start. A series of 8 completed the loop 8 of 8 times: 99.7–99.8% in 717–751 s, 0.18–0.19 m p95
+      off the true route, SLAM 0.25–0.27 m median and under 1 m throughout, no link gaps, no obstacle stops, 5 of 5
+      faults through the camera's view in every patrol. With repeats 2 and 3: 10 of 10.
 
     What remains: ten repeat patrols.
 
