@@ -2,7 +2,8 @@
 
 For each patrol (from the patrol node's "driving" to "done", "blocked" or "stopped", or the end of the log):
   - route: completion (truth projected on the route), time, mean speed, cross-track error (truth to route)
-  - localisation: wheel odometry drift against the truth (end, max, per 100 m)
+  - localisation: wheel odometry drift against the truth (end, max, per 100 m), and the error of every pose the
+    Jetson logged through the relay (the SLAM pose): median, p95, max, at the end
   - GNSS: fix availability, 3D share, error (median, p95) overall and by sky cover (open, partial, dense canopy)
   - faults: which ones passed through the side camera's view (left side, within 50 degrees of its axis, closer than
     6 m), and for how long
@@ -97,6 +98,16 @@ def score(rows, meta, t0, t1, pose_topic, final):
             j += 1
         mx, my = sx + c * o["x"] - s * o["y"], sy + s * o["x"] + c * o["y"]
         drift.append(math.hypot(mx - truth[j]["x"], my - truth[j]["y"]))
+    # localisation estimates logged by the Jetson (k == "pose", e.g. src "slam"), against the truth nearest in time
+    loc = {}
+    for src in sorted({r.get("src") for r in win if r["k"] == "pose"}):
+        errs, j = [], 0
+        for r in (r for r in win if r["k"] == "pose" and r.get("src") == src):
+            while j + 1 < len(truth) and truth[j + 1]["wall"] <= r["wall"]:
+                j += 1
+            errs.append(math.hypot(r["x"] - truth[j]["x"], r["y"] - truth[j]["y"]))
+        loc[src] = {"median": r2(statistics.median(errs)), "p95": r2(pct(errs, 0.95)), "max": r2(max(errs)), "end": r2(errs[-1]),
+                    "samples": len(errs)}
     # GNSS
     fixes = [g for g in gps if g.get("mode", 0) >= 2]
     buckets = {"open (<0.3)": [], "partial (0.3-0.6)": [], "dense (>=0.6)": []}
@@ -128,6 +139,7 @@ def score(rows, meta, t0, t1, pose_topic, final):
                   "route_m": round(cum[-1], 1), "travelled_m": round(travelled, 1), "duration_s": round(dur, 1),
                   "mean_speed_ms": r2(travelled / dur if dur > 0 else 0.0),
                   "cross_track_m": {"median": r2(statistics.median(xte)), "p95": r2(pct(xte, 0.95)), "max": r2(max(xte))}},
+        "localisation_error_m": loc,
         "odom_drift_m": {"end": r2(drift[-1] if drift else None), "max": r2(max(drift) if drift else None),
                          "per_100m": r2(100 * drift[-1] / travelled if drift and travelled > 1 else None)},
         "gnss": {"samples": len(gps), "fix_pct": round(100 * len(fixes) / len(gps), 1) if gps else None,
@@ -166,6 +178,8 @@ def main():
             R["completion_pct"], R["route_m"], R["duration_s"], R["mean_speed_ms"] or 0, R["cross_track_m"]["median"],
             R["cross_track_m"]["p95"], R["cross_track_m"]["max"]))
         print("  odometry   drift at the end %s m, max %s m, %s m per 100 m" % (D["end"], D["max"], D["per_100m"]))
+        for src, e in sc["localisation_error_m"].items():
+            print("  %-10s error median %s m, p95 %s m, max %s m, at the end %s m" % (src, e["median"], e["p95"], e["max"], e["end"]))
         print("  GNSS       fix %s%% (3D %s%%), error median %s m, p95 %s m" % (G["fix_pct"], G["fix_3d_pct"], G["error_m"]["median"], G["error_m"]["p95"]))
         for k, v in G["by_cover"].items():
             print("             %-18s %5s%% of the time: fix %s%%, error median %s m, p95 %s m" % (k, v["share_pct"], v["fix_pct"], v["error_median_m"], v["error_p95_m"]))

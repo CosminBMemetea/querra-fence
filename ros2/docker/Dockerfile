@@ -12,6 +12,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends ros-humble-micr
     && . /opt/ros/humble/setup.sh && cd /opt/uros \
     && colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release --event-handlers console_cohesion- \
     && rm -rf /opt/uros/build /opt/uros/log /opt/uros/src
+# Ground robot (UGV): a 2D scan from the 3D LiDAR, SLAM (mapping with loop closure, then localisation against the
+# saved map) and the EKF for fusing odometry, IMU and GNSS. KISS-ICP has no Humble arm64 package; slam_toolbox does.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ros-humble-pointcloud-to-laserscan ros-humble-slam-toolbox ros-humble-robot-localization ros-humble-nav2-map-server \
+    && rm -rf /var/lib/apt/lists/*
 ENV ROS_DOMAIN_ID=42 RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 COPY entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]

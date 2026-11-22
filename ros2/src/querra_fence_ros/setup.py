@@ -4,7 +4,7 @@ pkg = "querra_fence_ros"
 setup(
     name=pkg, version="0.1.0", packages=[pkg],
     data_files=[("share/ament_index/resource_index/packages", ["resource/" + pkg]), ("share/" + pkg, ["package.xml"]),
-                ("share/" + pkg + "/launch", glob("launch/*.py"))],
+                ("share/" + pkg + "/launch", glob("launch/*.py")), ("share/" + pkg + "/config", glob("config/*.yaml"))],
     install_requires=["setuptools"], zip_safe=True, maintainer="Cosmin B. Memetea", license="MIT",
     description="QUERRA Fence ROS 2 nodes",
     entry_points={"console_scripts": [

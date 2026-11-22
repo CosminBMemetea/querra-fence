@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- **Ground robot: SLAM, teach and repeat (first stage)** ([docs/ugv.md](docs/ugv.md#slam-teach-and-repeat)).
+  - **Docker image:** pointcloud_to_laserscan, slam_toolbox, robot_localization and nav2_map_server. KISS-ICP has no
+    Humble arm64 package.
+  - **Teach and repeat:** `./ros.sh ugv … slam:=mapping` maps while driving and saves the map 10 s after the loop.
+    `slam:=localization pose:=slam` patrols on the SLAM pose against that map.
+  - **One clock:** every sample carries Gazebo's simulation time, and `ugv_bridge` publishes `/clock`. Stamping on
+    arrival had made SLAM's heading drift on every turn.
+  - **Outdoor tuning of slam_toolbox:** scans count for more against the odometry, a larger local map, and a 15 m
+    loop-closure search.
+  - **Scoring:** `ugv_eval` scores the SLAM pose against the truth.
+  - **Measured:**
+    - the tuned teach run kept SLAM to 1.1 m median error (wheel odometry drifted 14.8 m) and closed the loop at
+      the start;
+    - the first repeat patrol passed the tight spots where odometry stopped, steady at 1.1–1.3 m for 400 s, until
+      the Mac–Jetson Wi-Fi stalled.
+
+    What remains: record the route in the map frame, Ethernet for the simulation link, and the CPU load.
+
 - **Ground robot (UGV), phase 0: simulation** ([docs/ugv.md](docs/ugv.md)). A ground robot patrols a fenced forest
   enclosure, where the drone cannot see the fence and GNSS is poor. The Mac plays the robot's body and the Jetson
   runs its brain.

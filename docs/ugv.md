@@ -67,6 +67,8 @@ flowchart LR
 ./ugv.sh                     # Mac: forest world, Gazebo window, relay on tcp://<mac>:5611 (headless: ./ugv.sh headless)
 cd /ssd/querra/ros2 && ./ros.sh ugv tcp://<mac-ip>:5611            # Jetson: patrol on wheel odometry
 ./ros.sh ugv tcp://<mac-ip>:5611 pose:=truth                       # patrol on ground truth (tests the chain)
+./ros.sh ugv tcp://<mac-ip>:5611 pose:=truth slam:=mapping         # teach: map while driving, saved to /ws/maps/forest
+./ros.sh ugv tcp://<mac-ip>:5611 pose:=slam slam:=localization     # repeat: patrol on the SLAM pose against that map
 python3 tools/ugv_eval.py --json                                   # Mac: score the patrols in the newest log
 ```
 
@@ -124,6 +126,61 @@ fused with odometry, the IMU and GNSS where the sky is open.
 **A requirement found on the way.** Untrimmed spruces hang branches at 0.9–1.0 m, inside the robot's 1.0 m height
 envelope. A strip a ground robot patrols needs its low branches cut back above about 1.3 m. That is a maintenance
 requirement for the customer, not something the robot can solve.
+
+## SLAM: teach and repeat
+
+A ground robot that patrols the same strip every day does not need to discover the forest each time. It drives the
+route once while a map is built (teach), then localises against that map on every patrol (repeat). Its error then
+stays bounded by how well the scans match the map, instead of growing with the distance driven.
+
+```mermaid
+flowchart LR
+  PC["/ugv/lidar/points<br/>3D, 16 beams"] --> P2L["pointcloud_to_laserscan<br/>0.33–1.7 m above ground"]
+  P2L --> SCAN["/ugv/scan<br/>trunks · posts · bushes"]
+  ODO["wheel odometry TF<br/>ugv_odom → ugv_base_link"] --> SLAM
+  SCAN --> SLAM["slam_toolbox<br/>mapping · localization"]
+  SLAM -- "TF ugv_slam_map → ugv_odom" --> BR["ugv_bridge<br/>/ugv/slam_pose"]
+  BR --> PAT["ugv_patrol<br/>pose:=slam"]
+  SLAM -- "patrol done" --> MAP["/ws/maps/forest<br/>.posegraph · .data"]
+```
+
+- **Scan:** `pointcloud_to_laserscan` turns the 3D point cloud into a 2D scan from a slice 0.33–1.7 m above the
+  ground. That holds the trunks, fence posts and bushes, and leaves out the ground and the crowns.
+- **SLAM:** slam_toolbox (`ros2/src/querra_fence_ros/config/ugv_slam_*.yaml`) uses the wheel odometry as its prior.
+  Its map frame starts at the spawn pose; `ugv_bridge` places it in the world.
+- **Why not KISS-ICP:** KISS-ICP (3D LiDAR odometry) has no Humble package for arm64. slam_toolbox does, and it
+  also does what LiDAR odometry alone cannot: close the loop, and localise against a saved map.
+- **Teach:** the mapping run drives on ground truth, standing in for an operator who drives the robot by remote
+  control once. When the patrol is done, `ugv_patrol` asks slam_toolbox to save the map.
+- **Repeat:** `slam:=localization pose:=slam`. The patrol drives on the SLAM pose, localised against that map.
+
+**Results so far (2026-11-22):**
+
+| Run | SLAM error (median / max / at the end) | Wheel odometry drift | Notes |
+|---|---|---|---|
+| Teach 1: stamps on arrival, default settings | 3.1 / 7.1 / 6.4 m | 4.6 m | Worse than odometry. The heading drifted on every left turn, because each stream's own delay was mixed into its stamps |
+| Teach 2: Gazebo's simulation time on every sample (`/clock`), defaults | 3.7 / 9.0 / 8.3 m | 6.9 m | Still no loop closure. The indoor defaults trust the odometry's heading over the scans and search only 4 m for a loop |
+| Teach 3: simulation time + outdoor tuning | 1.08 / 4.6 m, **0.01 m after the loop closed** | 14.8 m | The loop closed at the start. The map was saved after the closure |
+| Repeat 1: localisation against that map, patrol on the SLAM pose | 0.84 / 6.3 m over the first 275 m | 7 m | Passed the tight spots at 95 m and 107 m where odometry stopped. For 400 s localisation held steady: 1.1–1.3 m from the truth, heading within 0.3°. Then the Wi-Fi link between the Mac and the Jetson stalled (4–5 s gaps from 414 s); localisation lost its heading in the last 10 s, and the link carried nothing for about 13 minutes. The patrol held still on its stale pose, as it should |
+
+**On the Orin Nano** during the repeat run: the localisation node used about two CPU cores, `ugv_bridge` 60–75% of
+one, the stats node about a third of one.
+
+**Why the Jetson stopped answering.** It did not crash or reboot: its log runs on without a gap, with no memory,
+thermal or network event, and the ROS container stayed up. Its link is 2.4 GHz Wi-Fi at about −59 dBm, which carries
+the robot's stream (LiDAR, camera, IMU, odometry: about 0.5 MB/s) plus Foxglove. That link stalled and then dropped.
+On a real robot the sensors are wired to the Jetson; the Wi-Fi link exists only because the Mac plays the robot's
+body. For simulation runs the Jetson should be on Ethernet (or 5 GHz).
+
+**The steady 1.1–1.3 m error is the map's warp.** The teach run's drift was closed at the loop's end, which spreads
+the correction along the loop but leaves the map up to about a metre off the world. The route comes from the world
+(`forest_meta.json`), so a robot localised in the map follows it up to a metre off. Real teach and repeat records the
+route in the map's own frame during the teach run, so the warp does not matter.
+
+Open:
+- record the taught route in the map frame (the teach run's SLAM poses);
+- the Jetson on Ethernet for simulation runs, then ten repeat patrols;
+- the CPU load.
 
 ## Phase 0 goals
 

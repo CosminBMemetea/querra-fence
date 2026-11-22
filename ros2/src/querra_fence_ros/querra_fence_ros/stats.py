@@ -12,7 +12,7 @@ from rclpy.qos import qos_profile_sensor_data, QoSProfile, DurabilityPolicy
 from rosidl_runtime_py.utilities import get_message
 
 SKIP = ("/parameter_events", "/rosout")
-ON_DEMAND = ("/image_raw", "/camera_info", "/detections/image")   # name suffixes
+ON_DEMAND = ("/image_raw", "/camera_info", "/detections/image", "/lidar/points")   # name suffixes (the 3D cloud: heavy)
 
 
 class Stats(Node):

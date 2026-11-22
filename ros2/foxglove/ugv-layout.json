@@ -93,6 +93,27 @@
     },
     "/ugv/odom_map": {
      "visible": false
+    },
+    "/ugv/scan": {
+     "visible": true,
+     "pointSize": 4,
+     "colorField": "range",
+     "colorMode": "flat",
+     "flatColor": "#ff4d4dff"
+    },
+    "/map": {
+     "visible": true,
+     "colorMode": "map",
+     "alpha": 0.6
+    },
+    "/ugv/trail/slam": {
+     "visible": true,
+     "type": "line",
+     "lineWidth": 0.12,
+     "gradient": [
+      "#b84dffff",
+      "#b84dffff"
+     ]
     }
    },
    "layers": {
@@ -144,6 +165,12 @@
      "enabled": true,
      "timestampMethod": "receiveTime",
      "label": "GNSS error (m)"
+    },
+    {
+     "value": "/ugv/eval/slam_error_m.data",
+     "enabled": true,
+     "timestampMethod": "receiveTime",
+     "label": "SLAM error (m)"
     }
    ],
    "showLegend": true,

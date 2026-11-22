@@ -9,9 +9,10 @@
 #                                  (on the Mac: ./start.sh headless, tools/cam_stream.sh, tools/uxrce_relay.py JETSON)
 #                                  model: model-v0.5 (both world looks, trained on stream-like JPEG) for the replay and
 #                                  live tcp:// sources. engine:=/models/<file>.engine overrides (ml/README.md lists them)
-#   ./ros.sh ugv tcp://MAC:5611 [pose:=truth] [patrol:=false]
+#   ./ros.sh ugv tcp://MAC:5611 [pose:=odom|slam|truth] [slam:=off|mapping|localization] [patrol:=false]
 #                                  ground robot: the Gazebo forest robot (./ugv.sh on the Mac) patrols its fence route,
-#                                  /ugv/* topics (LiDAR, IMU, odometry, GNSS under canopy, camera) in Foxglove
+#                                  /ugv/* topics (LiDAR, IMU, odometry, GNSS under canopy, camera) in Foxglove; teach
+#                                  and repeat: slam:=mapping saves /ws/maps/forest, slam:=localization pose:=slam uses it
 #   ./ros.sh stop                  stop and remove the container
 #   ./ros.sh status                container state, nodes and topic rates (from the stats node)
 #   ./ros.sh record [SECONDS]      MCAP bag of all QUERRA topics to /ssd/querra/bags (no SECONDS: until Ctrl-C)
@@ -76,7 +77,7 @@ case "${1:-help}" in
     echo "demo: $src -> /sim/camera -> fence_detector (TensorRT) -> alert_confirm -> /fence/alerts"
     echo "Foxglove: open ws://$(lan_ip):8765 and import ros2/foxglove/querra-layout.json" ;;
   ugv)
-    src=${2:-}; case "$src" in tcp://*) ;; *) echo "usage: ./ros.sh ugv tcp://<mac-ip>:5611 [pose:=odom|truth] [patrol:=true|false] [speed:=0.8]"; exit 1 ;; esac
+    src=${2:-}; case "$src" in tcp://*) ;; *) echo "usage: ./ros.sh ugv tcp://<mac-ip>:5611 [pose:=odom|slam|truth] [slam:=off|mapping|localization] [patrol:=true|false] [speed:=0.8]"; exit 1 ;; esac
     LAUNCH=ugv.launch.py "$0" start source:="$src" "${@:3}"
     echo "ugv: $src -> ugv_bridge -> /ugv/* -> ugv_patrol -> /ugv/cmd_vel"
     echo "Foxglove: open ws://$(lan_ip):8765 (3D panel, display frame ugv_map)" ;;
@@ -132,5 +133,5 @@ PY
     r=$(df -BG --output=avail / 2>/dev/null | tail -1 | tr -dc 0-9) || true
     [ "${r:-0}" -gt 2 ] && ok "root disk free ${r} GB (ROS uses none)" || bad "root disk free ${r:-?} GB"
     echo "  bags: $(ls "$BAGS" 2>/dev/null | wc -l) in $BAGS ($(du -sh "$BAGS" 2>/dev/null | cut -f1))" ;;
-  help|-h|--help|*) sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//' ;;
+  help|-h|--help|*) sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//' ;;
 esac

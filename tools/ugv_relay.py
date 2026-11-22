@@ -3,7 +3,7 @@
 The Mac plays the robot's body and sensors, the Jetson is its brain. This relay serves the robot's sensors on a TCP
 port and drives the robot with the velocity commands that come back:
 
-  Mac -> Jetson, one framed message per sample:
+  Mac -> Jetson, one framed message per sample (every header carries "st", Gazebo's simulation time of the sample):
       b"QUG1" | kind (1 byte) | uint32 BE header_len | uint32 BE payload_len | header JSON | payload
       M  meta, once per connection: worlds/forest_meta.json (route, spawn, sensor mounts, faults, crowns dropped)
       L  LiDAR scan: header {t, count, vcount, angle_min, angle_step, vangle_min, vangle_step}, payload float16 ranges
@@ -17,6 +17,8 @@ port and drives the robot with the velocity commands that come back:
   Jetson -> Mac, one JSON object per line:
       {"cmd_vel": [v, w]}   m/s, rad/s; the robot stops if no command arrives for 0.5 s
       {"reset": true}       put the robot back at the spawn pose and zero the odometry (for repeated patrols)
+      {"event": {...}}      logged as is (the patrol's state changes)
+      {"pose": {"src", "x", "y", "yaw"}}   a localisation estimate in the world frame (the SLAM pose), logged for scoring
 
 Each client gets the newest LiDAR scan and camera frame (stale ones are dropped); IMU, odometry, GNSS and truth are
 queued. Everything the patrol needs for scoring is logged to run/ugv/<time>/log.jsonl (truth, odometry, GNSS,
@@ -73,6 +75,13 @@ def yaw_of(q):
 
 def wrap(a):
     return math.atan2(math.sin(a), math.cos(a))
+
+
+def sim_t(m):
+    """Gazebo's simulation time of a message: every sample carries it as "st", so the Jetson can stamp them all on one
+    clock (/clock). Stamping on arrival mixes each stream's own delay into the stamps, and SLAM then matches a scan
+    against the wrong odometry pose during a turn."""
+    return round(m.header.stamp.sec + m.header.stamp.nsec * 1e-9, 4)
 
 
 def frame(kind, header, payload=b""):
@@ -250,7 +259,7 @@ class Relay:
     # ---- Gazebo -> clients
     def on_lidar(self, m):
         r = np.asarray(m.ranges, dtype=np.float32).astype(np.float16).tobytes()
-        h = {"t": round(time.time(), 3), "count": m.count, "vcount": m.vertical_count, "angle_min": m.angle_min,
+        h = {"t": round(time.time(), 3), "st": sim_t(m), "count": m.count, "vcount": m.vertical_count, "angle_min": m.angle_min,
              "angle_step": m.angle_step, "vangle_min": m.vertical_angle_min, "vangle_step": m.vertical_angle_step,
              "range_min": m.range_min, "range_max": m.range_max}
         self.broadcast("L", frame("L", h, r))
@@ -259,7 +268,7 @@ class Relay:
         if self.cam_busy and len(self.encoder.pending) > 2:     # encoder behind: drop this frame
             return
         self.cam_busy = True
-        self.encoder.push({"t": round(time.time(), 3), "w": m.width, "h": m.height, "t_gz_recv": time.time()},
+        self.encoder.push({"t": round(time.time(), 3), "st": sim_t(m), "w": m.width, "h": m.height, "t_gz_recv": time.time()},
                           m.data, m.width, m.height)
 
     def on_jpeg(self, header, jpeg):
@@ -272,7 +281,7 @@ class Relay:
             return
         self.t_imu = now
         q, w, a = m.orientation, m.angular_velocity, m.linear_acceleration
-        self.broadcast("I", frame("I", {"t": round(now, 4), "q": [q.x, q.y, q.z, q.w], "w": [w.x, w.y, w.z],
+        self.broadcast("I", frame("I", {"t": round(now, 4), "st": sim_t(m), "q": [q.x, q.y, q.z, q.w], "w": [w.x, w.y, w.z],
                                         "a": [a.x, a.y, a.z]}))
 
     def on_odom(self, m):
@@ -281,6 +290,7 @@ class Relay:
                              m.twist.linear.x, m.twist.angular.z)
         if o is None:
             return
+        o["st"] = sim_t(m)
         self.broadcast("O", frame("O", o))
         if now - self.t_log_odom >= 0.2:
             self.t_log_odom = now
@@ -289,7 +299,7 @@ class Relay:
     def on_truth(self, m):
         now = time.time()
         p = m.pose.position
-        tr = {"t": round(now, 3), "x": round(p.x, 3), "y": round(p.y, 3), "z": round(p.z, 3), "yaw": round(yaw_of(m.pose.orientation), 4)}
+        tr = {"t": round(now, 3), "st": sim_t(m), "x": round(p.x, 3), "y": round(p.y, 3), "z": round(p.z, 3), "yaw": round(yaw_of(m.pose.orientation), 4)}
         self.truth = tr
         self.broadcast("T", frame("T", tr))
         if now - self.t_log_truth >= 0.2:
@@ -298,6 +308,7 @@ class Relay:
         if now - self.t_gps >= 1.0 / self.meta["gps"]["rate_hz"]:
             self.t_gps = now
             g = self.gnss.sample(now, p.x, p.y, p.z)
+            g["st"] = tr["st"]
             self.log(dict(g, k="gps"))
             g.pop("err_m", None)                  # the robot never knows its true GNSS error
             self.broadcast("G", frame("G", g))
@@ -386,6 +397,8 @@ class Relay:
                     threading.Thread(target=self.reset, daemon=True).start()
                 if "event" in m:
                     self.log({"k": "event", **m["event"]})
+                if "pose" in m:                       # a localisation estimate from the Jetson (e.g. SLAM), for scoring
+                    self.log({"k": "pose", **m["pose"]})
         except (OSError, ValueError):
             pass
         c.alive = False

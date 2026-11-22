@@ -1,8 +1,10 @@
 """Ground robot bridge: the Gazebo robot on the Mac (tools/ugv_relay.py, TCP) -> ROS 2 topics, and /ugv/cmd_vel back.
 
 Frames: ugv_map is the simulation's world frame (east, north; origin = forest.json "origin"), ugv_odom is where the
-wheel odometry starts (the spawn pose, a static ugv_map -> ugv_odom), ugv_base_link is the robot, with static
-ugv_lidar, ugv_camera_optical and ugv_imu from the robot's sensor mounts in the meta message.
+wheel odometry starts, ugv_base_link is the robot, with static ugv_lidar, ugv_camera_optical and ugv_imu from the
+robot's sensor mounts in the meta message. Without SLAM, ugv_map -> ugv_odom is static (the spawn pose). With
+slam:=true, SLAM owns ugv_slam_map -> ugv_odom (its corrections) and the static spawn pose is ugv_map -> ugv_slam_map,
+so the SLAM map lands where it belongs in the world.
 
 Robot topics (what a real robot would have):
   /ugv/lidar/points                sensor_msgs/PointCloud2 (x, y, z, ring) in ugv_lidar, 10 Hz
@@ -17,7 +19,13 @@ Scoring topics (ground truth from the simulator; never used for driving unless u
   /ugv/ground_truth                nav_msgs/Odometry in ugv_map
   /ugv/trail/truth, /ugv/trail/odom  nav_msgs/Path: where the robot really went and where odometry thinks it went
   /ugv/eval/odom_drift_m, /ugv/eval/gps_error_m  std_msgs/Float32
+With slam:=true:
+  /ugv/slam_pose                   nav_msgs/Odometry in ugv_map: the SLAM pose (TF ugv_map -> ugv_base_link), 20 Hz
+  /ugv/trail/slam, /ugv/eval/slam_error_m   its path and its error against the truth
+  The SLAM pose also goes to the relay's log (5 Hz), so tools/ugv_eval.py can score the localisation.
   /ugv/faults                      MarkerArray (latched): the seeded faults
+Clock: every sample carries Gazebo's simulation time; the bridge stamps all of them with it and publishes /clock, so
+the nodes that combine streams (pointcloud_to_laserscan, slam_toolbox) run with use_sim_time and see one clock.
 In:  /ugv/cmd_vel (geometry_msgs/Twist), /ugv/reset (std_msgs/Empty: back to the spawn pose, odometry zeroed),
      /ugv/patrol/status (forwarded to the relay's log, so a patrol can be scored from one file).
 """
@@ -25,13 +33,16 @@ import json, math, socket, struct, threading, time
 import numpy as np
 import rclpy
 from rclpy.node import Node
+from rclpy.time import Time
 from rclpy.qos import qos_profile_sensor_data, QoSProfile, DurabilityPolicy
+from builtin_interfaces.msg import Time as TimeMsg
 from geometry_msgs.msg import Twist, TransformStamped, PoseStamped, Point
+from rosgraph_msgs.msg import Clock
 from nav_msgs.msg import Odometry, Path
 from sensor_msgs.msg import PointCloud2, PointField, Imu, NavSatFix, NavSatStatus, CompressedImage
 from std_msgs.msg import Empty, Float32, String, ColorRGBA
 from visualization_msgs.msg import Marker, MarkerArray
-from tf2_ros import TransformBroadcaster, StaticTransformBroadcaster
+from tf2_ros import TransformBroadcaster, StaticTransformBroadcaster, Buffer, TransformListener
 from querra_fence_msgs.msg import GpsInfo
 
 MAGIC = b"QUG1"
@@ -55,6 +66,7 @@ class UgvBridge(Node):
         super().__init__("ugv_bridge")
         self.source = self.declare_parameter("source", "tcp://127.0.0.1:5611").value
         self.trail_step = float(self.declare_parameter("trail_step_m", 0.5).value)
+        self.slam = bool(self.declare_parameter("slam", False).value)
         p = lambda t, T, q=10: self.create_publisher(T, t, q)
         self.pub = {
             "cloud": p("/ugv/lidar/points", PointCloud2, qos_profile_sensor_data), "imu": p("/ugv/imu", Imu, 50),
@@ -64,7 +76,10 @@ class UgvBridge(Node):
             "drift": p("/ugv/eval/odom_drift_m", Float32), "gps_err": p("/ugv/eval/gps_error_m", Float32),
             "route": p("/ugv/route", Path, LATCHED), "fence": p("/ugv/fence", MarkerArray, LATCHED),
             "faults": p("/ugv/faults", MarkerArray, LATCHED),
+            "slam_pose": p("/ugv/slam_pose", Odometry), "trail_slam": p("/ugv/trail/slam", Path),
+            "slam_err": p("/ugv/eval/slam_error_m", Float32), "clock": p("/clock", Clock),
         }
+        self.sim_now = 0.0
         self.tf = TransformBroadcaster(self)
         self.static_tf = StaticTransformBroadcaster(self)
         self.create_subscription(Twist, "/ugv/cmd_vel", self.on_cmd, 10)
@@ -73,10 +88,37 @@ class UgvBridge(Node):
         self.sock, self.sock_lock = None, threading.Lock()
         self.meta, self.spawn = None, (0.0, 0.0, 0.0)
         self.truth, self.odom_map = None, None
-        self.trails = {"truth": Path(), "odom": Path()}
+        self.trails = {"truth": Path(), "odom": Path(), "slam": Path()}
         self.dirs = None
         self.last_status = None
+        self.t_pose_sent = 0.0
+        if self.slam:
+            self.tf_buffer = Buffer()
+            # its own thread: /tf traffic must not delay the velocity commands on this node's executor
+            self.tf_listener = TransformListener(self.tf_buffer, self, spin_thread=True)
+            self.create_timer(0.05, self.slam_pose)
         threading.Thread(target=self.loop, daemon=True).start()
+
+    def slam_pose(self):
+        """The SLAM pose in the world frame: TF ugv_map -> ugv_base_link through SLAM's ugv_slam_map -> ugv_odom."""
+        if self.meta is None:
+            return
+        try:
+            t = self.tf_buffer.lookup_transform("ugv_map", "ugv_base_link", Time())
+        except Exception:
+            return
+        q = t.transform.rotation
+        x, y = t.transform.translation.x, t.transform.translation.y
+        yaw = math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
+        stamp = t.header.stamp
+        self.pub["slam_pose"].publish(self.odom_msg(stamp, "ugv_map", "ugv_base_link_slam", x, y, yaw))
+        self.add_trail("slam", stamp, x, y)
+        if self.truth:
+            self.pub["slam_err"].publish(Float32(data=float(math.hypot(x - self.truth[0], y - self.truth[1]))))
+        now = time.monotonic()
+        if now - self.t_pose_sent >= 0.2:
+            self.t_pose_sent = now
+            self.send({"pose": {"src": "slam", "x": round(x, 3), "y": round(y, 3), "yaw": round(yaw, 4)}})
 
     # ---------------------------------------------------------------- link
     def send(self, obj):
@@ -131,6 +173,16 @@ class UgvBridge(Node):
             time.sleep(2)
 
     # ---------------------------------------------------------------- messages
+    def sim_stamp(self, h):
+        """The sample's simulation time as a ROS stamp; advances /clock."""
+        st = h.get("st")
+        if st is None:
+            return self.stamp()
+        if st > self.sim_now + 0.004:
+            self.sim_now = st
+            self.pub["clock"].publish(Clock(clock=TimeMsg(sec=int(st), nanosec=int(round((st % 1.0) * 1e9)) % 1000000000)))
+        return TimeMsg(sec=int(st), nanosec=int(round((st % 1.0) * 1e9)) % 1000000000)
+
     def stamp(self):
         return self.get_clock().now().to_msg()
 
@@ -143,7 +195,7 @@ class UgvBridge(Node):
             self.on_lidar(h, payload)
         elif kind == "C":
             m = CompressedImage(format="jpeg", data=payload)
-            m.header.stamp, m.header.frame_id = self.stamp(), "ugv_camera_optical"
+            m.header.stamp, m.header.frame_id = self.sim_stamp(h), "ugv_camera_optical"
             self.pub["cam"].publish(m)
         elif kind == "I":
             self.on_imu(h)
@@ -160,7 +212,8 @@ class UgvBridge(Node):
         self.lat0, self.lon0 = meta["origin"]["lat"], meta["origin"]["lon"]
         self.mlat, self.mlon = m_per_deg(self.lat0)
         stamp = self.stamp()
-        tfs = [self.make_tf(stamp, "ugv_map", "ugv_odom", self.spawn[0], self.spawn[1], 0.0, 0.0, 0.0, self.spawn[2])]
+        tfs = [self.make_tf(stamp, "ugv_map", "ugv_slam_map" if self.slam else "ugv_odom",
+                            self.spawn[0], self.spawn[1], 0.0, 0.0, 0.0, self.spawn[2])]
         R = meta["robot"]
         bz = R["base_z"]
         for child, key in (("ugv_lidar", "lidar"), ("ugv_imu", "imu")):
@@ -184,7 +237,7 @@ class UgvBridge(Node):
         self.pub["route"].publish(path)
         self.pub["fence"].publish(self.fence_markers(meta, stamp))
         self.pub["faults"].publish(self.fault_markers(meta, stamp))
-        self.trails = {"truth": Path(), "odom": Path()}
+        self.trails = {"truth": Path(), "odom": Path(), "slam": Path()}
         self.last_status = None                              # a new relay log gets the current patrol state once
         self.get_logger().info(f"robot meta: world {meta['world']}, route {meta['route_length_m']} m, "
                                f"{len(meta['faults'])} faults, spawn {self.spawn}")
@@ -246,7 +299,7 @@ class UgvBridge(Node):
         pts = self.dirs[1][ok] * r[ok, None]
         data = np.column_stack([pts, self.dirs[2][ok]]).astype(np.float32)
         m = PointCloud2()
-        m.header.stamp, m.header.frame_id = self.stamp(), "ugv_lidar"
+        m.header.stamp, m.header.frame_id = self.sim_stamp(h), "ugv_lidar"
         m.height, m.width = 1, data.shape[0]
         m.fields = [PointField(name=nm, offset=4 * i, datatype=PointField.FLOAT32, count=1) for i, nm in enumerate(("x", "y", "z", "ring"))]
         m.is_bigendian, m.point_step, m.row_step, m.is_dense = False, 16, 16 * data.shape[0], True
@@ -255,7 +308,7 @@ class UgvBridge(Node):
 
     def on_imu(self, h):
         m = Imu()
-        m.header.stamp, m.header.frame_id = self.stamp(), "ugv_imu"
+        m.header.stamp, m.header.frame_id = self.sim_stamp(h), "ugv_imu"
         m.orientation.x, m.orientation.y, m.orientation.z, m.orientation.w = h["q"]
         m.angular_velocity.x, m.angular_velocity.y, m.angular_velocity.z = h["w"]
         m.linear_acceleration.x, m.linear_acceleration.y, m.linear_acceleration.z = h["a"]
@@ -274,7 +327,7 @@ class UgvBridge(Node):
         return m
 
     def on_odom(self, h):
-        stamp = self.stamp()
+        stamp = self.sim_stamp(h)
         self.pub["odom"].publish(self.odom_msg(stamp, "ugv_odom", "ugv_base_link", h["x"], h["y"], h["yaw"], h["v"], h["w"]))
         self.tf.sendTransform(self.make_tf(stamp, "ugv_odom", "ugv_base_link", h["x"], h["y"], 0.0, 0, 0, h["yaw"]))
         sx, sy, syaw = self.spawn
@@ -288,7 +341,7 @@ class UgvBridge(Node):
             self.pub["drift"].publish(d)
 
     def on_truth(self, h):
-        stamp = self.stamp()
+        stamp = self.sim_stamp(h)
         self.truth = (h["x"], h["y"], h["yaw"])
         self.pub["truth"].publish(self.odom_msg(stamp, "ugv_map", "ugv_truth", h["x"], h["y"], h["yaw"]))
         self.add_trail("truth", stamp, h["x"], h["y"])
@@ -310,7 +363,7 @@ class UgvBridge(Node):
         self.pub["trail_" + key].publish(tr)
 
     def on_gps(self, h):
-        stamp = self.stamp()
+        stamp = self.sim_stamp(h)
         mode = int(h.get("mode", 0))
         f = NavSatFix()
         f.header.stamp, f.header.frame_id = stamp, "ugv_base_link"

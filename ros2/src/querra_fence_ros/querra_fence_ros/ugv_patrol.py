@@ -11,11 +11,13 @@
   spot (overshooting a sharp corner at speed swings the robot out into whatever stands beside the strip). Turning on
   the spot is allowed while nothing is inside the circle the robot's corners sweep (rotate_radius_m).
 - Gives up ("blocked") after blocked_timeout_s stopped in front of an obstacle.
+- save_map: 10 s after the patrol is done, ask slam_toolbox to save its map there (the teach run of teach and repeat;
+  the wait lets a loop closure that lands as the robot reaches the start get into the saved map).
 
 Topics: in /ugv/route, the pose topic, /ugv/lidar/points, /ugv/patrol/cmd (std_msgs/String: start | stop | restart);
 out /ugv/cmd_vel, /ugv/patrol/status (std_msgs/String, JSON, 1 Hz and on every state change), /ugv/patrol/target.
 """
-import json, math, time
+import json, math, os, time
 import numpy as np
 import rclpy
 from rclpy.node import Node
@@ -46,10 +48,11 @@ class UgvPatrol(Node):
         self.front = float(P("front_m", 0.40))              # bumper ahead of the base_link origin
         self.blocked_timeout = float(P("blocked_timeout_s", 20.0))
         self.turn_in_place = math.radians(float(P("turn_in_place_deg", 35.0)))
-        self.rotate_radius = float(P("rotate_radius_m", 0.62))  # the corners of a 0.80 x 0.72 m footprint sweep 0.54 m
+        self.rotate_radius = float(P("rotate_radius_m", 0.62))
+        self.save_map = str(P("save_map", ""))  # the corners of a 0.80 x 0.72 m footprint sweep 0.54 m
         self.route, self.pose, self.pose_t = None, None, 0.0
         self.obstacle = (False, False, False)                # (stop, slow, nothing may even turn on the spot)
-        self.state, self.idx, self.restart_at = "idle", 0, 0.0
+        self.state, self.idx, self.restart_at, self.save_at = "idle", 0, 0.0, None
         self.t_start = self.travelled = 0.0
         self.last_xy, self.blocked_since, self.stops = None, None, 0
         self.cmd_pub = self.create_publisher(Twist, "/ugv/cmd_vel", 10)
@@ -116,10 +119,15 @@ class UgvPatrol(Node):
             self.state = s
             self.get_logger().info(f"patrol: {s}")
             self.publish_status()
+            if s == "done" and self.save_map:
+                self.save_at = time.monotonic() + 10.0       # a loop closure often lands as the robot arrives
         if s in ("stopped", "done", "blocked", "idle", "restarting"):
             self.cmd_pub.publish(Twist())
 
     def control(self):
+        if self.save_at is not None and time.monotonic() >= self.save_at:
+            self.save_at = None
+            self.serialize_map()
         if self.state == "restarting" and time.monotonic() >= self.restart_at:
             self.start()
         if self.state not in ("driving", "waiting") or self.route is None:
@@ -171,6 +179,19 @@ class UgvPatrol(Node):
         v = max(0.25, min(self.speed, v)) * (0.5 if slow else 1.0)
         cmd.linear.x, cmd.angular.z = v, max(-1.0, min(1.0, k * v))
         self.cmd_pub.publish(cmd)
+
+    def serialize_map(self):
+        from slam_toolbox.srv import SerializePoseGraph
+        os.makedirs(os.path.dirname(self.save_map), exist_ok=True)
+        cli = self.create_client(SerializePoseGraph, "/slam_toolbox/serialize_map")
+        if not cli.wait_for_service(timeout_sec=5.0):
+            self.get_logger().error("slam_toolbox/serialize_map is not available: map not saved")
+            return
+        req = SerializePoseGraph.Request()
+        req.filename = self.save_map
+        fut = cli.call_async(req)
+        fut.add_done_callback(lambda f: self.get_logger().info(
+            f"map saved to {self.save_map}.posegraph/.data" if f.result() is not None else f"saving the map failed: {f.exception()}"))
 
     def publish_status(self):
         if self.route is None:
