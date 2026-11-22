@@ -13,6 +13,30 @@ def f(v):
     return NAN if v is None else float(v)
 
 
+def ecef_to_latlon(x, y, z):
+    """WGS-84 ECEF (m) to geodetic latitude and longitude (degrees), Bowring's formula (sub-metre near the ground)."""
+    a, e2 = 6378137.0, 6.69437999014e-3
+    b = a * math.sqrt(1 - e2); ep2 = (a * a - b * b) / (b * b)
+    p = math.hypot(x, y); th = math.atan2(z * a, p * b)
+    lat = math.atan2(z + ep2 * b * math.sin(th) ** 3, p - e2 * a * math.cos(th) ** 3)
+    return math.degrees(lat), math.degrees(math.atan2(y, x))
+
+
+def latlon_wrong(t):
+    """True when a TPV with a fix has lat/lon that disagree with its own ECEF position (more than 50 m): gpsd 3.22
+    with a u-blox 7 reports lat 0, lon 0 under a 3D fix until the receiver also sends NAV-POSLLH. The panel's device
+    hub (jetson/panel/hub.py) turns that back on; this node only refuses to publish the wrong position."""
+    e = [t.get(k) for k in ("ecefx", "ecefy", "ecefz")]
+    if (t.get("mode") or 0) < 2 or None in e:
+        return False
+    if t.get("lat") is None or t.get("lon") is None:
+        return True
+    lat, lon = ecef_to_latlon(*e)
+    dn = math.radians(lat - t["lat"]) * 6371000.0
+    de = math.radians(lon - t["lon"]) * 6371000.0 * math.cos(math.radians(lat))
+    return math.hypot(dn, de) > 50.0
+
+
 class GpsdGps(Node):
     def __init__(self):
         super().__init__("gpsd_gps")
@@ -45,6 +69,10 @@ class GpsdGps(Node):
 
     def _tpv(self, t):
         stamp = self.get_clock().now().to_msg()
+        if latlon_wrong(t):
+            self.get_logger().warn("gpsd lat/lon disagree with its ECEF position (u-blox 7 + gpsd 3.22): publishing "
+                                   "no fix until the panel turns NAV-POSLLH back on", throttle_duration_sec=30)
+            t = dict(t, mode=1, lat=None, lon=None)
         mode = int(t.get("mode") or 0)
         self.device = t.get("device") or self.device
         if mode >= 2 and t.get("lat") is not None:

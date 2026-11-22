@@ -75,7 +75,8 @@ Solid lines run today; the PX4 link (micro-ROS agent and `px4_pose`) runs with `
   `CompressedImage` without re-encoding. It decodes to a `bgr8` `Image` only while someone subscribes to the raw topic.
 - **GPS:** `gpsd_gps` is a gpsd client. `NavSatFix` carries the fix status and a diagonal covariance from gpsd's
   `epx`/`epy`/`epv`. `GpsInfo` carries the fix type, satellites used and seen, HDOP, speed, track and the time since
-  the last fix.
+  the last fix. A report whose lat/lon disagree with its ECEF position by more than 50 m (gpsd 3.22 with a u-blox 7)
+  is published as no fix. The panel's hub turns the receiver's NAV-POSLLH back on.
 - **Radar:** `ld2450` is a client of the service's `/events` SSE stream and never opens `/dev/ttyUSB0`.
   `RadarTargets` carries the sensor-frame x and y, speed, distance, angle and resolution per occupied slot, plus the
   connected, fps, frames, bad, error and demo fields. `PointCloud2` and `MarkerArray` use the REP 103 radar frame

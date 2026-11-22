@@ -5,7 +5,7 @@
   simulator stream), with the GPS fix in each frame header, so nobody else opens the camera or the GPS port.
 - Cameras open on demand and close 20 s after the last viewer or consumer leaves.
 """
-import json, os, socket, struct, threading, time, urllib.request
+import json, math, os, socket, struct, threading, time, urllib.request
 import cv2
 import numpy as np
 import gi
@@ -157,14 +157,62 @@ class CsiCamera(Camera):
         self._publish_live(cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 72])[1].tobytes())
 
 
+def ecef_to_latlon(x, y, z):
+    """WGS-84 ECEF (m) to geodetic latitude and longitude (degrees), Bowring's formula (sub-metre near the ground)."""
+    a, e2 = 6378137.0, 6.69437999014e-3
+    b = a * math.sqrt(1 - e2); ep2 = (a * a - b * b) / (b * b)
+    p = math.hypot(x, y); th = math.atan2(z * a, p * b)
+    lat = math.atan2(z + ep2 * b * math.sin(th) ** 3, p - e2 * a * math.cos(th) ** 3)
+    return math.degrees(lat), math.degrees(math.atan2(y, x))
+
+
+def latlon_wrong(tpv):
+    """True when a TPV with a fix has lat/lon that disagree with its own ECEF position (more than 50 m).
+
+    gpsd 3.22 asks a u-blox 7 (PROTVER 14) only for NAV-SOL, which carries ECEF, and does not convert it: TPV then
+    reports a 3D fix at lat 0, lon 0 (or the last lat/lon it saw). The ECEF fields stay right."""
+    e = [tpv.get(k) for k in ("ecefx", "ecefy", "ecefz")]
+    if (tpv.get("mode") or 0) < 2 or None in e:
+        return False
+    if tpv.get("lat") is None or tpv.get("lon") is None:
+        return True
+    lat, lon = ecef_to_latlon(*e)
+    dn = math.radians(lat - tpv["lat"]) * 6371000.0
+    de = math.radians(lon - tpv["lon"]) * 6371000.0 * math.cos(math.radians(lat))
+    return math.hypot(dn, de) > 50.0
+
+
+def ubx_frame(cls, mid, payload):
+    body = bytes([cls, mid, len(payload) & 255, len(payload) >> 8]) + bytes(payload)
+    a = b = 0
+    for x in body:
+        a = (a + x) & 255; b = (b + a) & 255
+    return b"\xb5\x62" + body + bytes([a, b])
+
+
+UBX_NAV_POSLLH_ON = ubx_frame(0x06, 0x01, [0x01, 0x02, 1]).hex()   # CFG-MSG: NAV-POSLLH once per fix, current port
+
+
 class Gps:
-    """One gpsd client (gpsd owns the u-blox port); publishes the latest fix."""
+    """One gpsd client (gpsd owns the u-blox port); publishes the latest fix.
+
+    With a u-blox 7 under gpsd 3.22 the receiver must also send NAV-POSLLH, or gpsd reports lat 0, lon 0 under a 3D
+    fix. The receiver keeps that setting only in RAM, so whenever the hub sees it (latlon_wrong), it asks gpsd to turn
+    NAV-POSLLH back on (at most every 30 s) and reports no position until gpsd's lat/lon agree with ECEF again."""
 
     def __init__(self, host="127.0.0.1", port=2947):
         self.host, self.port = host, port
         self.tpv, self.sky, self.connected, self.error = {}, {}, False, None
-        self.last_fix_mono = None; self.device = None
+        self.last_fix_mono = None; self.device = None; self.driver = None; self.healed_mono = None
         threading.Thread(target=self._run, daemon=True, name="gps").start()
+
+    def _heal(self, s, path):
+        now = time.monotonic()
+        if self.driver != "u-blox" or not path or (self.healed_mono is not None and now - self.healed_mono < 30):
+            return
+        self.healed_mono = now
+        s.sendall(("?DEVICE=" + json.dumps({"path": path, "hexdata": UBX_NAV_POSLLH_ON}) + ";\n").encode())
+        print(f"gps: lat/lon disagree with ECEF on {path}; turned NAV-POSLLH back on", flush=True)
 
     def _run(self):
         while True:
@@ -180,6 +228,9 @@ class Gps:
                             continue
                         c = m.get("class")
                         if c == "TPV":
+                            if latlon_wrong(m):
+                                self._heal(s, m.get("device") or self.device)
+                                m = dict(m, lat=None, lon=None, alt=None, altHAE=None, altMSL=None)
                             self.tpv = m; self.device = m.get("device")
                             if (m.get("mode") or 0) >= 2 and m.get("lat") is not None:
                                 self.last_fix_mono = time.monotonic()
@@ -189,6 +240,9 @@ class Gps:
                         elif c == "DEVICES":
                             devs = m.get("devices") or []
                             self.device = devs[0].get("path") if devs else None
+                            self.driver = devs[0].get("driver") if devs else None
+                        elif c == "DEVICE" and m.get("driver"):
+                            self.driver = m["driver"]
             except OSError as e:
                 self.error = str(e)
             self.connected = False

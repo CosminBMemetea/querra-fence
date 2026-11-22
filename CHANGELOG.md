@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- **GPS at 0,0 under a 3D fix, fixed.** gpsd 3.22 drives the u-blox 7 (PROTVER 14) in binary mode and asks it only for
+  NAV-SOL, which carries an ECEF position that gpsd does not convert: TPV reported a 3D fix at lat 0, lon 0 (or the last
+  lat/lon it saw) while the receiver's own NAV-POSLLH and NAV-PVT were right. The receiver keeps its message settings
+  only in RAM, so the fix lives in the readers:
+  - the panel's device hub (`jetson/panel/hub.py`) checks gpsd's lat/lon against the ECEF position in the same report.
+    When they differ by more than 50 m on a u-blox, it asks gpsd to turn NAV-POSLLH on (at most every 30 s) and
+    reports no position until they agree. Field mode takes its fix from the hub, so it gets the same check;
+  - the ROS 2 node `gpsd_gps` makes the same check and publishes no fix instead of a wrong position. It never writes
+    to the receiver.
+
 ## v0.11.0 · 2026-11-21 · model-v0.5 is the default: no false alerts in flight
 
 - **model-v0.5**, fine-tuned from v0.4 on 9,600 frames posed like the inspection flight and compressed like the

@@ -43,6 +43,9 @@ field, in English or Polish (EN | PL switch, remembered by the browser), for a p
 - **Settings:** start at boot (a user crontab line tagged `# querra-field`, off by default), the v0.2, v0.3, v0.4 or
   v0.5 engine (edits `field.sh` with a backup, only while collection is stopped), and the Vision demo on or off.
 - **GPS:** fix type, satellites used and seen, HDOP, position with a map link, altitude, speed, heading, time since fix.
+  gpsd 3.22 reports a u-blox 7 at lat 0, lon 0 under a 3D fix unless the receiver also sends NAV-POSLLH. The hub
+  checks gpsd's lat/lon against the ECEF position, turns NAV-POSLLH back on through gpsd when they differ, and shows
+  no position until they agree.
 - **Radar:** a ±60°, 6 m fan with up to 3 targets and their trails, plus distance, angle and speed per target, and
   fps, frames, bad frames, error and the demo flag. It says "radar service offline" when the service is down.
 - **System:** CPU and GPU temperature, power mode, RAM, uptime, free SSD and system disk, safe shutdown. Without
