@@ -166,8 +166,23 @@ flowchart LR
 | Repeat 3: as repeat 2, with the localisation and bridge lighter on the CPU (below); Wi-Fi power saving off | 0.26 / 0.83 m, 0.05 m at the end | 4.3 m | The whole loop: 99.7% in 832 s (0.62 m/s), no obstacle stops, 5 of 5 faults through the camera's view. Off the true route: 0.01 m median, 0.18 m p95, 0.62 m max. No link gaps |
 | **Repeat 2: localisation, patrol on the SLAM pose along the taught route** | 0.30 / 1.13 m, 0.02 m at the end | 4.2 m | **The whole loop: 99.7% in 735 s (0.70 m/s), no obstacle stops, 5 of 5 faults through the camera's view. Off the true route: 0.01 m median, 0.17 m p95, 0.60 m max.** One 3.3 s link gap, ridden out |
 
-**On the Orin Nano** during the repeat run: the localisation node used about two CPU cores, `ugv_bridge` 60–75% of
-one, the stats node about a third of one.
+**Repeat 3 from above.** Black is where the robot really drove, blue is where SLAM on the Jetson placed it, and
+orange is where wheel odometry alone would have placed it. Blue covers black the whole way round; orange drifts up to
+4.6 m off. Close-up 1 is the moment SLAM was furthest off, at the corner by F2: 0.83 m along the path and 0.03 m
+sideways, so it did not push the robot off the route. Close-up 2 is the end of the loop, back at the start.
+
+![Repeat 3 from above: the true path and the SLAM position overlap the whole way round, while wheel odometry drifts up to 4.6 m off; close-ups of the worst SLAM moment and of the end of the loop](media/ugv-patrol-top.svg)
+
+The same patrol as error against the distance driven. Wheel odometry's error grows with the distance. GNSS under the
+crowns swings between 1.5 and 9 m, which is why the patrol does not steer on it. SLAM stays under a metre.
+
+![Position error along repeat 3: SLAM stays under 1 m (median 0.26 m), wheel odometry grows to 4.3 m, GNSS under the trees swings between 1.5 and 9 m (median 4.3 m)](media/ugv-error.svg)
+
+Both figures come from the patrol's log: `python3 tools/ugv_figures.py run/ugv/<time>` (after `tools/ugv_eval.py
+--json`, whose numbers they reuse).
+
+**On the Orin Nano** during repeat 2 (before the CPU cut below): the localisation node used about two CPU cores,
+`ugv_bridge` 60–75% of one, the stats node about a third of one.
 
 **Why the Jetson stopped answering.** It did not crash or reboot: its log runs on without a gap, with no memory,
 thermal or network event, and the ROS container stayed up. Its link is 2.4 GHz Wi-Fi at about −59 dBm, which carries

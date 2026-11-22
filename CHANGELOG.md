@@ -28,6 +28,11 @@
       `bytes`, which rclpy checks byte by byte, and publishes the trails every 2 s (77% → 33%); the stats node skips
       the high-rate and bulky topics. `./ros.sh cpu [SECONDS]` measures it.
 
+    - **Figures from a patrol's log:** `tools/ugv_figures.py run/ugv/<time>` draws the forest from above with the
+      true path, the SLAM position and wheel odometry, with close-ups of the worst SLAM moment and the end of the
+      loop, and charts each estimate's error against the distance driven. Both figures for repeat 3 are in
+      docs/ugv.md.
+
     What remains: ten repeat patrols.
 
 - **Ground robot (UGV), phase 0: simulation** ([docs/ugv.md](docs/ugv.md)). A ground robot patrols a fenced forest
