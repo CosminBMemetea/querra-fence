@@ -18,7 +18,12 @@
     - the first repeat patrol passed the tight spots where odometry stopped, steady at 1.1–1.3 m for 400 s, until
       the Mac–Jetson Wi-Fi stalled.
 
-    What remains: record the route in the map frame, Ethernet for the simulation link, and the CPU load.
+    - **teach and repeat:** the teach run now saves the route as the map sees it (the pose graph after the loop
+      closes), and the repeat patrol follows it. The first autonomous loop on SLAM went all the way: 99.7% in
+      735 s, 0.17 m p95 off the true route, no obstacle stops, 5 of 5 faults through the camera's view.
+    - `ugv_eval` reports link gaps, so a stalled link shows in the score instead of looking like a SLAM failure.
+
+    What remains: ten repeat patrols, Wi-Fi power saving on the Jetson, and the CPU load.
 
 - **Ground robot (UGV), phase 0: simulation** ([docs/ugv.md](docs/ugv.md)). A ground robot patrols a fenced forest
   enclosure, where the drone cannot see the fence and GNSS is poor. The Mac plays the robot's body and the Jetson

@@ -162,6 +162,8 @@ flowchart LR
 | Teach 2: Gazebo's simulation time on every sample (`/clock`), defaults | 3.7 / 9.0 / 8.3 m | 6.9 m | Still no loop closure. The indoor defaults trust the odometry's heading over the scans and search only 4 m for a loop |
 | Teach 3: simulation time + outdoor tuning | 1.08 / 4.6 m, **0.01 m after the loop closed** | 14.8 m | The loop closed at the start. The map was saved after the closure |
 | Repeat 1: localisation against that map, patrol on the SLAM pose | 0.84 / 6.3 m over the first 275 m | 7 m | Passed the tight spots at 95 m and 107 m where odometry stopped. For 400 s localisation held steady: 1.1–1.3 m from the truth, heading within 0.3°. Then the Wi-Fi link between the Mac and the Jetson stalled (4–5 s gaps from 414 s); localisation lost its heading in the last 10 s, and the link carried nothing for about 13 minutes. The patrol held still on its stale pose, as it should |
+| Teach 4: 5 GHz link; the route saved as the map sees it | 1.01 / 2.41 m, 0.38 m at the end | 4.5 m | No link gaps. The saved route (the pose graph after the loop closed, 1,536 points) lies 0.13 m from the true route on median, 0.39 m at most |
+| **Repeat 2: localisation, patrol on the SLAM pose along the taught route** | 0.30 / 1.13 m, 0.02 m at the end | 4.2 m | **The whole loop: 99.7% in 735 s (0.70 m/s), no obstacle stops, 5 of 5 faults through the camera's view. Off the true route: 0.01 m median, 0.17 m p95, 0.60 m max.** One 3.3 s link gap, ridden out |
 
 **On the Orin Nano** during the repeat run: the localisation node used about two CPU cores, `ugv_bridge` 60–75% of
 one, the stats node about a third of one.
@@ -177,19 +179,24 @@ the correction along the loop but leaves the map up to about a metre off the wor
 (`forest_meta.json`), so a robot localised in the map follows it up to a metre off. Real teach and repeat records the
 route in the map's own frame during the teach run, so the warp does not matter.
 
+**Teach and repeat fixes it.** With the route saved as the map sees it (`ugv_patrol` saves slam_toolbox's pose graph
+after the loop closes, in `/ws/maps/forest.route.json`), the route and the SLAM pose come from the same map. In
+repeat 2 the SLAM pose was 0.30 m from the truth on median, yet the robot drove 0.01 m from the true route on median
+and 0.17 m at the 95th percentile: the map's warp cancels out.
+
 Open:
-- record the taught route in the map frame (the teach run's SLAM poses);
-- the Jetson on Ethernet for simulation runs, then ten repeat patrols;
-- the CPU load.
+- ten repeat patrols, against the 9-of-10 goal;
+- Wi-Fi power saving on the Jetson (it adds latency spikes up to about 0.3 s on 5 GHz);
+- the CPU load on the Orin Nano.
 
 ## Phase 0 goals
 
 | Goal | Status |
 |---|---|
 | The whole chain runs (Gazebo → relay → ROS 2 on the Jetson → commands back), every sensor at its rate | done |
-| The robot completes the loop autonomously in at least 9 of 10 patrols | on ground truth: yes, in both versions of the world (1 patrol each; 10 to come with each change). On wheel odometry: no, blocked at about 100 m in 2 of 2 patrols. Needs SLAM |
+| The robot completes the loop autonomously in at least 9 of 10 patrols | on SLAM (teach and repeat): 1 of 1 so far; ten to run. On wheel odometry: no, blocked at about 100 m in 2 of 2 patrols. On ground truth: yes |
 | At least 4 of 5 faults found, at most 1 false alert per patrol | not yet. All 5 pass through the camera's view, but model-v0.5 knows only the drone's 55° view; the ground view needs its own data and model |
-| Localisation error under 1 m with poor GNSS, on the Orin Nano | not yet: next step |
+| Localisation error under 1 m with poor GNSS, on the Orin Nano | in repeat 2: 0.30 m median, 0.61 m p95, 1.13 m max against the truth, and 0.17 m p95 off the true route; the max is above 1 m, and the localisation node takes about two CPU cores |
 
 ## Next steps
 

@@ -4,8 +4,10 @@
   pose:=odom                   what the patrol drives on: odom (wheel odometry from the spawn pose, the default),
                                slam (the SLAM pose, needs slam:=mapping or slam:=localization), truth (the
                                simulator's ground truth: only to test the rest of the chain)
-  slam:=off                    off | mapping (build a map while patrolling, with loop closure; the map is saved to
-                               map:= when the patrol is done) | localization (localise against the saved map)
+  slam:=off                    off | mapping (teach: build a map while patrolling, with loop closure; the map and the
+                               route as the map sees it are saved to map:= when the patrol is done) | localization
+                               (repeat: localise against the saved map; with pose:=slam the patrol follows the saved
+                               route, map:=<...>.route.json)
   map:=/ws/maps/forest         slam_toolbox's serialized map (/ws is /ssd/querra/ros2 on the Jetson)
   patrol:=true                 drive the taught route around the enclosure as soon as it arrives
   speed:=0.8                   patrol speed, m/s
@@ -30,6 +32,9 @@ def generate_launch_description():
     pose_topic = PythonExpression(["{'truth': '/ugv/ground_truth', 'slam': '/ugv/slam_pose'}.get('", pose, "', '/ugv/odom_map')"])
     slam_on = PythonExpression(["'", slam, "' in ('mapping', 'localization')"])
     save_map = PythonExpression(["'", LaunchConfiguration("map"), "' if '", slam, "' == 'mapping' else ''"])
+    save_route = PythonExpression(["'", LaunchConfiguration("map"), ".route.json' if '", slam, "' == 'mapping' else ''"])
+    route_file = PythonExpression(["'", LaunchConfiguration("map"), ".route.json' if '", slam, "' == 'localization' and '",
+                                   pose, "' == 'slam' else ''"])
     return LaunchDescription([
         DeclareLaunchArgument("source", default_value="tcp://127.0.0.1:5611", description="tools/ugv_relay.py on the Mac"),
         DeclareLaunchArgument("pose", default_value="odom", description="odom | slam | truth"),
@@ -57,7 +62,8 @@ def generate_launch_description():
                                                                               "use_sim_time": True}],
              output="screen"),
         Node(package="querra_fence_ros", executable="ugv_patrol", name="ugv_patrol", condition=IfCondition(LaunchConfiguration("patrol")),
-             parameters=[{"pose_topic": pose_topic, "speed": LaunchConfiguration("speed"), "save_map": save_map}], output="screen"),
+             parameters=[{"pose_topic": pose_topic, "speed": LaunchConfiguration("speed"), "save_map": save_map,
+                          "save_route": save_route, "route_file": route_file}], output="screen"),
         Node(package="foxglove_bridge", executable="foxglove_bridge", name="foxglove_bridge", condition=IfCondition(LaunchConfiguration("foxglove")),
              parameters=[{"port": 8765, "address": "0.0.0.0", "send_buffer_limit": 20000000}], output="log"),
     ])

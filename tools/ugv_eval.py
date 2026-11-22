@@ -106,8 +106,10 @@ def score(rows, meta, t0, t1, pose_topic, final):
             while j + 1 < len(truth) and truth[j + 1]["wall"] <= r["wall"]:
                 j += 1
             errs.append(math.hypot(r["x"] - truth[j]["x"], r["y"] - truth[j]["y"]))
+        ts = [r["wall"] for r in win if r["k"] == "pose" and r.get("src") == src]
+        gaps = [b - a for a, b in zip(ts, ts[1:]) if b - a > 1.0]   # the Jetson sends 5 per second: longer gaps = link stalls
         loc[src] = {"median": r2(statistics.median(errs)), "p95": r2(pct(errs, 0.95)), "max": r2(max(errs)), "end": r2(errs[-1]),
-                    "samples": len(errs)}
+                    "samples": len(errs), "link_gaps_over_1s": len(gaps), "link_gap_max_s": r2(max(gaps) if gaps else 0.0)}
     # GNSS
     fixes = [g for g in gps if g.get("mode", 0) >= 2]
     buckets = {"open (<0.3)": [], "partial (0.3-0.6)": [], "dense (>=0.6)": []}
@@ -179,7 +181,8 @@ def main():
             R["cross_track_m"]["p95"], R["cross_track_m"]["max"]))
         print("  odometry   drift at the end %s m, max %s m, %s m per 100 m" % (D["end"], D["max"], D["per_100m"]))
         for src, e in sc["localisation_error_m"].items():
-            print("  %-10s error median %s m, p95 %s m, max %s m, at the end %s m" % (src, e["median"], e["p95"], e["max"], e["end"]))
+            print("  %-10s error median %s m, p95 %s m, max %s m, at the end %s m | link: %d gaps over 1 s, longest %s s" % (
+                src, e["median"], e["p95"], e["max"], e["end"], e["link_gaps_over_1s"], e["link_gap_max_s"]))
         print("  GNSS       fix %s%% (3D %s%%), error median %s m, p95 %s m" % (G["fix_pct"], G["fix_3d_pct"], G["error_m"]["median"], G["error_m"]["p95"]))
         for k, v in G["by_cover"].items():
             print("             %-18s %5s%% of the time: fix %s%%, error median %s m, p95 %s m" % (k, v["share_pct"], v["fix_pct"], v["error_median_m"], v["error_p95_m"]))

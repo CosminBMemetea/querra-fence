@@ -11,8 +11,12 @@
   spot (overshooting a sharp corner at speed swings the robot out into whatever stands beside the strip). Turning on
   the spot is allowed while nothing is inside the circle the robot's corners sweep (rotate_radius_m).
 - Gives up ("blocked") after blocked_timeout_s stopped in front of an obstacle.
-- save_map: 10 s after the patrol is done, ask slam_toolbox to save its map there (the teach run of teach and repeat;
-  the wait lets a loop closure that lands as the robot reaches the start get into the saved map).
+- Teach (save_map, save_route): 10 s after the patrol is done, ask slam_toolbox to save its map, and save the route
+  as the map sees it: the teach run's pose graph after optimisation (slam_toolbox's graph markers, in the world frame
+  through the static ugv_map -> ugv_slam_map). The wait lets a loop closure that lands as the robot reaches the start
+  into both.
+- Repeat (route_file): follow that saved route instead of /ugv/route. The route and the SLAM pose then come from the
+  same map, so the map's own warp against the world cancels out.
 
 Topics: in /ugv/route, the pose topic, /ugv/lidar/points, /ugv/patrol/cmd (std_msgs/String: start | stop | restart);
 out /ugv/cmd_vel, /ugv/patrol/status (std_msgs/String, JSON, 1 Hz and on every state change), /ugv/patrol/target.
@@ -21,11 +25,13 @@ import json, math, os, time
 import numpy as np
 import rclpy
 from rclpy.node import Node
+from rclpy.time import Time
 from rclpy.qos import qos_profile_sensor_data, QoSProfile, DurabilityPolicy
 from geometry_msgs.msg import Twist, PointStamped
 from nav_msgs.msg import Odometry, Path
 from sensor_msgs.msg import PointCloud2
 from std_msgs.msg import Empty, String
+from visualization_msgs.msg import Marker, MarkerArray
 
 
 def yaw_of(q):
@@ -48,8 +54,10 @@ class UgvPatrol(Node):
         self.front = float(P("front_m", 0.40))              # bumper ahead of the base_link origin
         self.blocked_timeout = float(P("blocked_timeout_s", 20.0))
         self.turn_in_place = math.radians(float(P("turn_in_place_deg", 35.0)))
-        self.rotate_radius = float(P("rotate_radius_m", 0.62))
-        self.save_map = str(P("save_map", ""))  # the corners of a 0.80 x 0.72 m footprint sweep 0.54 m
+        self.rotate_radius = float(P("rotate_radius_m", 0.62))  # the corners of a 0.80 x 0.72 m footprint sweep 0.54 m
+        self.save_map = str(P("save_map", ""))
+        self.save_route = str(P("save_route", ""))
+        self.route_file = str(P("route_file", ""))
         self.route, self.pose, self.pose_t = None, None, 0.0
         self.obstacle = (False, False, False)                # (stop, slow, nothing may even turn on the spot)
         self.state, self.idx, self.restart_at, self.save_at = "idle", 0, 0.0, None
@@ -65,16 +73,67 @@ class UgvPatrol(Node):
         self.create_subscription(String, "/ugv/patrol/cmd", self.on_cmd, 10)
         self.create_timer(0.05, self.control)
         self.create_timer(1.0, self.publish_status)
+        self.route_fixed, self.graph = False, None
+        if self.save_route:
+            from tf2_ros import Buffer, TransformListener
+            self.tf_buffer = Buffer()
+            self.tf_listener = TransformListener(self.tf_buffer, self, spin_thread=True)
+            self.create_subscription(MarkerArray, "/slam_toolbox/graph_visualization", lambda m: setattr(self, "graph", m), 1)
+        if self.route_file:
+            self.load_route(self.route_file)
         self.get_logger().info(f"patrol: pose from {self.pose_topic}, {self.speed} m/s, autostart {self.autostart}")
 
     # ---------------------------------------------------------------- inputs
-    def on_route(self, m):
-        self.route = np.array([[p.pose.position.x, p.pose.position.y] for p in m.poses])
+    def set_route(self, pts, source):
+        self.route = np.asarray(pts, dtype=float)
         seg = np.linalg.norm(np.diff(self.route, axis=0), axis=1)
         self.route_s = np.concatenate([[0.0], np.cumsum(seg)])
-        self.get_logger().info(f"route: {len(self.route)} points, {self.route_s[-1]:.0f} m")
+        self.get_logger().info(f"route ({source}): {len(self.route)} points, {self.route_s[-1]:.0f} m")
         if self.autostart and self.state == "idle":
             self.start()
+
+    def on_route(self, m):
+        if not self.route_fixed:                             # a taught route from a file wins
+            self.set_route([[p.pose.position.x, p.pose.position.y] for p in m.poses], "/ugv/route")
+
+    def load_route(self, path):
+        try:
+            with open(path) as f:
+                pts = json.load(f)["points"]
+        except (OSError, ValueError, KeyError) as e:
+            self.get_logger().error(f"taught route {path}: {e}; falling back to /ugv/route")
+            return
+        self.route_fixed = True
+        self.set_route(pts, f"taught, {os.path.basename(path)}")
+
+    def save_taught_route(self):
+        """The teach run's path as the map sees it: slam_toolbox's pose-graph nodes, in the world frame."""
+        if self.graph is None:
+            self.get_logger().error("no slam_toolbox graph received: taught route not saved")
+            return
+        nodes = sorted((m.id, m.pose.position.x, m.pose.position.y, m.header.frame_id)
+                       for m in self.graph.markers if m.type == Marker.SPHERE and m.action == Marker.ADD)
+        if len(nodes) < 10:
+            self.get_logger().error(f"only {len(nodes)} graph nodes: taught route not saved")
+            return
+        try:
+            t = self.tf_buffer.lookup_transform("ugv_map", nodes[0][3], Time())
+        except Exception as e:
+            self.get_logger().error(f"no TF ugv_map <- {nodes[0][3]}: {e}; taught route not saved")
+            return
+        q, tr = t.transform.rotation, t.transform.translation
+        yaw = yaw_of(q)
+        c, s_ = math.cos(yaw), math.sin(yaw)
+        pts = []
+        for _, x, y, _ in nodes:
+            wx, wy = tr.x + c * x - s_ * y, tr.y + s_ * x + c * y
+            if not pts or math.hypot(wx - pts[-1][0], wy - pts[-1][1]) >= 0.3:
+                pts.append([round(wx, 3), round(wy, 3)])
+        os.makedirs(os.path.dirname(self.save_route), exist_ok=True)
+        with open(self.save_route, "w") as f:
+            json.dump({"frame": "ugv_map", "source": "slam_toolbox pose graph of the teach run, after optimisation",
+                       "nodes": len(nodes), "points": pts}, f)
+        self.get_logger().info(f"taught route saved to {self.save_route}: {len(pts)} points from {len(nodes)} graph nodes")
 
     def on_pose(self, m):
         p = m.pose.pose
@@ -119,7 +178,7 @@ class UgvPatrol(Node):
             self.state = s
             self.get_logger().info(f"patrol: {s}")
             self.publish_status()
-            if s == "done" and self.save_map:
+            if s == "done" and (self.save_map or self.save_route):
                 self.save_at = time.monotonic() + 10.0       # a loop closure often lands as the robot arrives
         if s in ("stopped", "done", "blocked", "idle", "restarting"):
             self.cmd_pub.publish(Twist())
@@ -127,7 +186,10 @@ class UgvPatrol(Node):
     def control(self):
         if self.save_at is not None and time.monotonic() >= self.save_at:
             self.save_at = None
-            self.serialize_map()
+            if self.save_map:
+                self.serialize_map()
+            if self.save_route:
+                self.save_taught_route()
         if self.state == "restarting" and time.monotonic() >= self.restart_at:
             self.start()
         if self.state not in ("driving", "waiting") or self.route is None:
