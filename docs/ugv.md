@@ -96,21 +96,27 @@ the camera.
 | Pose the patrol drives on | Result | Route | Off the route (max) | Odometry drift | Faults through the camera's view |
 |---|---|---|---|---|---|
 | Ground truth (control), first version of the world (sparser forest) | done | 99.8% in 706 s | 0.32 m | (not used) | 5 of 5 |
-| Ground truth (control), final world | blocked at 221 m: a pinch-point trunk on the outside of a sharp corner (56°), after overshooting the corner by 0.5 m | 43% | 0.50 m | (not used) | 2 of 5 |
+| Ground truth (control), final world, before turning on the spot | blocked at 221 m: a pinch-point trunk on the outside of a sharp corner (56°), after overshooting the corner by 0.5 m | 43% | 0.50 m | (not used) | 2 of 5 |
+| Ground truth (control), final world, turning on the spot at sharp corners | done, no obstacle stops | 99.8% in 762 s (0.68 m/s) | 0.31 m | 5.3 m over the loop if it had driven on it (1.0 m per 100 m) | 5 of 5 |
 | Wheel odometry, run 1 | blocked at 107 m: a spruce's low branches hung into the strip at 0.9–1.0 m | 21% | 0.81 m | 1.1 m (1.0 m per 100 m) | 1 of 5 |
 | Wheel odometry, run 2 (spruces trimmed) | blocked at 95 m: a trunk at a pinch point, after drifting 0.6 m off the line | 19% | 0.61 m | 1.0 m (1.1 m per 100 m) | 1 of 5 |
 
-After the corner, `ugv_patrol` turns on the spot when the target is more than 35° off its heading, as skid steers
-do. The control run with that change was interrupted at 112 m, when ROS 2 was stopped from the panel, so it still
-has to be repeated.
+After the blocked corner, `ugv_patrol` turns on the spot when the target is more than 35° off its heading, as skid
+steers do. With that change, the control patrol completes the final world: the world is passable for a robot that
+knows where it is.
 
-**GNSS under the canopy.** The fix was there the whole time, but mostly 2D (15–18% 3D). The error was 5 m median
-and 10 m at the 95th percentile. Under dense canopy (85% of the time) it was 5.2 m median and 10–11 m at the 95th
-percentile.
+**GNSS under the canopy.** Over the whole loop (the control patrol), the fix was there all the time, but 3D for
+only 35% of it. The error was 4.4 m median and 9.9 m at the 95th percentile:
+
+| Sky | Share of the loop | Error, median | Error, 95th percentile |
+|---|---|---|---|
+| Open (the clearing) | 10% | 1.9 m | 4.3 m |
+| Partial cover | 25% | 4.5 m | 9.5 m |
+| Dense canopy | 66% | 4.9 m | 10.4 m |
 
 **What it means.** At its tightest, the strip leaves 0.59 m from the route centre to the nearest obstacle in the
 robot's height band (`tools/ugv_clearance.py`; 5th percentile 1.1 m). The robot is 0.72 m wide, so it has about
-0.2 m to spare there. A robot that holds its line passes on the straights; sharp corners need it to turn on the spot. Wheel odometry is good to
+0.2 m to spare there. A robot that holds its line and turns on the spot at sharp corners passes, as the control patrol shows. Wheel odometry is good to
 about 1% of the distance, a good figure for a skid steer, and it still puts the robot 0.6 m off within 100 m. GNSS
 error under the trees is many times the margin. The robot needs localisation from the trees themselves: LiDAR SLAM,
 fused with odometry, the IMU and GNSS where the sky is open.
@@ -124,7 +130,7 @@ requirement for the customer, not something the robot can solve.
 | Goal | Status |
 |---|---|
 | The whole chain runs (Gazebo → relay → ROS 2 on the Jetson → commands back), every sensor at its rate | done |
-| The robot completes the loop autonomously in at least 9 of 10 patrols | on ground truth: once in the first world; the final world's control run (with turning on the spot) is to be repeated. On wheel odometry: no, blocked at about 100 m in 2 of 2 patrols. Needs SLAM |
+| The robot completes the loop autonomously in at least 9 of 10 patrols | on ground truth: yes, in both versions of the world (1 patrol each; 10 to come with each change). On wheel odometry: no, blocked at about 100 m in 2 of 2 patrols. Needs SLAM |
 | At least 4 of 5 faults found, at most 1 false alert per patrol | not yet. All 5 pass through the camera's view, but model-v0.5 knows only the drone's 55° view; the ground view needs its own data and model |
 | Localisation error under 1 m with poor GNSS, on the Orin Nano | not yet: next step |
 

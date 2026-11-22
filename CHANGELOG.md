@@ -19,9 +19,10 @@
   - **Tools:** a Foxglove layout (`ros2/foxglove/ugv-layout.json`) and `tools/ugv_eval.py`, which scores a patrol
     from the relay's log.
   - **Measured:**
-    - on ground truth, the robot completed the 516 m loop in the first version of the world and passed all 5 faults
-      through the camera's view. In the final, denser world, a sharp corner stopped it, so the patrol now turns on
-      the spot at sharp corners (that control run is still to be repeated);
+    - on ground truth, the robot completes the 516 m loop and passes all 5 faults through the camera's view. In the
+      final, denser world that took turning on the spot at sharp corners (before that change, a trunk on the
+      outside of a 56° corner stopped it at 221 m). With the change: 99.8% in 762 s, at most 0.31 m off the route,
+      no obstacle stops;
     - on wheel odometry with 1% error, it drifts about 0.6 m sideways within 100 m and stops at the first tight spot
       (95 m and 107 m in two patrols);
     - under the canopy, GNSS error is 5 m median and 10 m at the 95th percentile.
