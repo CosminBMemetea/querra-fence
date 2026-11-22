@@ -88,5 +88,14 @@
 "lim1": "<b>Dron leti u simulaciji.</b>Misija je pravi PX4 kod koji bi upravljao fizičkim X500; letjelica još nije izgrađena.",
 "lim2": "<b>Model je vidio samo sintetičke farme.</b>Još nije provjeren na pravim ogradama ni životinjama; slijedi prikupljanje pravih podataka.",
 "lim3": "<b>Otkrivanje grabežljivaca je u planu, nije izgrađeno.</b>Danas sustav pronalazi kvarove ograde i odbjegle životinje.",
-"ft_rel": "Izdanja", "ft_ros": "Bilješke o ROS 2", "ft_log": "Dnevnik učenja", "ft_readme": "README na hrvatskom"
+"ft_rel": "Izdanja", "ft_ros": "Bilješke o ROS 2", "ft_log": "Dnevnik učenja", "ft_readme": "README na hrvatskom",
+"c5_h": "Zemaljski robot pod krošnjama",
+"alt_c5": "Pojas šume u LiDAR-u zemaljskog robota: debla, žica ograde i prijeđena putanja",
+"c5_1": "Gdje dron ne vidi ogradu, mali zemaljski robot patrolira 500 m ograde kroz šumu u Gazebu, s mozgom u ROS 2 na Jetsonu.",
+"c5_2": "LiDAR SLAM, teach and repeat: 10 od 10 dovršenih petlji, 0,26 m od stvarnog položaja (medijan), dok je GNSS pod krošnjama griješio 4,3 m.",
+"c5_3": "Još ne: pronalaženje kvarova sa zemlje, za što treba detektor treniran na bočnom pogledu robota.",
+"d9": "Zemaljski robot, faza 0",
+"d9s": "v0.12 · patrola kroz šumu u Gazebu: LiDAR SLAM teach and repeat na Jetsonu, 10 od 10 petlji",
+"n4": "Kvarovi sa zemlje",
+"n4s": "detektor za bočni pogled zemaljskog robota, zatim šetnja uz pravu šumsku ogradu"
 }

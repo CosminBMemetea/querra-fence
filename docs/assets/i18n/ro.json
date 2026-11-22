@@ -88,5 +88,14 @@
 "lim1": "<b>Drona zboară în simulare.</b>Misiunea e cod PX4 real, care ar conduce un X500 fizic; drona nu e încă construită.",
 "lim2": "<b>Modelul a văzut doar ferme sintetice.</b>Nu e încă validat pe garduri sau animale reale; colectarea de date reale urmează.",
 "lim3": "<b>Detecția prădătorilor e planificată, nu construită.</b>Azi sistemul găsește defecte de gard și animale evadate.",
-"ft_rel": "Versiuni", "ft_ros": "Note ROS 2", "ft_log": "Jurnal de reantrenare", "ft_readme": "README în română"
+"ft_rel": "Versiuni", "ft_ros": "Note ROS 2", "ft_log": "Jurnal de reantrenare", "ft_readme": "README în română",
+"c5_h": "Robot terestru sub copaci",
+"alt_c5": "Fâșia de pădure în LiDAR-ul robotului terestru: trunchiuri, sârma gardului și traseul parcurs",
+"c5_1": "Acolo unde drona nu vede gardul, un robot terestru mic patrulează 500 m de gard prin pădure în Gazebo, cu „creierul” în ROS 2 pe Jetson.",
+"c5_2": "LiDAR SLAM, teach and repeat: 10 din 10 bucle terminate, la 0,26 m de poziția reală (mediana), în timp ce GNSS sub copaci greșea cu 4,3 m.",
+"c5_3": "Încă nu: găsirea defectelor de la sol, care cere un detector antrenat pe perspectiva laterală a robotului.",
+"d9": "Robot terestru, faza 0",
+"d9s": "v0.12 · o patrulă prin pădure în Gazebo: LiDAR SLAM teach and repeat pe Jetson, 10 din 10 bucle",
+"n4": "Defecte văzute de la sol",
+"n4s": "un detector pentru perspectiva laterală a robotului terestru, apoi o plimbare de-a lungul unui gard real din pădure"
 }

@@ -88,5 +88,14 @@
 "lim1": "<b>El dron vuela en simulación.</b>La misión es código PX4 real que manejaría un X500 físico; el dron aún no está construido.",
 "lim2": "<b>El modelo solo ha visto granjas sintéticas.</b>Aún no está validado en cercas ni animales reales; la recogida de datos reales es lo siguiente.",
 "lim3": "<b>La detección de depredadores está planificada, no construida.</b>Hoy el sistema encuentra averías en la cerca y animales escapados.",
-"ft_rel": "Versiones", "ft_ros": "Notas de ROS 2", "ft_log": "Registro de reentrenamiento", "ft_readme": "README en español"
+"ft_rel": "Versiones", "ft_ros": "Notas de ROS 2", "ft_log": "Registro de reentrenamiento", "ft_readme": "README en español",
+"c5_h": "Robot terrestre bajo los árboles",
+"alt_c5": "La franja de bosque en el LiDAR del robot terrestre: troncos, el alambre de la cerca y el recorrido",
+"c5_1": "Donde el dron no ve la cerca, un pequeño robot terrestre patrulla 500 m de cerca en el bosque en Gazebo, con el cerebro en ROS 2 en el Jetson.",
+"c5_2": "LiDAR SLAM, teach and repeat: 10 de 10 circuitos completados, a 0,26 m de la posición real (mediana), mientras el GNSS bajo los árboles se equivocaba 4,3 m.",
+"c5_3": "Aún no: encontrar las averías desde el suelo, que requiere un detector entrenado para la vista lateral del robot.",
+"d9": "Robot terrestre, fase 0",
+"d9s": "v0.12 · una patrulla en el bosque en Gazebo: LiDAR SLAM teach and repeat en el Jetson, 10 de 10 circuitos",
+"n4": "Averías vistas desde el suelo",
+"n4s": "un detector para la vista lateral del robot terrestre y después un recorrido a pie junto a una cerca real en el bosque"
 }

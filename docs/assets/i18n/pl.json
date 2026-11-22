@@ -146,5 +146,14 @@
  "out8": "Ponowny przelot nad usterką",
  "out8s": "Jetson przejmuje sterowanie w trybie OFFBOARD i przelatuje nisko nad każdym alertem",
  "d8": "Ponowny przelot nad potwierdzonymi usterkami (faza 3, część 2)",
- "d8s": "v0.8 · po misji Jetson przelatuje nisko nad każdym alertem w trybie OFFBOARD i oddaje sterowanie poleceniem Return; raport, README i ta strona w dziewięciu językach"
+ "d8s": "v0.8 · po misji Jetson przelatuje nisko nad każdym alertem w trybie OFFBOARD i oddaje sterowanie poleceniem Return; raport, README i ta strona w dziewięciu językach",
+ "c5_h": "Robot naziemny pod drzewami",
+ "alt_c5": "Pas lasu w LiDAR-ze robota naziemnego: pnie drzew, drut ogrodzenia i przejechana trasa",
+ "c5_1": "Tam, gdzie dron nie widzi ogrodzenia, mały robot naziemny patroluje 500 m ogrodzenia w lesie w Gazebo, a jego mózg działa w ROS 2 na Jetsonie.",
+ "c5_2": "LiDAR SLAM, teach and repeat: 10 z 10 pętli ukończonych, mediana 0,26 m od rzeczywistej pozycji, podczas gdy GNSS pod drzewami mylił się o 4,3 m.",
+ "c5_3": "Jeszcze nie: wykrywanie usterek z ziemi, do czego potrzebny jest detektor wytrenowany na bocznym widoku robota.",
+ "d9": "Robot naziemny, faza 0",
+ "d9s": "v0.12 · patrol w lesie w Gazebo: LiDAR SLAM teach and repeat na Jetsonie, 10 z 10 pętli",
+ "n4": "Usterki z ziemi",
+ "n4s": "detektor dla bocznego widoku robota naziemnego, potem przejście wzdłuż prawdziwego ogrodzenia w lesie"
 }

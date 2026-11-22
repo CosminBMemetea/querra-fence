@@ -1,78 +1,54 @@
 # Changelog
 
-## Unreleased
-
-- **Ground robot: SLAM, teach and repeat (first stage)** ([docs/ugv.md](docs/ugv.md#slam-teach-and-repeat)).
-  - **Docker image:** pointcloud_to_laserscan, slam_toolbox, robot_localization and nav2_map_server. KISS-ICP has no
-    Humble arm64 package.
-  - **Teach and repeat:** `./ros.sh ugv … slam:=mapping` maps while driving and saves the map 10 s after the loop.
-    `slam:=localization pose:=slam` patrols on the SLAM pose against that map.
-  - **One clock:** every sample carries Gazebo's simulation time, and `ugv_bridge` publishes `/clock`. Stamping on
-    arrival had made SLAM's heading drift on every turn.
-  - **Outdoor tuning of slam_toolbox:** scans count for more against the odometry, a larger local map, and a 15 m
-    loop-closure search.
-  - **Scoring:** `ugv_eval` scores the SLAM pose against the truth.
-  - **Measured:**
-    - the tuned teach run kept SLAM to 1.1 m median error (wheel odometry drifted 14.8 m) and closed the loop at
-      the start;
-    - the first repeat patrol passed the tight spots where odometry stopped, steady at 1.1–1.3 m for 400 s, until
-      the Mac–Jetson Wi-Fi stalled.
-
-    - **teach and repeat:** the teach run now saves the route as the map sees it (the pose graph after the loop
-      closes), and the repeat patrol follows it. The first autonomous loop on SLAM went all the way: 99.7% in
-      735 s, 0.17 m p95 off the true route, no obstacle stops, 5 of 5 faults through the camera's view.
-    - `ugv_eval` reports link gaps, so a stalled link shows in the score instead of looking like a SLAM failure.
-
-    - **CPU on the Orin Nano:** the ground-robot stack went from 327% to 119% of one core (of six) with the same
-      accuracy. Changes: a lighter localisation config (194% → 39%); the bridge hands byte arrays to rclpy instead of
-      `bytes`, which rclpy checks byte by byte, and publishes the trails every 2 s (77% → 33%); the stats node skips
-      the high-rate and bulky topics. `./ros.sh cpu [SECONDS]` measures it.
-
-    - **Figures from a patrol's log:** `tools/ugv_figures.py run/ugv/<time>` draws the forest from above with the
-      true path, the SLAM position and wheel odometry, with close-ups of the worst SLAM moment and the end of the
-      loop, and charts each estimate's error against the distance driven. Both figures for repeat 3 are in
-      docs/ugv.md.
-    - **What the LiDAR sees:** `tools/ugv_lidar_view.sh [SECONDS]` listens to the running simulation and renders the
-      accumulated point cloud in 3D, with the 0.33–1.68 m band that SLAM matches in orange. Two views of the dense
-      forest strip are in docs/ugv.md.
-    - **The SLAM map against the true forest:** `tools/ugv_slam_map.sh` saves `/map` on the Jetson
-      (`ros2/grab_map.py`), draws it with the true trunks and the taught route, and measures the fit: 0.10 m median
-      from each true trunk centre to the nearest occupied cell (739 trunks), against 0.56 m for teach 3's map.
-
-    - **Phase 0 goal met: 10 of 10 loops on SLAM.** `tools/ugv_series.sh N` runs N repeat patrols unattended, each
-      from a clean start. A series of 8 completed the loop 8 of 8 times: 99.7–99.8% in 717–751 s, 0.18–0.19 m p95
-      off the true route, SLAM 0.25–0.27 m median and under 1 m throughout, no link gaps, no obstacle stops, 5 of 5
-      faults through the camera's view in every patrol. With repeats 2 and 3: 10 of 10.
-
-    What remains: ten repeat patrols.
+## v0.12.0 · 2026-11-22 · a ground robot under the trees: LiDAR SLAM, 10 of 10 loops
 
 - **Ground robot (UGV), phase 0: simulation** ([docs/ugv.md](docs/ugv.md)). A ground robot patrols a fenced forest
   enclosure, where the drone cannot see the fence and GNSS is poor. The Mac plays the robot's body and the Jetson
   runs its brain.
-  - **World:** `forest.json` → `sim/gen_forest.py`. 499 m of fence with 5 faults, 878 trees, a cleared route strip
-    with pinch points, logs and rocks, and a clearing. It reuses the pasture's fence and fault code.
+  - **World:** `forest.json` → `sim/gen_forest.py`. 500 m of fence with 5 faults, 880 trees, a cleared route strip
+    with pinch points, bushes, logs and rocks, and a clearing. It reuses the pasture's fence and fault code.
   - **Robot:** a 4×4 skid steer with a 16-beam 3D LiDAR, a side camera at the fence and an IMU. Tyre friction is
     calibrated with `tools/ugv_calibrate.py`.
   - **Relay** (`tools/ugv_relay.py`, `./ugv.sh`): serves the robot to the Jetson over TCP and adds two error models.
     GNSS degrades with the sky the crowns hide. Wheel odometry gets scale and heading errors, only while the robot
     moves.
-  - **ROS 2** (`./ros.sh ugv tcp://<mac>:5611`):
-    - `ugv_bridge` publishes `/ugv/*` (point cloud, IMU, odometry, GNSS, camera, route, fence, faults) and ground
-      truth for scoring;
-    - `ugv_patrol` follows the taught route with pure pursuit and a LiDAR stop.
+  - **ROS 2** (`./ros.sh ugv tcp://<mac>:5611`): `ugv_bridge` publishes `/ugv/*` (point cloud, IMU, odometry, GNSS,
+    camera, route, fence, faults) and ground truth for scoring; `ugv_patrol` follows the route with pure pursuit, a
+    LiDAR stop and turning on the spot at sharp corners.
   - **Tools:** a Foxglove layout (`ros2/foxglove/ugv-layout.json`) and `tools/ugv_eval.py`, which scores a patrol
     from the relay's log.
-  - **Measured:**
-    - on ground truth, the robot completes the 516 m loop and passes all 5 faults through the camera's view. In the
-      final, denser world that took turning on the spot at sharp corners (before that change, a trunk on the
-      outside of a 56° corner stopped it at 221 m). With the change: 99.8% in 762 s, at most 0.31 m off the route,
-      no obstacle stops;
-    - on wheel odometry with 1% error, it drifts about 0.6 m sideways within 100 m and stops at the first tight spot
-      (95 m and 107 m in two patrols);
-    - under the canopy, GNSS error is 5 m median and 10 m at the 95th percentile.
-
-    So the robot needs localisation that uses the trees (LiDAR SLAM) before it can patrol a forest strip.
-
+  - **Without SLAM:** on ground truth the robot completes the 516 m loop (99.8% in 762 s, at most 0.31 m off the
+    route). On wheel odometry with 1% error it stops at the first tight spot (95 m and 107 m in two patrols). Under
+    the canopy GNSS is 5 m off on median and 10 m at the 95th percentile.
+- **LiDAR SLAM, teach and repeat** ([docs/ugv.md](docs/ugv.md#slam-teach-and-repeat)).
+  - **Docker image:** pointcloud_to_laserscan, slam_toolbox, robot_localization and nav2_map_server. KISS-ICP has no
+    Humble arm64 package.
+  - **Teach:** `./ros.sh ugv … slam:=mapping` maps while driving. 10 s after the loop it saves the map and the route as
+    the map sees it (the pose graph after the loop closed).
+  - **Repeat:** `slam:=localization pose:=slam` patrols on the SLAM pose along that route, so the map's own warp
+    cancels out.
+  - **One clock:** every sample carries Gazebo's simulation time, and `ugv_bridge` publishes `/clock`. Stamping on
+    arrival had made SLAM's heading drift on every turn.
+  - **Outdoor tuning of slam_toolbox:** scans count for more against the odometry, a larger local map, and a 15 m
+    loop-closure search.
+  - **Scoring:** `ugv_eval` scores the SLAM pose against the truth and reports link gaps, so a stalled Wi-Fi link
+    shows in the score instead of looking like a SLAM failure.
+  - **CPU on the Orin Nano:** the ground-robot stack went from 327% to 119% of one core (of six) with the same
+    accuracy. Changes: a lighter localisation config (194% → 39%); the bridge hands byte arrays to rclpy instead of
+    `bytes`, which rclpy checks byte by byte, and publishes the trails every 2 s (77% → 33%); the stats node skips the
+    high-rate and bulky topics. `./ros.sh cpu [SECONDS]` measures it.
+  - **Measured: 10 of 10 loops.** `tools/ugv_series.sh N` runs N repeat patrols unattended, each from a clean start.
+    A series of 8 completed the loop 8 of 8 times: 99.7–99.8% in 717–751 s, 0.18–0.19 m p95 off the true route,
+    SLAM 0.25–0.27 m median and under 1 m throughout, no link gaps, no obstacle stops, 5 of 5 faults through the
+    camera's view in every patrol. With repeats 2 and 3: 10 of 10, so the phase 0 goal of 9 of 10 is met.
+  - **The map:** 0.10 m on median from each true trunk centre to the nearest occupied cell (739 trunks).
+- **Pictures** in docs/ugv.md, all made from logs or by listening to Gazebo:
+  - `tools/ugv_figures.py`: a patrol from above (true path, SLAM, wheel odometry) and each estimate's error along
+    the loop;
+  - `tools/ugv_lidar_view.sh`: the LiDAR point cloud in 3D while a patrol drives, or with `--sweep`, with no patrol
+    and no Jetson (`tools/ugv_lidar_sweep.py`): the whole loop, one scan, and each fault;
+  - `tools/ugv_slam_map.sh`: the SLAM map against the true forest (`ros2/grab_map.py` saves `/map` on the Jetson).
+- **README in nine languages and the project page:** a section and a card for the ground robot, and the roadmap.
 - **GPS at 0,0 under a 3D fix, fixed.** gpsd 3.22 drives the u-blox 7 (PROTVER 14) in binary mode and asks it only for
   NAV-SOL, which carries an ECEF position that gpsd does not convert: TPV reported a 3D fix at lat 0, lon 0 (or the last
   lat/lon it saw) while the receiver's own NAV-POSLLH and NAV-PVT were right. The receiver keeps its message settings

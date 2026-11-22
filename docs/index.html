@@ -223,6 +223,15 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
           <li data-i18n="c4_3">The same topics come from the simulation or from the real sensors, so the pipeline is tested before the field.</li>
         </ul>
       </article>
+      <article class="card">
+        <div class="top"><h3 data-i18n="c5_h">Ground robot under the trees</h3><span class="chip sim" data-i18n="chip_sim_long">simulated</span></div>
+        <img class="pic" src="media/ugv-lidar-forest.jpg" width="1600" height="964" loading="lazy" data-i18n-alt="alt_c5" alt="The forest strip in the ground robot's LiDAR: tree trunks, the fence wire and the path driven">
+        <ul>
+          <li data-i18n="c5_1">Where the drone cannot see the fence, a small ground robot patrols a 500 m forest fence in Gazebo, with the brain in ROS 2 on the Jetson.</li>
+          <li data-i18n="c5_2">LiDAR SLAM, teach and repeat: 10 of 10 loops completed, 0.26 m median from the truth, while GNSS under the trees was 4.3 m off.</li>
+          <li data-i18n="c5_3">Not yet: finding the faults from the ground, which needs a detector trained for the robot's side view.</li>
+        </ul>
+      </article>
     </div>
   </div>
 </section>
@@ -295,6 +304,7 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
           <li><b data-i18n="d6">Safe-fence launcher</b><small data-i18n="d6s">v0.6 · desktop app, new icon, reliability fixes, this page in English and Polish</small></li>
           <li><b data-i18n="d7">PX4 ↔ ROS 2 (phase 3, part 1)</b><small data-i18n="d7s">v0.7 · PX4 over uXRCE-DDS into ROS 2 on the Jetson; alerts use the drone's own pose: real faults within 2.4–4.2 m</small></li>
           <li><b data-i18n="d8">Re-fly the confirmed faults (phase 3, part 2)</b><small data-i18n="d8s">v0.8 · after the mission the Jetson flies low over every alert in OFFBOARD and hands back with Return; report, READMEs and this page in nine languages</small></li>
+          <li><b data-i18n="d9">Ground robot, phase 0</b><small data-i18n="d9s">v0.12 · a forest patrol in Gazebo: LiDAR SLAM teach and repeat on the Jetson, 10 of 10 loops</small></li>
         </ul>
       </div>
       <div class="lane next">
@@ -303,6 +313,7 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
           <li><b data-i18n="n1">A close-up check you can trust</b><small data-i18n="n1s">the re-fly works, but the detector was trained at 12 m: retrain it on low-altitude frames so a close look can confirm or reject an alert</small></li>
           <li><b data-i18n="n2">Real fence data</b><small data-i18n="n2s">field collection is ready: real photos, labels and retraining to close the gap between simulation and reality</small></li>
           <li><b data-i18n="n3">Calibrated sensors</b><small data-i18n="n3s">camera calibration and the real mounting offsets of every sensor on the airframe</small></li>
+          <li><b data-i18n="n4">Faults from the ground</b><small data-i18n="n4s">a detector for the ground robot's side view, then a walk along a real forest fence</small></li>
         </ul>
       </div>
       <div class="lane later">

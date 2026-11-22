@@ -166,6 +166,25 @@ ground and the crowns, which move with the wind and the seasons on a real site.
 `tools/ugv_lidar_view.sh [SECONDS]` makes both from the running simulation. It only listens to Gazebo, so it does not
 disturb a patrol.
 
+**The whole loop, one scan, and the faults.** With no patrol and no Jetson, `tools/ugv_lidar_view.sh --sweep` places
+the robot every 1.5 m along the route (every 0.3 m within 8 m of a fault) and keeps one scan at each of 571 stops.
+
+![The whole forest loop in LiDAR, from high above its south side: trees as columns with crowns, the robot's route in white, the five faults marked](media/ugv-lidar-loop.jpg)
+
+A single scan is sparse: about 13,000 points in 16 rings, a handful on each trunk. SLAM's accuracy comes from matching
+each such scan against the map built on the teach run, not from any one scan.
+
+![One LiDAR scan as the sensor delivers it in 0.1 s: 16 rings on the ground and a few points on each trunk around the robot](media/ugv-lidar-single.jpg)
+
+The faults show in 3D too: a branch lying across the wires (F2), and the wires running down to the ground where a post
+fell (F3). The simulated wires are 36 mm thick, like wide polytape. A real 2.5 mm steel wire would barely show in a
+16-beam LiDAR, so the camera stays the main fault sensor.
+
+<p>
+  <img src="media/ugv-lidar-F2.jpg" width="49%" alt="F2 in LiDAR: a branch lying across the fence wires, between two posts">
+  <img src="media/ugv-lidar-F3.jpg" width="49%" alt="F3 in LiDAR: the fence wires run down to the ground where a post fell">
+</p>
+
 **The map it localises against.** This is slam_toolbox's occupancy grid from the teach run, as the Jetson holds it
 during a repeat patrol, placed in the world through the spawn pose, with the true trunk positions on top. The trunks
 the LiDAR saw sit in their rings, around the whole loop: from each true trunk centre to the nearest occupied cell is

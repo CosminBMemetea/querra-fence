@@ -300,6 +300,25 @@ a TensorRT FP16 engine on a Jetson Orin Nano. The Jetson reads the simulated dro
 - [Models and data](ml/README.md): registry of every model and dataset, run records and sha256 of the model files.
 - [Jetson integration](docs/jetson-integration.md): the `sim:` camera source, the detector and field mode in querra-scout.
 
+## Ground robot under the trees (simulation, phase 0)
+
+Under a canopy the drone can neither see the fence nor fly safely, and GNSS is metres off. A small ground robot can
+patrol there instead: a fenced woodland paddock, a deer park, a zoo enclosure. Phase 0 runs it in Gazebo: a 500 m
+fence through a procedural forest with five faults, a skid-steer robot with a 16-beam LiDAR, a camera, an IMU and
+GNSS that degrades under the crowns, and its patrol brain in ROS 2 on the Jetson.
+
+![The forest strip in the ground robot's LiDAR: tree trunks banded orange where they cross the slice SLAM uses, the fence wire as an orange line, crowns overhead, the path driven in white](docs/media/ugv-lidar-forest.jpg)
+
+- **Teach and repeat with slam_toolbox:** the robot drives the loop once to build a map, then localises against it on
+  every patrol. It completed the loop in 10 of 10 patrols, 0.18 m off the route at the 95th percentile, with the SLAM
+  pose 0.26 m from the truth on median and under 1 m throughout. Under the trees GNSS was 4.3 m off on median, and on
+  wheel odometry alone the robot got stuck at about 100 m.
+- **On the Orin Nano** the whole ground-robot stack uses about 1.2 of the 6 cores.
+- **Not done yet:** finding the faults from the ground. All five pass through the camera's view, but the fence
+  detector knows only the drone's view.
+
+Run it with `./ugv.sh` on the Mac and `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` on the Jetson. Details, figures and results: [docs/ugv.md](docs/ugv.md).
+
 ## Simulated versus real
 
 The flight is real PX4 code: the same mission, parameters and MAVLink commands would drive a physical X500.

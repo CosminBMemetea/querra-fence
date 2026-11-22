@@ -88,5 +88,14 @@
 "lim1": "<b>Die Drohne fliegt in der Simulation.</b>Die Mission ist echter PX4-Code, der eine echte X500 steuern würde; das Fluggerät ist noch nicht gebaut.",
 "lim2": "<b>Das Modell kennt nur synthetische Höfe.</b>Es ist noch nicht an echten Zäunen oder Tieren validiert; die Erfassung echter Daten kommt als Nächstes.",
 "lim3": "<b>Die Raubtiererkennung ist geplant, nicht gebaut.</b>Heute findet das System Zaunschäden und ausgebrochene Tiere.",
-"ft_rel": "Releases", "ft_ros": "ROS-2-Notizen", "ft_log": "Trainingsprotokoll", "ft_readme": "README auf Deutsch"
+"ft_rel": "Releases", "ft_ros": "ROS-2-Notizen", "ft_log": "Trainingsprotokoll", "ft_readme": "README auf Deutsch",
+"c5_h": "Bodenroboter unter den Bäumen",
+"alt_c5": "Der Waldstreifen im LiDAR des Bodenroboters: Baumstämme, der Zaundraht und der gefahrene Weg",
+"c5_1": "Wo die Drohne den Zaun nicht sieht, patrouilliert ein kleiner Bodenroboter 500 m Waldzaun in Gazebo, mit dem Gehirn in ROS 2 auf dem Jetson.",
+"c5_2": "LiDAR-SLAM, Teach and Repeat: 10 von 10 Runden geschafft, im Median 0,26 m von der wahren Position, während GNSS unter den Bäumen 4,3 m danebenlag.",
+"c5_3": "Noch nicht: die Schäden vom Boden aus finden; dafür braucht es einen Detektor, der auf die Seitensicht des Roboters trainiert ist.",
+"d9": "Bodenroboter, Phase 0",
+"d9s": "v0.12 · eine Waldpatrouille in Gazebo: LiDAR-SLAM Teach and Repeat auf dem Jetson, 10 von 10 Runden",
+"n4": "Schäden vom Boden aus",
+"n4s": "ein Detektor für die Seitensicht des Bodenroboters, dann ein Gang an einem echten Waldzaun entlang"
 }

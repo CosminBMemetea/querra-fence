@@ -304,6 +304,25 @@ sieć LAN (`tools/cam_stream.py`), gdy PX4 wykonuje misję, i zapisuje każde wy
 - [Modele i dane](ml/README.md): rejestr wszystkich modeli i zbiorów danych, zapisy przebiegów treningu i sha256 plików modeli.
 - [Integracja z Jetsonem](docs/jetson-integration.md): źródło kamery `sim:`, detektor i tryb terenowy w querra-scout.
 
+## Robot naziemny pod drzewami (symulacja, faza 0)
+
+Pod koronami drzew dron nie widzi ogrodzenia ani nie może bezpiecznie latać, a GNSS myli się o kilka metrów. Tam
+może patrolować mały robot naziemny: ogrodzony wybieg w lesie, zagroda dla jeleni, wybieg w zoo. Faza 0 działa
+w Gazebo: 500 m ogrodzenia przez proceduralnie generowany las z pięcioma usterkami, robot z napędem typu skid-steer,
+16-wiązkowym LiDAR-em, kamerą, IMU i GNSS, które słabnie pod koronami, a „mózg” patrolu działa w ROS 2 na Jetsonie.
+
+![Pas lasu w LiDAR-ze robota naziemnego: pnie drzew z pomarańczowym pasem tam, gdzie przecinają warstwę używaną przez SLAM, drut ogrodzenia jako pomarańczowa linia, korony u góry, przejechana trasa na biało](docs/media/ugv-lidar-forest.jpg)
+
+- **Teach and repeat ze slam_toolbox:** robot raz przejeżdża pętlę i buduje mapę, a potem w każdym patrolu lokalizuje
+  się względem niej. Ukończył pętlę w 10 z 10 patroli, 0,18 m od trasy (95. percentyl), a pozycja z SLAM była 0,26 m
+  od rzeczywistej (mediana) i przez cały czas poniżej 1 m. Pod drzewami GNSS mylił się o 4,3 m (mediana), a na samej
+  odometrii kół robot utknął po około 100 m.
+- **Na Orin Nano** cały stos robota naziemnego zużywa około 1,2 z 6 rdzeni.
+- **Jeszcze nie zrobione:** wykrywanie usterek z ziemi. Wszystkie pięć przechodzi przez pole widzenia kamery, ale
+  detektor ogrodzenia zna tylko widok z drona.
+
+Uruchomienie: `./ugv.sh` na Macu i `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` na Jetsonie. Szczegóły, wykresy i wyniki: [docs/ugv.md](docs/ugv.md).
+
 ## Symulacja a rzeczywistość
 
 Lot to prawdziwy kod PX4: ta sama misja, parametry i polecenia MAVLink sterowałyby fizycznym X500.

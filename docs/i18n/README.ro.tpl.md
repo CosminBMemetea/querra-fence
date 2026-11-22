@@ -218,6 +218,25 @@ locală (`tools/cam_stream.py`) în timp ce PX4 zboară misiunea și înregistre
 - [Modele și date](ml/README.md): registrul tuturor modelelor și seturilor de date, fișele antrenărilor și sha256 pentru fișierele modelelor.
 - [Integrarea cu Jetson](docs/jetson-integration.md): sursa de cameră `sim:`, detectorul și modul de teren din querra-scout.
 
+## Robot terestru sub copaci (simulare, faza 0)
+
+Sub coronament, drona nu vede gardul și nu poate zbura în siguranță, iar GNSS greșește cu câțiva metri. Acolo poate
+patrula un robot terestru mic: un padoc împrejmuit în pădure, un parc de cerbi, un țarc de grădină zoologică. Faza 0
+rulează în Gazebo: 500 m de gard printr-o pădure generată procedural, cu cinci defecte, un robot skid-steer cu LiDAR
+cu 16 fascicule, cameră, IMU și GNSS care se degradează sub coroane, iar „creierul” patrulei rulează în ROS 2 pe Jetson.
+
+![Fâșia de pădure în LiDAR-ul robotului terestru: trunchiuri cu o bandă portocalie acolo unde taie felia folosită de SLAM, sârma gardului ca linie portocalie, coroanele deasupra, traseul parcurs cu alb](docs/media/ugv-lidar-forest.jpg)
+
+- **Teach and repeat cu slam_toolbox:** robotul parcurge bucla o dată ca să construiască harta, apoi se localizează
+  pe ea la fiecare patrulă. A terminat bucla în 10 din 10 patrule, la 0,18 m de traseu (percentila 95), cu poziția din
+  SLAM la 0,26 m de cea reală (mediana) și sub 1 m tot timpul. Sub copaci, GNSS a greșit cu 4,3 m (mediana), iar doar
+  pe odometria roților robotul s-a blocat pe la 100 m.
+- **Pe Orin Nano**, tot stack-ul robotului terestru folosește cam 1,2 din cele 6 nuclee.
+- **Încă nefăcut:** găsirea defectelor de la sol. Toate cinci trec prin câmpul camerei, dar detectorul de gard
+  cunoaște doar perspectiva dronei.
+
+Pornire: `./ugv.sh` pe Mac și `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` pe Jetson. Detalii, figuri și rezultate: [docs/ugv.md](docs/ugv.md).
+
 ## Simulare versus realitate
 
 Zborul este cod PX4 real: aceeași misiune, aceiași parametri și aceleași comenzi MAVLink ar conduce un X500 fizic.

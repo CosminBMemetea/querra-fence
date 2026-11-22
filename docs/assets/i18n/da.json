@@ -88,5 +88,14 @@
 "lim1": "<b>Dronen flyver i simulering.</b>Missionen er rigtig PX4-kode, der ville styre en fysisk X500; dronen er ikke bygget endnu.",
 "lim2": "<b>Modellen har kun set syntetiske gårde.</b>Den er endnu ikke valideret på rigtige hegn eller dyr; indsamling af rigtige data er det næste.",
 "lim3": "<b>Rovdyrsdetektion er planlagt, ikke bygget.</b>I dag finder systemet hegnsfejl og undslupne dyr.",
-"ft_rel": "Udgivelser", "ft_ros": "Noter om ROS 2", "ft_log": "Træningslog", "ft_readme": "README på dansk"
+"ft_rel": "Udgivelser", "ft_ros": "Noter om ROS 2", "ft_log": "Træningslog", "ft_readme": "README på dansk",
+"c5_h": "Jordrobot under træerne",
+"alt_c5": "Skovstriben i jordrobottens LiDAR: træstammer, hegnstråden og den kørte rute",
+"c5_1": "Hvor dronen ikke kan se hegnet, patruljerer en lille jordrobot 500 m skovhegn i Gazebo, med hjernen i ROS 2 på Jetson.",
+"c5_2": "LiDAR-SLAM, teach and repeat: 10 af 10 runder gennemført, 0,26 m fra den sande position (median), mens GNSS under træerne ramte 4,3 m forkert.",
+"c5_3": "Ikke endnu: at finde fejlene fra jorden, hvilket kræver en detektor trænet på robottens sideudsyn.",
+"d9": "Jordrobot, fase 0",
+"d9s": "v0.12 · en skovpatrulje i Gazebo: LiDAR-SLAM teach and repeat på Jetson, 10 af 10 runder",
+"n4": "Fejl set fra jorden",
+"n4s": "en detektor til jordrobottens sideudsyn og derefter en gåtur langs et rigtigt skovhegn"
 }

@@ -300,6 +300,25 @@ PX4 leti misiju i bilježi svaku detekciju s GPS-om.
 - [Modeli i podaci](ml/README.md): registar svih modela i skupova podataka, zapisi učenja i sha256 datoteka modela.
 - [Integracija s Jetsonom](docs/jetson-integration.md): izvor kamere `sim:`, detektor i terenski način u querra-scout.
 
+## Zemaljski robot pod krošnjama (simulacija, faza 0)
+
+Pod krošnjama dron ne vidi ogradu i ne može sigurno letjeti, a GNSS griješi za nekoliko metara. Ondje može
+patrolirati mali zemaljski robot: ograđeni pašnjak u šumi, park za jelene, nastamba u zoološkom vrtu. Faza 0 radi
+u Gazebu: 500 m ograde kroz proceduralno generiranu šumu s pet kvarova, skid-steer robot s LiDAR-om od 16 zraka,
+kamerom, IMU-om i GNSS-om koji slabi pod krošnjama, a „mozak” patrole radi u ROS 2 na Jetsonu.
+
+![Pojas šume u LiDAR-u zemaljskog robota: debla s narančastim pojasom gdje sijeku sloj koji koristi SLAM, žica ograde kao narančasta linija, krošnje iznad, prijeđena putanja bijelom bojom](docs/media/ugv-lidar-forest.jpg)
+
+- **Teach and repeat sa slam_toolboxom:** robot jednom prijeđe petlju i izgradi kartu, a zatim se u svakoj patroli
+  lokalizira na njoj. Dovršio je petlju u 10 od 10 patrola, 0,18 m od rute (95. percentil), s položajem iz SLAM-a
+  0,26 m od stvarnog (medijan) i uvijek ispod 1 m. Pod krošnjama je GNSS griješio 4,3 m (medijan), a samo na
+  odometriji kotača robot je zapeo nakon otprilike 100 m.
+- **Na Orin Nanu** cijeli stog zemaljskog robota troši oko 1,2 od 6 jezgri.
+- **Još nije gotovo:** pronalaženje kvarova sa zemlje. Svih pet prolazi kroz vidno polje kamere, ali detektor ograde
+  poznaje samo pogled iz drona.
+
+Pokretanje: `./ugv.sh` na Macu i `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` na Jetsonu. Detalji, slike i rezultati: [docs/ugv.md](docs/ugv.md).
+
 ## Simulacija naspram stvarnosti
 
 Let je pravi PX4 kod: ista misija, isti parametri i iste MAVLink naredbe upravljale bi fizičkim X500.

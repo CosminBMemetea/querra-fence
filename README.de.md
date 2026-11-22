@@ -304,6 +304,26 @@ Drohnenkamera über das LAN (`tools/cam_stream.py`), während PX4 die Mission fl
 - [Modelle und Daten](ml/README.md): Register aller Modelle und Datensätze, Trainingsprotokolle und sha256 der Modelldateien.
 - [Jetson-Integration](docs/jetson-integration.md): die Kameraquelle `sim:`, der Detektor und der Feldmodus in querra-scout.
 
+## Bodenroboter unter den Bäumen (Simulation, Phase 0)
+
+Unter dem Kronendach sieht die Drohne den Zaun nicht und kann nicht sicher fliegen, und GNSS liegt mehrere Meter
+daneben. Dort kann ein kleiner Bodenroboter patrouillieren: eine eingezäunte Waldkoppel, ein Wildgehege, ein
+Zoogehege. Phase 0 läuft in Gazebo: 500 m Zaun durch einen prozedural erzeugten Wald mit fünf Schäden, ein
+Skid-Steer-Roboter mit 16-Strahl-LiDAR, Kamera, IMU und GNSS, das unter den Kronen schlechter wird, und das
+„Gehirn“ der Patrouille in ROS 2 auf dem Jetson.
+
+![Der Waldstreifen im LiDAR des Bodenroboters: Baumstämme mit orangem Band, wo sie die von SLAM genutzte Schicht schneiden, der Zaundraht als orange Linie, die Kronen darüber, der gefahrene Weg in Weiß](docs/media/ugv-lidar-forest.jpg)
+
+- **Teach and Repeat mit slam_toolbox:** Der Roboter fährt die Runde einmal und baut dabei eine Karte, danach
+  lokalisiert er sich bei jeder Patrouille darauf. In 10 von 10 Patrouillen schaffte er die ganze Runde, 0,18 m neben
+  der Route (95. Perzentil), die SLAM-Position im Median 0,26 m von der wahren und durchgehend unter 1 m. Unter den
+  Bäumen lag GNSS im Median 4,3 m daneben, und nur mit Radodometrie blieb der Roboter nach etwa 100 m stecken.
+- **Auf dem Orin Nano** braucht der ganze Bodenroboter-Stack etwa 1,2 der 6 Kerne.
+- **Noch offen:** die Schäden vom Boden aus finden. Alle fünf ziehen durch das Kamerabild, aber der Zaundetektor kennt
+  nur die Sicht der Drohne.
+
+Starten: `./ugv.sh` auf dem Mac und `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` auf dem Jetson. Details, Abbildungen und Ergebnisse: [docs/ugv.md](docs/ugv.md).
+
 ## Simulation und Wirklichkeit
 
 Der Flug ist echter PX4-Code: dieselbe Mission, dieselben Parameter und MAVLink-Befehle würden eine echte X500 steuern.

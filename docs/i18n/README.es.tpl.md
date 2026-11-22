@@ -220,6 +220,26 @@ red local (`tools/cam_stream.py`) mientras PX4 vuela la misión, y registra cada
 - [Modelos y datos](ml/README.md): registro de todos los modelos y conjuntos de datos, fichas de cada entrenamiento y sha256 de los archivos de los modelos.
 - [Integración con el Jetson](docs/jetson-integration.md): la fuente de cámara `sim:`, el detector y el modo de campo en querra-scout.
 
+## Robot terrestre bajo los árboles (simulación, fase 0)
+
+Bajo el dosel, el dron no ve la cerca ni puede volar con seguridad, y el GNSS se equivoca varios metros. Ahí puede
+patrullar un pequeño robot terrestre: un cercado en el bosque, un parque de ciervos, un recinto de zoológico. La fase
+0 funciona en Gazebo: 500 m de cerca a través de un bosque generado proceduralmente, con cinco averías, un robot
+skid-steer con LiDAR de 16 haces, cámara, IMU y un GNSS que empeora bajo las copas, y el «cerebro» de la patrulla en
+ROS 2 en el Jetson.
+
+![La franja de bosque en el LiDAR del robot terrestre: troncos con una banda naranja donde cruzan la capa que usa el SLAM, el alambre de la cerca como línea naranja, las copas encima, el recorrido en blanco](docs/media/ugv-lidar-forest.jpg)
+
+- **Teach and repeat con slam_toolbox:** el robot recorre el circuito una vez para construir el mapa y después se
+  localiza en él en cada patrulla. Completó el circuito en 10 de 10 patrullas, a 0,18 m de la ruta (percentil 95),
+  con la posición del SLAM a 0,26 m de la real (mediana) y siempre por debajo de 1 m. Bajo los árboles el GNSS se
+  equivocó 4,3 m (mediana), y solo con la odometría de las ruedas el robot se quedó atascado hacia los 100 m.
+- **En el Orin Nano**, toda la pila del robot terrestre usa alrededor de 1,2 de los 6 núcleos.
+- **Pendiente:** encontrar las averías desde el suelo. Las cinco pasan por el campo de visión de la cámara, pero el
+  detector de la cerca solo conoce la vista del dron.
+
+Para ejecutarlo: `./ugv.sh` en el Mac y `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` en el Jetson. Detalles, figuras y resultados: [docs/ugv.md](docs/ugv.md).
+
 ## Simulado frente a real
 
 El vuelo es código PX4 real: la misma misión, los mismos parámetros y los mismos comandos MAVLink manejarían un X500

@@ -302,6 +302,25 @@ kører som TensorRT FP16-motor på en Jetson Orin Nano. Jetsonen læser dronens 
 - [Modeller og data](ml/README.md): register over alle modeller og datasæt, træningsforløb og sha256 for modelfilerne.
 - [Jetson-integration](docs/jetson-integration.md): kamerakilden `sim:`, detektoren og felttilstanden i querra-scout.
 
+## Jordrobot under træerne (simulering, fase 0)
+
+Under trækronerne kan dronen hverken se hegnet eller flyve sikkert, og GNSS rammer flere meter forkert. Der kan en
+lille jordrobot patruljere i stedet: en indhegnet skovfold, en hjortepark, et anlæg i en zoologisk have. Fase 0 kører
+i Gazebo: 500 m hegn gennem en proceduralt genereret skov med fem fejl, en skid-steer-robot med 16-stråles LiDAR,
+kamera, IMU og GNSS, der bliver dårligere under kronerne, og patruljens "hjerne" i ROS 2 på Jetson.
+
+![Skovstriben i jordrobottens LiDAR: træstammer med et orange bånd, hvor de krydser det lag, SLAM bruger, hegnstråden som en orange linje, kronerne foroven, den kørte rute i hvid](docs/media/ugv-lidar-forest.jpg)
+
+- **Teach and repeat med slam_toolbox:** robotten kører runden én gang og bygger et kort, og derefter lokaliserer den
+  sig på det ved hver patrulje. Den gennemførte runden i 10 af 10 patruljer, 0,18 m fra ruten (95. percentil), med
+  SLAM-positionen 0,26 m fra den sande (median) og hele tiden under 1 m. Under træerne ramte GNSS 4,3 m forkert
+  (median), og på hjulodometri alene sad robotten fast efter omkring 100 m.
+- **På Orin Nano** bruger hele jordrobottens stak omkring 1,2 af de 6 kerner.
+- **Ikke færdigt endnu:** at finde fejlene fra jorden. Alle fem passerer gennem kameraets synsfelt, men
+  hegnsdetektoren kender kun dronens udsyn.
+
+Kør det med `./ugv.sh` på Mac'en og `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` på Jetson. Detaljer, figurer og resultater: [docs/ugv.md](docs/ugv.md).
+
 ## Simuleret kontra virkelig
 
 Flyvningen er rigtig PX4-kode: den samme mission, de samme parametre og MAVLink-kommandoer ville styre en fysisk X500.

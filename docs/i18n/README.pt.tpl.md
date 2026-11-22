@@ -217,6 +217,26 @@ imagens corre como motor TensorRT FP16 num Jetson Orin Nano. O Jetson lê a câm
 - [Modelos e dados](ml/README.md): registo de todos os modelos e conjuntos de dados, registos dos treinos e sha256 dos ficheiros dos modelos.
 - [Integração com o Jetson](docs/jetson-integration.md): a fonte de câmara `sim:`, o detetor e o modo de campo no querra-scout.
 
+## Robô terrestre debaixo das árvores (simulação, fase 0)
+
+Debaixo da copa das árvores o drone não vê a cerca nem voa em segurança, e o GNSS erra vários metros. Aí pode
+patrulhar um pequeno robô terrestre: um cercado na floresta, um parque de veados, um recinto de jardim zoológico.
+A fase 0 corre em Gazebo: 500 m de cerca através de uma floresta gerada proceduralmente, com cinco avarias, um robô
+skid-steer com LiDAR de 16 feixes, câmara, IMU e GNSS que se degrada sob as copas, e o "cérebro" da patrulha em ROS 2
+no Jetson.
+
+![A faixa de floresta no LiDAR do robô terrestre: troncos com uma faixa laranja onde cruzam a fatia usada pelo SLAM, o fio da cerca como linha laranja, as copas por cima, o percurso feito a branco](docs/media/ugv-lidar-forest.jpg)
+
+- **Teach and repeat com slam_toolbox:** o robô percorre o circuito uma vez para construir o mapa e depois
+  localiza-se nele em cada patrulha. Completou o circuito em 10 de 10 patrulhas, a 0,18 m do percurso (percentil 95),
+  com a posição do SLAM a 0,26 m da real (mediana) e sempre abaixo de 1 m. Debaixo das árvores o GNSS errou 4,3 m
+  (mediana), e só com a odometria das rodas o robô ficou preso por volta dos 100 m.
+- **No Orin Nano**, toda a pilha do robô terrestre usa cerca de 1,2 dos 6 núcleos.
+- **Ainda por fazer:** encontrar as avarias a partir do chão. As cinco passam pelo campo de visão da câmara, mas o
+  detetor da cerca só conhece a vista do drone.
+
+Para correr: `./ugv.sh` no Mac e `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` no Jetson. Detalhes, figuras e resultados: [docs/ugv.md](docs/ugv.md).
+
 ## Simulado versus real
 
 O voo é código PX4 real: a mesma missão, os mesmos parâmetros e os mesmos comandos MAVLink conduziriam um X500 físico.
