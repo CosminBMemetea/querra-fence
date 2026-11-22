@@ -9,6 +9,9 @@
 #                                  (on the Mac: ./start.sh headless, tools/cam_stream.sh, tools/uxrce_relay.py JETSON)
 #                                  model: model-v0.5 (both world looks, trained on stream-like JPEG) for the replay and
 #                                  live tcp:// sources. engine:=/models/<file>.engine overrides (ml/README.md lists them)
+#   ./ros.sh ugv tcp://MAC:5611 [pose:=truth] [patrol:=false]
+#                                  ground robot: the Gazebo forest robot (./ugv.sh on the Mac) patrols its fence route,
+#                                  /ugv/* topics (LiDAR, IMU, odometry, GNSS under canopy, camera) in Foxglove
 #   ./ros.sh stop                  stop and remove the container
 #   ./ros.sh status                container state, nodes and topic rates (from the stats node)
 #   ./ros.sh record [SECONDS]      MCAP bag of all QUERRA topics to /ssd/querra/bags (no SECONDS: until Ctrl-C)
@@ -56,7 +59,7 @@ case "${1:-help}" in
     [ ${#MISSING[@]} -gt 0 ] && echo "note: not mounted (missing on the host): ${MISSING[*]}"
     nvidia_rt || echo "note: docker has no 'nvidia' runtime: the detector may not reach the GPU (./ros.sh doctor)"
     docker run -d --name "$NAME" "${RT[@]}" --network host --ipc host --restart no -v "$WS:/ws" -v "$BAGS:/bags" "${TRT[@]}" "$IMAGE" \
-      ros2 launch querra_fence_ros querra.launch.py "$@" >/dev/null
+      ros2 launch querra_fence_ros "${LAUNCH:-querra.launch.py}" "$@" >/dev/null
     for _ in $(seq 1 120); do [ -f "$WS/stats.json" ] && break; running || break; sleep 1; done
     if running; then echo "ROS 2 running (foxglove: ws://$(lan_ip):8765)"; else echo "start failed:"; docker logs --tail 30 "$NAME"; exit 1; fi ;;
   demo)
@@ -72,6 +75,11 @@ case "${1:-help}" in
     case " ${*:3} " in *" px4:=true "*) echo "phase 3: micro-ROS agent on UDP 8888, alerts use /px4/telemetry (PX4's own pose)";; esac
     echo "demo: $src -> /sim/camera -> fence_detector (TensorRT) -> alert_confirm -> /fence/alerts"
     echo "Foxglove: open ws://$(lan_ip):8765 and import ros2/foxglove/querra-layout.json" ;;
+  ugv)
+    src=${2:-}; case "$src" in tcp://*) ;; *) echo "usage: ./ros.sh ugv tcp://<mac-ip>:5611 [pose:=odom|truth] [patrol:=true|false] [speed:=0.8]"; exit 1 ;; esac
+    LAUNCH=ugv.launch.py "$0" start source:="$src" "${@:3}"
+    echo "ugv: $src -> ugv_bridge -> /ugv/* -> ugv_patrol -> /ugv/cmd_vel"
+    echo "Foxglove: open ws://$(lan_ip):8765 (3D panel, display frame ugv_map)" ;;
   stop) docker rm -f "$NAME" >/dev/null 2>&1 && echo "stopped" || echo "not running"; rm -f "$WS/stats.json" ;;
   status)
     running || { echo "stopped"; exit 0; }
@@ -124,5 +132,5 @@ PY
     r=$(df -BG --output=avail / 2>/dev/null | tail -1 | tr -dc 0-9) || true
     [ "${r:-0}" -gt 2 ] && ok "root disk free ${r} GB (ROS uses none)" || bad "root disk free ${r:-?} GB"
     echo "  bags: $(ls "$BAGS" 2>/dev/null | wc -l) in $BAGS ($(du -sh "$BAGS" 2>/dev/null | cut -f1))" ;;
-  help|-h|--help|*) sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//' ;;
+  help|-h|--help|*) sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//' ;;
 esac

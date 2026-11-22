@@ -65,6 +65,8 @@ flowchart LR
 Solid lines run today; the PX4 link (micro-ROS agent and `px4_pose`) runs with `px4:=true`. The panel's ROS 2 card reads `querra_stats`
 (nodes and topic rates) and starts, stops and records through `ros2/ros.sh`.
 
+Ground robot (UGV) simulation on the same stack: [ugv.md](ugv.md) (`./ros.sh ugv tcp://<mac>:5611`).
+
 ## Phase 1: sensors on ROS 2 (done)
 
 - **Runtime:** Docker image `querra-ros:humble`, built from `ros:humble-ros-base` (arm64) plus rosbag2 MCAP storage,

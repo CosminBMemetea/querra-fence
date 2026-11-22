@@ -1,0 +1,63 @@
+{
+  "_info": "Forest enclosure for the ground robot (UGV) simulation: a fenced woodland paddock, like a deer park or a zoo enclosure, with a cleared strip outside the fence where the robot patrols. Local coordinates in metres: x = east, y = north. Change it and run ./ugv.sh again; sim/gen_forest.py regenerates worlds/forest.sdf and worlds/forest_meta.json.",
+
+  "origin": { "lat": 45.71260, "lon": 21.48890, "alt_m": 118.0 },
+  "seed": 7,
+
+  "fence": {
+    "polygon": [[0, 0], [82, -10], [163, 7], [177, 61], [139, 104], [61, 113], [9, 83], [-7, 38]],
+    "post_spacing_m": 4.0,
+    "strand_heights_m": [0.55, 1.0],
+    "gate_width_m": 4.0,
+    "energizer_kv": 9.0
+  },
+
+  "faults": [
+    { "id": "F1", "type": "wire_break",   "segment": 16, "strand": 1 },
+    { "id": "F2", "type": "branch_short", "segment": 41 },
+    { "id": "F3", "type": "post_down",    "post": 66 },
+    { "id": "F4", "type": "wire_break",   "segment": 90, "strand": 0 },
+    { "id": "F5", "type": "branch_short", "segment": 110 }
+  ],
+
+  "forest": {
+    "_info": "Trees in a band around the fence. corridor_m: no trees this close to the robot's route (pinch points may come closer); fir_corridor_m: no spruce this close (their low tiers would overhang the strip). meadow_edges: fence edges in a clearing (no trees on either side: open sky, good GPS).",
+    "band_m": 24.0,
+    "tree_spacing_m": 4.6,
+    "fir_share": 0.35,
+    "corridor_m": 1.3,
+    "fir_corridor_m": 2.2,
+    "fence_clear_m": 0.6,
+    "pinch_points": 6,
+    "logs": 7,
+    "rocks": 12,
+    "meadow_edges": [2]
+  },
+
+  "robot": {
+    "_info": "The robot drives outside the fence with the fence on its left (the polygon is counter-clockwise), camera looking left.",
+    "offset_outside_m": 1.9,
+    "start_s_m": 10.0,
+    "route_step_m": 0.5,
+    "speed_ms": 0.8
+  },
+
+  "gps": {
+    "_info": "GNSS under canopy, applied by tools/ugv_relay.py. Sky cover: the share of the sky above a 15 degree elevation mask that the tree crowns around the robot (within 20 m) hide, each weighted by foliage_block (leaves attenuate the signal rather than stop it). Noise and a slowly wandering multipath bias grow with sky cover; above no_fix_cover there is no fix.",
+    "foliage_block": 0.45,
+    "rate_hz": 5.0,
+    "open_sigma_m": 1.0,
+    "canopy_sigma_m": 4.0,
+    "canopy_bias_m": 6.0,
+    "bias_tau_s": 30.0,
+    "no_fix_cover": 0.9
+  },
+
+  "odom": {
+    "_info": "Wheel odometry error added by tools/ugv_relay.py on top of Gazebo's (near perfect) skid-steer odometry, like encoders on mud and roots, only while the robot moves: distance scale error, turn scale error and a heading drift per distance travelled (a few percent of the distance over a loop).",
+    "scale_err": 0.01,
+    "yaw_scale_err": 0.02,
+    "yaw_drift_deg_per_100m": 1.0,
+    "seed": 3
+  }
+}

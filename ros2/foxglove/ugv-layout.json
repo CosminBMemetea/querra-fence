@@ -1,0 +1,204 @@
+{
+ "configById": {
+  "3D!ugv": {
+   "cameraState": {
+    "distance": 28,
+    "perspective": true,
+    "phi": 55,
+    "thetaOffset": 25,
+    "targetOffset": [
+     0,
+     0,
+     0
+    ],
+    "target": [
+     0,
+     0,
+     0
+    ],
+    "targetOrientation": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "fovy": 45,
+    "near": 0.5,
+    "far": 5000
+   },
+   "followMode": "follow-position",
+   "followTfFrame": "ugv_base_link",
+   "scene": {
+    "enableStats": false,
+    "transforms": {
+     "showLabel": false,
+     "axisScale": 0.6
+    }
+   },
+   "transforms": {
+    "frame:ugv_base_link": {
+     "visible": true
+    }
+   },
+   "topics": {
+    "/ugv/lidar/points": {
+     "visible": true,
+     "pointSize": 3,
+     "colorField": "z",
+     "colorMode": "colormap",
+     "colorMap": "turbo",
+     "decayTime": 0
+    },
+    "/ugv/route": {
+     "visible": true,
+     "type": "line",
+     "lineWidth": 0.08,
+     "gradient": [
+      "#4da3ffaa",
+      "#4da3ffaa"
+     ]
+    },
+    "/ugv/trail/truth": {
+     "visible": true,
+     "type": "line",
+     "lineWidth": 0.12,
+     "gradient": [
+      "#2ecc71ff",
+      "#2ecc71ff"
+     ]
+    },
+    "/ugv/trail/odom": {
+     "visible": true,
+     "type": "line",
+     "lineWidth": 0.12,
+     "gradient": [
+      "#ff9f1aff",
+      "#ff9f1aff"
+     ]
+    },
+    "/ugv/fence": {
+     "visible": true
+    },
+    "/ugv/faults": {
+     "visible": true
+    },
+    "/ugv/patrol/target": {
+     "visible": true
+    },
+    "/ugv/ground_truth": {
+     "visible": false
+    },
+    "/ugv/odom": {
+     "visible": false
+    },
+    "/ugv/odom_map": {
+     "visible": false
+    }
+   },
+   "layers": {
+    "grid": {
+     "layerId": "foxglove.Grid",
+     "visible": true,
+     "frameId": "ugv_map",
+     "size": 400,
+     "divisions": 80,
+     "color": "#ffffff22",
+     "position": [
+      80,
+      50,
+      0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "order": 1
+    }
+   },
+   "publish": {
+    "type": "point",
+    "poseTopic": "/move_base_simple/goal",
+    "pointTopic": "/clicked_point",
+    "poseEstimateTopic": "/initialpose"
+   },
+   "imageMode": {},
+   "followFrame": "ugv_map"
+  },
+  "Image!cam": {
+   "imageMode": {
+    "imageTopic": "/ugv/camera/image_raw/compressed"
+   },
+   "cameraState": {}
+  },
+  "Plot!eval": {
+   "paths": [
+    {
+     "value": "/ugv/eval/odom_drift_m.data",
+     "enabled": true,
+     "timestampMethod": "receiveTime",
+     "label": "odometry drift (m)"
+    },
+    {
+     "value": "/ugv/eval/gps_error_m.data",
+     "enabled": true,
+     "timestampMethod": "receiveTime",
+     "label": "GNSS error (m)"
+    }
+   ],
+   "showLegend": true,
+   "isSynced": true,
+   "xAxisVal": "timestamp",
+   "followingViewWidth": 300
+  },
+  "Map!map": {
+   "layer": "map",
+   "topicColors": {
+    "/ugv/gps/fix": "#ff9f1a"
+   },
+   "followTopic": "/ugv/gps/fix",
+   "zoomLevel": 18
+  },
+  "RawMessages!status": {
+   "topicPath": "/ugv/patrol/status.data",
+   "diffEnabled": false,
+   "expansion": "all"
+  },
+  "RawMessages!gps": {
+   "topicPath": "/ugv/gps/info",
+   "diffEnabled": false,
+   "expansion": "all"
+  }
+ },
+ "globalVariables": {},
+ "userNodes": {},
+ "playbackConfig": {
+  "speed": 1
+ },
+ "layout": {
+  "direction": "row",
+  "splitPercentage": 60,
+  "first": {
+   "direction": "column",
+   "splitPercentage": 68,
+   "first": "3D!ugv",
+   "second": "Plot!eval"
+  },
+  "second": {
+   "direction": "column",
+   "splitPercentage": 40,
+   "first": "Image!cam",
+   "second": {
+    "direction": "row",
+    "splitPercentage": 55,
+    "first": "Map!map",
+    "second": {
+     "direction": "column",
+     "first": "RawMessages!status",
+     "second": "RawMessages!gps",
+     "splitPercentage": 50
+    }
+   }
+  }
+ }
+}

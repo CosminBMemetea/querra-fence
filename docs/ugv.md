@@ -1,0 +1,151 @@
+# Ground robot (UGV) · phase 0: simulation
+
+The drone inspects open pasture. Under trees it can neither see the fence nor fly safely, and GNSS gets poor. A small
+ground robot can patrol there: a fenced woodland paddock, a deer park, a zoo or safari enclosure. This is the
+simulation phase: the robot, the forest and the patrol run before any hardware is bought.
+
+Under a canopy, LiDAR and SLAM earn their place. Tree trunks are good landmarks, and GNSS cannot be trusted. On open
+pasture the reverse holds, which is why the drone does without them.
+
+```mermaid
+flowchart LR
+  subgraph MAC["Mac: the robot's body"]
+    GEN["sim/gen_forest.py<br/>forest.json"]
+    GZ["Gazebo Harmonic<br/>worlds/forest.sdf + querra_ugv"]
+    REL["tools/ugv_relay.py :5611<br/>GNSS under canopy · odometry errors"]
+  end
+  subgraph JET["Jetson: the robot's brain (ROS 2 Humble, Docker)"]
+    BR["ugv_bridge<br/>/ugv/* topics, TF"]
+    PAT["ugv_patrol<br/>pure pursuit · LiDAR stop"]
+    FOX["foxglove_bridge :8765"]
+  end
+  GEN --> GZ
+  GZ -- "LiDAR 16×900 · camera · IMU · odometry · truth" --> REL
+  REL -- "TCP, QUG1 frames" --> BR
+  BR --> PAT
+  PAT -- "/ugv/cmd_vel" --> BR
+  BR -- "cmd_vel" --> REL --> GZ
+  BR --> FOX
+```
+
+## The world
+
+`forest.json` describes it; `sim/gen_forest.py` turns it into `worlds/forest.sdf`, the robot model and
+`worlds/forest_meta.json` (route, spawn pose, sensor mounts, tree crowns, faults). Nothing generated is in git.
+
+- **Enclosure:** an 8-sided paddock, 499 m of two-strand electric fence on 129 posts, 4 m apart. It reuses the
+  pasture's fence and fault code (`sim/geo.py`, `sim/gen_world.py`), so a fault looks the same to both robots.
+- **Faults:**
+  - F1, wire_break (upper strand);
+  - F2, branch_short (a branch across the wires);
+  - F3, post_down;
+  - F4, wire_break (lower strand);
+  - F5, branch_short.
+- **Forest:** 883 trees (a third spruce) in a 24 m band around the fence, with undergrowth.
+  - **Route strip:** a cleared strip 1.3 m each side of the route, outside the fence.
+  - **Obstacles next to the route:** 6 pinch points (a trunk 1.25–1.4 m from the route), 5 logs and 8 rocks. All
+    of them have collisions.
+  - **Clearing:** one fence edge runs through a clearing, with open sky.
+  - **Sky cover along the route:** open for 10% of it, partial for 29%, dense canopy for 61%.
+- **Route:** the fence polygon pushed 1.9 m outward, 516 m, a point every 0.5 m. The robot drives it once
+  counter-clockwise, with the fence on its left: teach and repeat.
+
+## The robot
+
+| | |
+|---|---|
+| Base | 4×4 skid steer, 0.80 × 0.50 m, 30 kg, wheels r = 0.16 m. Tyre friction 1.0 along, 0.35 sideways, calibrated with `tools/ugv_calibrate.py` (commanded and real turns agree within 1%) |
+| LiDAR | 16 beams, ±15°, 900 samples per turn, 0.3–40 m, 10 Hz, 0.8 m above the ground |
+| Camera | 640×400, 100° wide, 10 fps, looking left at the fence, 6° down, 0.7 m up |
+| IMU | 100 Hz (50 Hz to the Jetson) |
+| Wheel odometry | Gazebo's, plus an error model: 1% distance scale, 2% turn scale, 1° heading drift per 100 m, only while moving |
+| GNSS | 5 Hz. The truth plus noise (1 m under open sky, up to 4 m under canopy) and a wandering multipath bias (up to 6 m, 30 s correlation). Only a 2D fix above 60% sky cover; no fix above 90%. Sky cover is the share of the sky above a 15° mask that the crowns within 20 m hide, each weighted by 0.45 because leaves attenuate the signal rather than stop it. The robot is never told its true error |
+
+## Run it
+
+```bash
+./ugv.sh                     # Mac: forest world, Gazebo window, relay on tcp://<mac>:5611 (headless: ./ugv.sh headless)
+cd /ssd/querra/ros2 && ./ros.sh ugv tcp://<mac-ip>:5611            # Jetson: patrol on wheel odometry
+./ros.sh ugv tcp://<mac-ip>:5611 pose:=truth                       # patrol on ground truth (tests the chain)
+python3 tools/ugv_eval.py --json                                   # Mac: score the patrols in the newest log
+```
+
+- **Foxglove:** connect to `ws://<jetson>:8765`, or `ws://localhost:8765` through an SSH tunnel for the web app, and
+  import `ros2/foxglove/ugv-layout.json`. The layout shows the 3D view (point cloud, route, fence, faults, true
+  path in green, odometry path in orange), the camera, a map with the GNSS fix, and a plot of odometry drift and
+  GNSS error.
+- **Restart a patrol from the spawn pose:** publish `restart` on `/ugv/patrol/cmd`.
+
+## Results (2026-11-22)
+
+**The chain.** Every stream arrives on the Jetson at its rate:
+
+| Stream | Rate on the Jetson |
+|---|---|
+| LiDAR point cloud | 10 Hz, about 12,500 points |
+| Camera | 10 fps, about 20 KB per JPEG |
+| IMU | 50 Hz |
+| Odometry | 28 Hz |
+| GNSS | 5 Hz |
+
+The patrol commands come back at 20 Hz. Gazebo runs at about 0.9× real time on the M2 with 878 trees, the LiDAR and
+the camera.
+
+**Patrols** (`tools/ugv_eval.py`, scored against the simulator's truth):
+
+| Pose the patrol drives on | Result | Route | Off the route (max) | Odometry drift | Faults through the camera's view |
+|---|---|---|---|---|---|
+| Ground truth (control), first version of the world (sparser forest) | done | 99.8% in 706 s | 0.32 m | (not used) | 5 of 5 |
+| Ground truth (control), final world | blocked at 221 m: a pinch-point trunk on the outside of a sharp corner (56°), after overshooting the corner by 0.5 m | 43% | 0.50 m | (not used) | 2 of 5 |
+| Wheel odometry, run 1 | blocked at 107 m: a spruce's low branches hung into the strip at 0.9–1.0 m | 21% | 0.81 m | 1.1 m (1.0 m per 100 m) | 1 of 5 |
+| Wheel odometry, run 2 (spruces trimmed) | blocked at 95 m: a trunk at a pinch point, after drifting 0.6 m off the line | 19% | 0.61 m | 1.0 m (1.1 m per 100 m) | 1 of 5 |
+
+After the corner, `ugv_patrol` turns on the spot when the target is more than 35° off its heading, as skid steers
+do. The control run with that change was interrupted at 112 m, when ROS 2 was stopped from the panel, so it still
+has to be repeated.
+
+**GNSS under the canopy.** The fix was there the whole time, but mostly 2D (15–18% 3D). The error was 5 m median
+and 10 m at the 95th percentile. Under dense canopy (85% of the time) it was 5.2 m median and 10–11 m at the 95th
+percentile.
+
+**What it means.** At its tightest, the strip leaves 0.59 m from the route centre to the nearest obstacle in the
+robot's height band (`tools/ugv_clearance.py`; 5th percentile 1.1 m). The robot is 0.72 m wide, so it has about
+0.2 m to spare there. A robot that holds its line passes on the straights; sharp corners need it to turn on the spot. Wheel odometry is good to
+about 1% of the distance, a good figure for a skid steer, and it still puts the robot 0.6 m off within 100 m. GNSS
+error under the trees is many times the margin. The robot needs localisation from the trees themselves: LiDAR SLAM,
+fused with odometry, the IMU and GNSS where the sky is open.
+
+**A requirement found on the way.** Untrimmed spruces hang branches at 0.9–1.0 m, inside the robot's 1.0 m height
+envelope. A strip a ground robot patrols needs its low branches cut back above about 1.3 m. That is a maintenance
+requirement for the customer, not something the robot can solve.
+
+## Phase 0 goals
+
+| Goal | Status |
+|---|---|
+| The whole chain runs (Gazebo → relay → ROS 2 on the Jetson → commands back), every sensor at its rate | done |
+| The robot completes the loop autonomously in at least 9 of 10 patrols | on ground truth: once in the first world; the final world's control run (with turning on the spot) is to be repeated. On wheel odometry: no, blocked at about 100 m in 2 of 2 patrols. Needs SLAM |
+| At least 4 of 5 faults found, at most 1 false alert per patrol | not yet. All 5 pass through the camera's view, but model-v0.5 knows only the drone's 55° view; the ground view needs its own data and model |
+| Localisation error under 1 m with poor GNSS, on the Orin Nano | not yet: next step |
+
+## Next steps
+
+1. **Localisation.** LiDAR SLAM (KISS-ICP or slam_toolbox on a 2D slice) fused with odometry, the IMU and GNSS in
+   an EKF (`robot_localization`). The patrol already takes its pose from a topic, so it switches without code
+   changes. Measure against the same goals: 9 of 10 loops, under 1 m error.
+2. **Ground-view detector.** Render fence frames from the robot's camera pose (0.7 m up, 1.9 m from the fence,
+   looking sideways), train and score as for the drone models, then run it on `/ugv/camera`.
+3. **Ten patrols per change**, scored with `tools/ugv_eval.py`, as with the drone's models.
+4. **The real walk.** Walk a real forest fence with the Jetson, the camera at 0.7 m and the u-blox logging its
+   accuracy. That calibrates the GNSS and odometry models and gives the first real ground-view images.
+
+## Known limits
+
+- **Flat ground.** No slopes, mud or roots yet: the terrain is the main risk for a real robot.
+- **Near-field blind zone.** The LiDAR's lowest beam reaches the ground about 3 m ahead. A low log or rock closer
+  than about 2 m is invisible to it. A real robot adds a tilted LiDAR or a depth camera.
+- **No obstacle avoidance.** The patrol stops for an obstacle in its path and gives up after 20 s.
+- **Synthetic error models.** The odometry and GNSS errors are models, not measurements. The planned walk along a
+  real forest fence, with the u-blox logging its accuracy, is what calibrates them.
+- **Detector.** The fence detector (model-v0.5) has only seen the fence from above. The ground view needs its own
+  data and model.

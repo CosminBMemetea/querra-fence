@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+- **Ground robot (UGV), phase 0: simulation** ([docs/ugv.md](docs/ugv.md)). A ground robot patrols a fenced forest
+  enclosure, where the drone cannot see the fence and GNSS is poor. The Mac plays the robot's body and the Jetson
+  runs its brain.
+  - **World:** `forest.json` → `sim/gen_forest.py`. 499 m of fence with 5 faults, 878 trees, a cleared route strip
+    with pinch points, logs and rocks, and a clearing. It reuses the pasture's fence and fault code.
+  - **Robot:** a 4×4 skid steer with a 16-beam 3D LiDAR, a side camera at the fence and an IMU. Tyre friction is
+    calibrated with `tools/ugv_calibrate.py`.
+  - **Relay** (`tools/ugv_relay.py`, `./ugv.sh`): serves the robot to the Jetson over TCP and adds two error models.
+    GNSS degrades with the sky the crowns hide. Wheel odometry gets scale and heading errors, only while the robot
+    moves.
+  - **ROS 2** (`./ros.sh ugv tcp://<mac>:5611`):
+    - `ugv_bridge` publishes `/ugv/*` (point cloud, IMU, odometry, GNSS, camera, route, fence, faults) and ground
+      truth for scoring;
+    - `ugv_patrol` follows the taught route with pure pursuit and a LiDAR stop.
+  - **Tools:** a Foxglove layout (`ros2/foxglove/ugv-layout.json`) and `tools/ugv_eval.py`, which scores a patrol
+    from the relay's log.
+  - **Measured:**
+    - on ground truth, the robot completed the 516 m loop in the first version of the world and passed all 5 faults
+      through the camera's view. In the final, denser world, a sharp corner stopped it, so the patrol now turns on
+      the spot at sharp corners (that control run is still to be repeated);
+    - on wheel odometry with 1% error, it drifts about 0.6 m sideways within 100 m and stops at the first tight spot
+      (95 m and 107 m in two patrols);
+    - under the canopy, GNSS error is 5 m median and 10 m at the 95th percentile.
+
+    So the robot needs localisation that uses the trees (LiDAR SLAM) before it can patrol a forest strip.
+
 - **GPS at 0,0 under a 3D fix, fixed.** gpsd 3.22 drives the u-blox 7 (PROTVER 14) in binary mode and asks it only for
   NAV-SOL, which carries an ECEF position that gpsd does not convert: TPV reported a 3D fix at lat 0, lon 0 (or the last
   lat/lon it saw) while the receiver's own NAV-POSLLH and NAV-PVT were right. The receiver keeps its message settings
