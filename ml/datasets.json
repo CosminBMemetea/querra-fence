@@ -264,6 +264,64 @@
     "test": {"frames": 2535, "in_flight_frames": 1986, "role": "test"}
    },
    "notes": "The JPEG stream the Jetson receives (tools/cam_stream.py, 640x400), with the simulator's GPS and heading per frame. No boxes: tools/eval_mission.py scores it against the three known faults (F1-F3). The same recording is the ROS 2 replay demo on the Jetson (/ssd/querra/sim/m1)."
+  },
+  {
+   "id": "ground_yolo",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot side camera",
+   "created": "2026-11-23",
+   "code": "54f574b",
+   "command": "tools/make_ground_dataset.sh --layouts 14 --val-layouts 2 --frames 300 --seed 500 (test: --split test --seed 900 --layouts 3 --frames 200)",
+   "size": "842 MB",
+   "splits": {
+    "train": {"layouts": "0-11", "seeds": "500-511", "frames": 3600, "role": "train"},
+    "val": {"layouts": "12-13", "seeds": "512-513", "frames": 600, "role": "val"},
+    "test": {"layouts": "0-2", "seeds": "900-902", "frames": 600, "role": "test"}
+   },
+   "notes": "Random forest enclosures in the style of forest.json (6-9 sided fence, 3.5-5.5 m post spacing, 3-5 broken wires, 2-3 fallen posts, 2-3 branches on the wires, forest density and sun randomised). The camera is a free copy of the ground robot's side camera (640x400, 100 deg hfov) at robot poses: 1.4-2.5 m outside the fence, 0.70 m up, looking left and 6 deg down, with heading, pitch and roll noise. 45% of the poses are near a fault (each fault type equally often). Labels from the known geometry with the drone's 7 classes; a depth camera on the same mount removes hidden parts; nothing farther than 12 m. About a third of the frames without a fault are dropped. No animals in the forest."
+  },
+  {
+   "id": "ground_patrol",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot patrol route",
+   "created": "2026-11-23",
+   "code": "54f574b",
+   "command": "tools/make_ground_dataset.sh --patrol --out ~/querra-data/ground_patrol",
+   "size": "176 MB",
+   "splits": {
+    "test": {"world": "forest.json (the patrol world)", "frames": 1032, "role": "test"}
+   },
+   "notes": "The real forest.json world along the robot's patrol route, one frame every 0.5 m at the nominal camera pose (no noise), with patrol_poses.jsonl and patrol_faults.json (F1-F5). Never used for training or model selection: tools/ground_patrol_eval.py scores faults found and false alerts on it (5 of 8 frames confirm an alert)."
+  },
+  {
+   "id": "ground_yolo_stream",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "copy of ground_yolo, stream-like JPEG",
+   "created": "2026-11-23",
+   "code": "54f574b",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/ground_yolo train ~/querra-data/ground_yolo_stream --share 0.75 --seed 0 (val: --quality 4 --share 1 --seed 1; test: --quality 4 --share 1 --seed 2)",
+   "derived_from": "ground_yolo",
+   "size": "90 MB",
+   "splits": {
+    "train": {"frames": 3600, "role": "train"},
+    "val": {"frames": 600, "role": "val"},
+    "test": {"frames": 600, "role": "test"}
+   },
+   "notes": "2720 of the 3600 training frames compressed like the robot's camera stream (tools/ugv_relay.py: MJPEG -q:v 4, 4:2:0) at a random -q:v of 2, 3, 4, 5, 6 or 8; the rest are hard links to the PNGs. Val and test all at -q:v 4. Same labels."
+  },
+  {
+   "id": "ground_patrol_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "copy of ground_patrol, stream JPEG -q:v 4",
+   "created": "2026-11-23",
+   "code": "54f574b",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/ground_patrol test ~/querra-data/ground_patrol_q4 --quality 4 --share 1 --seed 3",
+   "derived_from": "ground_patrol:test",
+   "size": "23 MB",
+   "splits": {
+    "test": {"frames": 1032, "role": "test"}
+   },
+   "notes": "The patrol frames as the Jetson would receive them from the robot's camera stream."
   }
  ]
 }
