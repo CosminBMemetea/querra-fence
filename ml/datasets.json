@@ -276,9 +276,9 @@
    "splits": {
     "train": {"layouts": "0-11", "seeds": "500-511", "frames": 3600, "role": "train"},
     "val": {"layouts": "12-13", "seeds": "512-513", "frames": 600, "role": "val"},
-    "test": {"layouts": "0-2", "seeds": "900-902", "frames": 600, "role": "test"}
+    "test": {"layouts": "0-2", "seeds": "900-902", "frames": 600, "role": "test", "prefix": "T00,T01,T02"}
    },
-   "notes": "Random forest enclosures in the style of forest.json (6-9 sided fence, 3.5-5.5 m post spacing, 3-5 broken wires, 2-3 fallen posts, 2-3 branches on the wires, forest density and sun randomised). The camera is a free copy of the ground robot's side camera (640x400, 100 deg hfov) at robot poses: 1.4-2.5 m outside the fence, 0.70 m up, looking left and 6 deg down, with heading, pitch and roll noise. 45% of the poses are near a fault (each fault type equally often). Labels from the known geometry with the drone's 7 classes; a depth camera on the same mount removes hidden parts; nothing farther than 12 m. About a third of the frames without a fault are dropped. No animals in the forest."
+   "notes": "Test frames were written as G00-G02 at 54f574b (the same names as training layouts 0-2, in another folder) and renamed T00-T02; the generator names test layouts T since the next commit. Random forest enclosures in the style of forest.json (6-9 sided fence, 3.5-5.5 m post spacing, 3-5 broken wires, 2-3 fallen posts, 2-3 branches on the wires, forest density and sun randomised). The camera is a free copy of the ground robot's side camera (640x400, 100 deg hfov) at robot poses: 1.4-2.5 m outside the fence, 0.70 m up, looking left and 6 deg down, with heading, pitch and roll noise. 45% of the poses are near a fault (each fault type equally often). Labels from the known geometry with the drone's 7 classes; a depth camera on the same mount removes hidden parts; nothing farther than 12 m. About a third of the frames without a fault are dropped. No animals in the forest."
   },
   {
    "id": "ground_patrol",

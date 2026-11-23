@@ -360,7 +360,8 @@ def run_layout(li, seed, n_frames, split, out, args):
             labs = labels_for(objs, np.array([x, y, z]), md.rot(roll, pitch, yaw), depth)
             if not patrol and not any(c in (2, 3, 4) for c, *_ in labs) and rnd.random() < 0.35:
                 continue                          # keep about two thirds of the frames without a fault
-            name = ("P_%04d" % saved) if patrol else "G%02d_%04d" % (li, saved)
+            # G: train and val layouts, T: test layouts (their numbers start at 0 too), P: the patrol
+            name = ("P_%04d" % saved) if patrol else "%s%02d_%04d" % ("T" if split == "test" else "G", li, saved)
             md.write_png(os.path.join(out, "images", split, name + ".png"), img)
             with open(os.path.join(out, "labels", split, name + ".txt"), "w") as fh:
                 for c, cx, cy, bw, bh in labs:
