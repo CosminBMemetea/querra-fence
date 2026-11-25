@@ -43,7 +43,8 @@ def dist_m(a, b):
 
 
 class AlertConfirmer:
-    def __init__(self, n=5, m=8, radius_m=5.0, conf=0.7, classes=FAULTS, merge_m=10.0):
+    def __init__(self, n=5, m=8, radius_m=5.0, conf=0.7, classes=FAULTS, merge_m=10.0, cam=None):
+        self.cam = cam or {}   # img_w, img_h, fx, pitch_deg for ground_point(); the default is the drone camera
         assert 1 <= n <= m
         self.n, self.m, self.radius, self.conf, self.classes = n, m, radius_m, conf, set(classes)
         self.merge = max(merge_m, radius_m)  # a new sighting this close to an existing alert updates it, no new alert
@@ -55,7 +56,7 @@ class AlertConfirmer:
         frame = collections.defaultdict(list)
         for d in detections or ():
             if d.get("class") in self.classes and d.get("conf", 0) >= self.conf:
-                p = ground_point(lat, lon, alt_m, heading_deg, d.get("box_xyxy") or d.get("box"))
+                p = ground_point(lat, lon, alt_m, heading_deg, d.get("box_xyxy") or d.get("box"), **self.cam)
                 if p:
                     frame[d["class"]].append((p[0], p[1], d["conf"]))
         self.window.append(frame)

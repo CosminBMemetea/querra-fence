@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- **Real fence video** ([docs/drone-video.md](docs/drone-video.md)): `tools/video_eval.py` runs a fence model over a
+  drone video, such as one from a DJI Mini 4 Pro, with the Jetson's alert rule (5 of 8 frames, conf 0.7). With DJI's
+  subtitle file each alert gets a position on the ground; without it, frames alone confirm. It writes an annotated
+  video, the alerts with map links and the frame of each. Tested on a simulated mission turned into a DJI-style video:
+  the same 5 alerts on 3 faults, none false, as `tools/eval_mission.py`. `tools/confirm.py` takes the camera's
+  geometry (`cam=`), like the ROS 2 copy.
+- **Ground-view dataset** for the robot's side camera: `tools/make_ground_dataset.sh` renders random forests (frames
+  `G..` for train and val, `T..` for test) and the patrol of the real forest; `tools/ground_patrol_eval.py` scores a
+  model on that patrol, as the alert chain would. model-v0.5 on it: 2 of 5 faults, 19 false alerts.
+
 ## v0.12.0 · 2026-11-22 · a ground robot under the trees: LiDAR SLAM, 10 of 10 loops
 
 - **Ground robot (UGV), phase 0: simulation** ([docs/ugv.md](docs/ugv.md)). A ground robot patrols a fenced forest
