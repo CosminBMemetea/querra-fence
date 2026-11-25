@@ -93,9 +93,11 @@
 "alt_c5": "Pojas šume u LiDAR-u zemaljskog robota: debla, žica ograde i prijeđena putanja",
 "c5_1": "Gdje dron ne vidi ogradu, mali zemaljski robot patrolira 500 m ograde kroz šumu u Gazebu, s mozgom u ROS 2 na Jetsonu.",
 "c5_2": "LiDAR SLAM, teach and repeat: 10 od 10 dovršenih petlji, 0,26 m od stvarnog položaja (medijan), dok je GNSS pod krošnjama griješio 4,3 m.",
-"c5_3": "Još ne: pronalaženje kvarova sa zemlje, za što treba detektor treniran na bočnom pogledu robota.",
+"c5_3": "Kvarovi sa zemlje: detektor ground-v0.1 za pogled sa zemlje pronašao je 50 od 50 kvarova u 10 patrola uživo na Jetsonu, bez ijedne lažne uzbune.",
 "d9": "Zemaljski robot, faza 0",
 "d9s": "v0.12 · patrola kroz šumu u Gazebu: LiDAR SLAM teach and repeat na Jetsonu, 10 od 10 petlji",
-"n4": "Kvarovi sa zemlje",
-"n4s": "detektor za bočni pogled zemaljskog robota, zatim šetnja uz pravu šumsku ogradu"
+"d10": "Kvarovi sa zemlje",
+"d10s": "v0.13 · detektor pogleda sa zemlje uživo na Jetsonu: 50 od 50 kvarova u 10 patrola, 0 lažnih uzbuna; alat za stvarni video iz drona",
+"n4": "Stvarna ograda u šumi",
+"n4s": "prve stvarne slike sa zemlje: šetnja uz stvarnu ogradu u šumi s Jetsonom i kamerom na visini robota"
 }

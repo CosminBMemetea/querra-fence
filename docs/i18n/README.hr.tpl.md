@@ -230,10 +230,10 @@ kamerom, IMU-om i GNSS-om koji slabi pod krošnjama, a „mozak” patrole radi 
   0,26 m od stvarnog (medijan) i uvijek ispod 1 m. Pod krošnjama je GNSS griješio 4,3 m (medijan), a samo na
   odometriji kotača robot je zapeo nakon otprilike 100 m.
 - **Na Orin Nanu** cijeli stog zemaljskog robota troši oko 1,2 od 6 jezgri.
-- **Još nije gotovo:** pronalaženje kvarova sa zemlje. Svih pet prolazi kroz vidno polje kamere, ali detektor ograde
-  poznaje samo pogled iz drona.
+- **Kvarovi sa zemlje:** detektor pogleda sa zemlje ground-v0.1 radi na bočnoj kameri robota, na Jetsonu. U 10
+  patrola uživo svaki je put pronašao svih 5 kvarova, 50 od 50, bez ijedne lažne uzbune.
 
-Pokretanje: `./ugv.sh` na Macu i `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` na Jetsonu. Detalji, slike i rezultati: [docs/ugv.md](docs/ugv.md).
+Pokretanje: `./ugv.sh` na Macu i `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization detect:=true` na Jetsonu. Detalji, slike i rezultati: [docs/ugv.md](docs/ugv.md).
 
 ## Simulacija naspram stvarnosti
 

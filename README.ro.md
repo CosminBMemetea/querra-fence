@@ -316,10 +316,10 @@ cu 16 fascicule, cameră, IMU și GNSS care se degradează sub coroane, iar „c
   SLAM la 0,26 m de cea reală (mediana) și sub 1 m tot timpul. Sub copaci, GNSS a greșit cu 4,3 m (mediana), iar doar
   pe odometria roților robotul s-a blocat pe la 100 m.
 - **Pe Orin Nano**, tot stack-ul robotului terestru folosește cam 1,2 din cele 6 nuclee.
-- **Încă nefăcut:** găsirea defectelor de la sol. Toate cinci trec prin câmpul camerei, dar detectorul de gard
-  cunoaște doar perspectiva dronei.
+- **Defecte văzute de la sol:** detectorul pentru perspectiva de la sol ground-v0.1 rulează pe camera laterală a
+  robotului, pe Jetson. În 10 patrule live a găsit de fiecare dată toate cele 5 defecte, 50 din 50, fără nicio alarmă falsă.
 
-Pornire: `./ugv.sh` pe Mac și `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` pe Jetson. Detalii, figuri și rezultate: [docs/ugv.md](docs/ugv.md).
+Pornire: `./ugv.sh` pe Mac și `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization detect:=true` pe Jetson. Detalii, figuri și rezultate: [docs/ugv.md](docs/ugv.md).
 
 ## Simulare versus realitate
 

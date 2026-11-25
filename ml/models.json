@@ -1,5 +1,5 @@
 {
- "_info": "Model registry for the fence detector (YOLO11n, 7 classes). One entry per released model: where it is used, the data and code it came from, how it was trained, how it scored offline and live, and the sha256 of every file. Weights are attached to the GitHub release named in 'release'; TensorRT engines are built on the Jetson (hardware-specific) and live in ~/querra-scout-20261107/models/fence-yolo. 'python3 tools/model_registry.py' validates this file and rebuilds the table in ml/README.md; '--check DIR' compares local files with the hashes. 'summary' is the one-line change shown on the charts; 'platform' says from which platform release the model is the default (default_from) or runs the live simulation (live_sim_from).",
+ "_info": "Model registry for the fence detector (YOLO11n, 7 classes). One entry per released model (the drone's in models, the ground robot's in ground_models): where it is used, the data and code it came from, how it was trained, how it scored offline and live, and the sha256 of every file. Weights are attached to the GitHub release named in 'release'; TensorRT engines are built on the Jetson (hardware-specific) and live in ~/querra-scout-20261107/models/fence-yolo. 'python3 tools/model_registry.py' validates this file and rebuilds the table in ml/README.md; '--check DIR' compares local files with the hashes. 'summary' is the one-line change shown on the charts; 'platform' says from which platform release the model is the default (default_from) or runs the live simulation (live_sim_from).",
  "classes": [
   "post",
   "wire",
@@ -598,5 +598,116 @@
    "benchmark": "ml/benchmark",
    "benchmark_note": "Scored from the ONNX export; the .pt was not kept."
   }
+ ],
+ "ground_models": [
+ {
+  "id": "ground-v0.1",
+  "status": "default",
+  "summary": "first ground-view model",
+  "camera": "ground robot side camera: 0.70 m up, looking left at the fence 1.9 m away, 640x400, 100 deg",
+  "date": "2026-11-25",
+  "parent": "model-v0.5",
+  "code": "dcd017a",
+  "release": "ground-v0.1",
+  "run": "ml/runs/ground-v0.1",
+  "used_for": [
+   "ground robot: ./ros.sh ugv ... detect:=true (fence_detector on /ugv/camera, ugv_alerts)"
+  ],
+  "platform": {
+   "default_from": "v0.13.0"
+  },
+  "data": {
+   "train": [
+    {
+     "dataset": "ground_yolo_stream",
+     "split": "train",
+     "frames": 3600
+    }
+   ],
+   "val": [
+    {
+     "dataset": "ground_yolo_stream",
+     "split": "val",
+     "frames": 600
+    }
+   ]
+  },
+  "training": {
+   "from": "model-v0.5",
+   "epochs": 10,
+   "selected_epoch": 10,
+   "imgsz": 640,
+   "batch": 16,
+   "optimizer": "AdamW lr0 0.000909 (Ultralytics auto), 3 warm-up epochs",
+   "close_mosaic": 3,
+   "device": "CPU, Apple M2 8 GB",
+   "hours": 3.5,
+   "notes": "tools/train_with_breaks.py: 5 sessions of 2 epochs with 15 min cooling breaks. Ultralytics 8.4.215, torch 2.15. Scores still rising at epoch 10."
+  },
+  "scores": {
+   "val_mAP50": 0.933,
+   "test_mAP50": 0.957,
+   "test_precision": 0.928,
+   "test_recall": 0.909,
+   "test_mAP50_per_class": {
+    "post": 0.98,
+    "wire": 0.95,
+    "wire_break": 0.957,
+    "fallen_post": 0.942,
+    "branch": 0.958
+   },
+   "test_fallen_post_recall_at_conf": {
+    "0.7": 0.52,
+    "0.5": 0.9
+   },
+   "patrol_offline": {
+    "conf0.5": "5 of 5, 0 false",
+    "conf0.7": "5 of 5, 0 false",
+    "conf0.7_fallen_post0.5": "5 of 5, 0 false"
+   },
+   "baseline_model-v0.5": {
+    "test_mAP50": 0.04,
+    "patrol_offline_conf0.5": "2 of 5, 19 false"
+   }
+  },
+  "live": {
+   "forest_patrols": {
+    "patrols": 10,
+    "faults_found": "50 of 50",
+    "false_alerts": 0,
+    "alert_distance_m": "0.4-1.4 (median per fault)",
+    "rule": "5 of 8 frames 0.5 m apart within 5 m; conf 0.7, fallen_post 0.5",
+    "first_rule_all_conf0.7": "2 patrols: 4 of 5 each (F3 missed), 0 false"
+   }
+  },
+  "decision": "Default for the ground robot's fault alerts from v0.13.0. 50 of 50 faults and no false alert in 10 live patrols on the Jetson. Fallen posts need conf 0.5 in ugv_alerts (class_conf): at 0.7 the model keeps half of them, and the live patrols missed F3. Thin margin: F3 shows in 6-7 steps where 5 are needed.",
+  "jetson": {
+   "engine_gpu_ms": 3.43,
+   "trtexec": "TensorRT 10.3 FP16, 286 inferences/s"
+  },
+  "artefacts": [
+   {
+    "file": "ground-yolo11n-v0.1.pt",
+    "bytes": 5486042,
+    "sha256": "a6837e2413f955a86c23b4d25c9e3aaeca411465e357a80441c3f12dcbabcaa4"
+   },
+   {
+    "file": "ground-yolo11n-v0.1.onnx",
+    "bytes": 10610506,
+    "sha256": "9eb8a54398912e68879a6f79a9e71324437fbc805da7dbcda09faaedede65911"
+   },
+   {
+    "file": "classes.json",
+    "bytes": 77,
+    "sha256": "4bc311cdc19b0ab73d26877dac914ffd61fb63b9e69e534b5405d5dad00e24e1"
+   },
+   {
+    "file": "ground-yolo11n-v0.1-fp16.engine",
+    "bytes": 8099084,
+    "sha256": "7c561333347ed7b6cc7dba967fd9fd6f622d660adb3fe5811a05a8bf1da920dd",
+    "where": "Jetson only"
+   }
+  ]
+ }
  ]
 }

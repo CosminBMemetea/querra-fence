@@ -93,9 +93,11 @@
 "alt_c5": "Der Waldstreifen im LiDAR des Bodenroboters: Baumstämme, der Zaundraht und der gefahrene Weg",
 "c5_1": "Wo die Drohne den Zaun nicht sieht, patrouilliert ein kleiner Bodenroboter 500 m Waldzaun in Gazebo, mit dem Gehirn in ROS 2 auf dem Jetson.",
 "c5_2": "LiDAR-SLAM, Teach and Repeat: 10 von 10 Runden geschafft, im Median 0,26 m von der wahren Position, während GNSS unter den Bäumen 4,3 m danebenlag.",
-"c5_3": "Noch nicht: die Schäden vom Boden aus finden; dafür braucht es einen Detektor, der auf die Seitensicht des Roboters trainiert ist.",
+"c5_3": "Schäden vom Boden aus: der Bodensicht-Detektor ground-v0.1 fand in 10 Live-Patrouillen auf dem Jetson 50 von 50 Schäden, ohne Fehlalarm.",
 "d9": "Bodenroboter, Phase 0",
 "d9s": "v0.12 · eine Waldpatrouille in Gazebo: LiDAR-SLAM Teach and Repeat auf dem Jetson, 10 von 10 Runden",
-"n4": "Schäden vom Boden aus",
-"n4s": "ein Detektor für die Seitensicht des Bodenroboters, dann ein Gang an einem echten Waldzaun entlang"
+"d10": "Schäden vom Boden aus",
+"d10s": "v0.13 · der Bodensicht-Detektor live auf dem Jetson: 50 von 50 Schäden in 10 Patrouillen, 0 Fehlalarme; ein Werkzeug für echte Drohnenvideos",
+"n4": "Ein echter Waldzaun",
+"n4s": "die ersten echten Bilder vom Boden aus: ein Gang an einem echten Waldzaun entlang, mit dem Jetson und einer Kamera auf Roboterhöhe"
 }

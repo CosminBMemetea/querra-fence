@@ -93,9 +93,11 @@
 "alt_c5": "La franja de bosque en el LiDAR del robot terrestre: troncos, el alambre de la cerca y el recorrido",
 "c5_1": "Donde el dron no ve la cerca, un pequeño robot terrestre patrulla 500 m de cerca en el bosque en Gazebo, con el cerebro en ROS 2 en el Jetson.",
 "c5_2": "LiDAR SLAM, teach and repeat: 10 de 10 circuitos completados, a 0,26 m de la posición real (mediana), mientras el GNSS bajo los árboles se equivocaba 4,3 m.",
-"c5_3": "Aún no: encontrar las averías desde el suelo, que requiere un detector entrenado para la vista lateral del robot.",
+"c5_3": "Averías desde el suelo: el detector ground-v0.1, para la vista desde el suelo, encontró 50 de 50 averías en 10 patrullas en vivo en el Jetson, sin ninguna falsa alarma.",
 "d9": "Robot terrestre, fase 0",
 "d9s": "v0.12 · una patrulla en el bosque en Gazebo: LiDAR SLAM teach and repeat en el Jetson, 10 de 10 circuitos",
-"n4": "Averías vistas desde el suelo",
-"n4s": "un detector para la vista lateral del robot terrestre y después un recorrido a pie junto a una cerca real en el bosque"
+"d10": "Averías desde el suelo",
+"d10s": "v0.13 · el detector de vista desde el suelo en vivo en el Jetson: 50 de 50 averías en 10 patrullas, 0 falsas alarmas; una herramienta para vídeo real de dron",
+"n4": "Una cerca real en el bosque",
+"n4s": "las primeras imágenes reales desde el suelo: un paseo a lo largo de una cerca real en el bosque, con el Jetson y una cámara a la altura del robot"
 }

@@ -319,10 +319,10 @@ Skid-Steer-Roboter mit 16-Strahl-LiDAR, Kamera, IMU und GNSS, das unter den Kron
   der Route (95. Perzentil), die SLAM-Position im Median 0,26 m von der wahren und durchgehend unter 1 m. Unter den
   Bäumen lag GNSS im Median 4,3 m daneben, und nur mit Radodometrie blieb der Roboter nach etwa 100 m stecken.
 - **Auf dem Orin Nano** braucht der ganze Bodenroboter-Stack etwa 1,2 der 6 Kerne.
-- **Noch offen:** die Schäden vom Boden aus finden. Alle fünf ziehen durch das Kamerabild, aber der Zaundetektor kennt
-  nur die Sicht der Drohne.
+- **Schäden vom Boden aus:** der Bodensicht-Detektor ground-v0.1 läuft auf der Seitenkamera des Roboters, auf dem
+  Jetson. In 10 Live-Patrouillen fand er jedes Mal alle 5 Schäden, 50 von 50, ohne einen Fehlalarm.
 
-Starten: `./ugv.sh` auf dem Mac und `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` auf dem Jetson. Details, Abbildungen und Ergebnisse: [docs/ugv.md](docs/ugv.md).
+Starten: `./ugv.sh` auf dem Mac und `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization detect:=true` auf dem Jetson. Details, Abbildungen und Ergebnisse: [docs/ugv.md](docs/ugv.md).
 
 ## Simulation und Wirklichkeit
 

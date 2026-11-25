@@ -151,9 +151,11 @@
  "alt_c5": "Pas lasu w LiDAR-ze robota naziemnego: pnie drzew, drut ogrodzenia i przejechana trasa",
  "c5_1": "Tam, gdzie dron nie widzi ogrodzenia, mały robot naziemny patroluje 500 m ogrodzenia w lesie w Gazebo, a jego mózg działa w ROS 2 na Jetsonie.",
  "c5_2": "LiDAR SLAM, teach and repeat: 10 z 10 pętli ukończonych, mediana 0,26 m od rzeczywistej pozycji, podczas gdy GNSS pod drzewami mylił się o 4,3 m.",
- "c5_3": "Jeszcze nie: wykrywanie usterek z ziemi, do czego potrzebny jest detektor wytrenowany na bocznym widoku robota.",
+ "c5_3": "Usterki z ziemi: detektor ground-v0.1 dla widoku z ziemi znalazł 50 z 50 usterek w 10 patrolach na żywo na Jetsonie, bez fałszywego alarmu.",
  "d9": "Robot naziemny, faza 0",
  "d9s": "v0.12 · patrol w lesie w Gazebo: LiDAR SLAM teach and repeat na Jetsonie, 10 z 10 pętli",
- "n4": "Usterki z ziemi",
- "n4s": "detektor dla bocznego widoku robota naziemnego, potem przejście wzdłuż prawdziwego ogrodzenia w lesie"
+ "d10": "Usterki z ziemi",
+ "d10s": "v0.13 · detektor widoku z ziemi na żywo na Jetsonie: 50 z 50 usterek w 10 patrolach, 0 fałszywych alarmów; narzędzie do prawdziwych nagrań z drona",
+ "n4": "Prawdziwe ogrodzenie w lesie",
+ "n4s": "pierwsze prawdziwe obrazy z ziemi: spacer wzdłuż prawdziwego ogrodzenia w lesie z Jetsonem i kamerą na wysokości robota"
 }

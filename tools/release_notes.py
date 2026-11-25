@@ -8,7 +8,7 @@ A file without a tag is a draft: the notes of a release that is not published ye
 Drafts get the same checks; --apply and --verify skip them.
 
 Checks: every release tag has a file; the title starts with the tag; the sections of its track
-are present (platform vX.Y.Z or model model-vX.Y, see ml/README.md); no {{placeholder}} is left; images from
+are present (platform vX.Y.Z, model model-vX.Y or ground model ground-vX.Y, see ml/README.md); no {{placeholder}} is left; images from
 raw.githubusercontent.com are pinned to a commit or tag, not to main. --verify also checks that every file attached to
 a release is listed in its Files table. Tags are never moved.
 """
@@ -26,6 +26,8 @@ TRACKS = {
     "platform": (re.compile(r"^v\d+\.\d+\.\d+$"), ["**Models:**", "## Highlights", "## Install or run", "## Known limits"]),
     "model": (re.compile(r"^model-v\d+\.\d+$"), ["## What changed", "## Scores", "## In flight on the Jetson",
                                                   "## Known limits", "## Files"]),
+    "ground": (re.compile(r"^ground-v\d+\.\d+$"), ["## What changed", "## Scores", "## Live on the Jetson",
+                                                    "## Known limits", "## Files"]),
 }
 
 
@@ -38,7 +40,7 @@ def track(tag):
 
 
 def tag_key(tag):
-    return (tag.startswith("model-"), [int(x) for x in re.findall(r"\d+", tag)])
+    return (tag.startswith("model-") + 2 * tag.startswith("ground-"), [int(x) for x in re.findall(r"\d+", tag)])
 
 
 def read(tag):

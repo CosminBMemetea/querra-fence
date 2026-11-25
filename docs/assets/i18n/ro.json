@@ -93,9 +93,11 @@
 "alt_c5": "Fâșia de pădure în LiDAR-ul robotului terestru: trunchiuri, sârma gardului și traseul parcurs",
 "c5_1": "Acolo unde drona nu vede gardul, un robot terestru mic patrulează 500 m de gard prin pădure în Gazebo, cu „creierul” în ROS 2 pe Jetson.",
 "c5_2": "LiDAR SLAM, teach and repeat: 10 din 10 bucle terminate, la 0,26 m de poziția reală (mediana), în timp ce GNSS sub copaci greșea cu 4,3 m.",
-"c5_3": "Încă nu: găsirea defectelor de la sol, care cere un detector antrenat pe perspectiva laterală a robotului.",
+"c5_3": "Defecte de la sol: detectorul ground-v0.1, antrenat pe perspectiva de la sol, a găsit 50 din 50 de defecte în 10 patrule live pe Jetson, fără nicio alarmă falsă.",
 "d9": "Robot terestru, faza 0",
 "d9s": "v0.12 · o patrulă prin pădure în Gazebo: LiDAR SLAM teach and repeat pe Jetson, 10 din 10 bucle",
-"n4": "Defecte văzute de la sol",
-"n4s": "un detector pentru perspectiva laterală a robotului terestru, apoi o plimbare de-a lungul unui gard real din pădure"
+"d10": "Defecte de la sol",
+"d10s": "v0.13 · detectorul pentru perspectiva de la sol live pe Jetson: 50 din 50 de defecte în 10 patrule, 0 alarme false; un instrument pentru video real de dronă",
+"n4": "Un gard real în pădure",
+"n4s": "primele imagini reale de la sol: o plimbare de-a lungul unui gard real din pădure, cu Jetson și o cameră la înălțimea robotului"
 }

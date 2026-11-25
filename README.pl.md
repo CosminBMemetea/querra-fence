@@ -318,10 +318,10 @@ w Gazebo: 500 m ogrodzenia przez proceduralnie generowany las z pięcioma usterk
   od rzeczywistej (mediana) i przez cały czas poniżej 1 m. Pod drzewami GNSS mylił się o 4,3 m (mediana), a na samej
   odometrii kół robot utknął po około 100 m.
 - **Na Orin Nano** cały stos robota naziemnego zużywa około 1,2 z 6 rdzeni.
-- **Jeszcze nie zrobione:** wykrywanie usterek z ziemi. Wszystkie pięć przechodzi przez pole widzenia kamery, ale
-  detektor ogrodzenia zna tylko widok z drona.
+- **Usterki z ziemi:** detektor widoku z ziemi ground-v0.1 działa na bocznej kamerze robota, na Jetsonie. W 10
+  patrolach na żywo za każdym razem znalazł wszystkie 5 usterek, 50 z 50, bez fałszywego alarmu.
 
-Uruchomienie: `./ugv.sh` na Macu i `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` na Jetsonie. Szczegóły, wykresy i wyniki: [docs/ugv.md](docs/ugv.md).
+Uruchomienie: `./ugv.sh` na Macu i `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization detect:=true` na Jetsonie. Szczegóły, wykresy i wyniki: [docs/ugv.md](docs/ugv.md).
 
 ## Symulacja a rzeczywistość
 

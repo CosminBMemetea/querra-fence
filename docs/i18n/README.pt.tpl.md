@@ -232,10 +232,10 @@ no Jetson.
   com a posição do SLAM a 0,26 m da real (mediana) e sempre abaixo de 1 m. Debaixo das árvores o GNSS errou 4,3 m
   (mediana), e só com a odometria das rodas o robô ficou preso por volta dos 100 m.
 - **No Orin Nano**, toda a pilha do robô terrestre usa cerca de 1,2 dos 6 núcleos.
-- **Ainda por fazer:** encontrar as avarias a partir do chão. As cinco passam pelo campo de visão da câmara, mas o
-  detetor da cerca só conhece a vista do drone.
+- **Avarias a partir do chão:** o detetor da vista do chão ground-v0.1 corre na câmara lateral do robô, no Jetson.
+  Em 10 patrulhas ao vivo encontrou as 5 avarias de cada vez, 50 em 50, sem nenhum falso alarme.
 
-Para correr: `./ugv.sh` no Mac e `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` no Jetson. Detalhes, figuras e resultados: [docs/ugv.md](docs/ugv.md).
+Para correr: `./ugv.sh` no Mac e `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization detect:=true` no Jetson. Detalhes, figuras e resultados: [docs/ugv.md](docs/ugv.md).
 
 ## Simulado versus real
 

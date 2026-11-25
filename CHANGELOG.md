@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.13.0 · 2026-11-25 · the ground robot finds the faults: 50 of 50 in 10 live patrols
 
 - **Real fence video** ([docs/drone-video.md](docs/drone-video.md)): `tools/video_eval.py` runs a fence model over a
   drone video, such as one from a DJI Mini 4 Pro, with the Jetson's alert rule (5 of 8 frames, conf 0.7). With DJI's
@@ -20,6 +20,10 @@
 - **Ground-view dataset** for the robot's side camera: `tools/make_ground_dataset.sh` renders random forests (frames
   `G..` for train and val, `T..` for test) and the patrol of the real forest; `tools/ground_patrol_eval.py` scores a
   model on that patrol, as the alert chain would. model-v0.5 on it: 2 of 5 faults, 19 false alerts.
+- **Model registry:** `ml/models.json` gets `ground_models` and `ml/README.md` a table for them
+  (`tools/model_registry.py` validates both lists); release track `ground-vX.Y` in `tools/release_notes.py`. The
+  v0.12.0 notes get the platform track's **Models:** line and "Install or run" heading.
+- README in nine languages and the project page: the ground robot's fault alerts, v0.13 on the timeline.
 
 ## v0.12.0 · 2026-11-22 · a ground robot under the trees: LiDAR SLAM, 10 of 10 loops
 

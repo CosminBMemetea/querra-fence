@@ -229,7 +229,7 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
         <ul>
           <li data-i18n="c5_1">Where the drone cannot see the fence, a small ground robot patrols a 500 m forest fence in Gazebo, with the brain in ROS 2 on the Jetson.</li>
           <li data-i18n="c5_2">LiDAR SLAM, teach and repeat: 10 of 10 loops completed, 0.26 m median from the truth, while GNSS under the trees was 4.3 m off.</li>
-          <li data-i18n="c5_3">Not yet: finding the faults from the ground, which needs a detector trained for the robot's side view.</li>
+          <li data-i18n="c5_3">Faults from the ground: the ground-view detector ground-v0.1 found 50 of 50 faults in 10 live patrols on the Jetson, with no false alert.</li>
         </ul>
       </article>
     </div>
@@ -305,6 +305,7 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
           <li><b data-i18n="d7">PX4 ↔ ROS 2 (phase 3, part 1)</b><small data-i18n="d7s">v0.7 · PX4 over uXRCE-DDS into ROS 2 on the Jetson; alerts use the drone's own pose: real faults within 2.4–4.2 m</small></li>
           <li><b data-i18n="d8">Re-fly the confirmed faults (phase 3, part 2)</b><small data-i18n="d8s">v0.8 · after the mission the Jetson flies low over every alert in OFFBOARD and hands back with Return; report, READMEs and this page in nine languages</small></li>
           <li><b data-i18n="d9">Ground robot, phase 0</b><small data-i18n="d9s">v0.12 · a forest patrol in Gazebo: LiDAR SLAM teach and repeat on the Jetson, 10 of 10 loops</small></li>
+          <li><b data-i18n="d10">Faults from the ground</b><small data-i18n="d10s">v0.13 · the ground-view detector live on the Jetson: 50 of 50 faults in 10 patrols, 0 false alerts; a tool for real drone video</small></li>
         </ul>
       </div>
       <div class="lane next">
@@ -313,7 +314,7 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
           <li><b data-i18n="n1">A close-up check you can trust</b><small data-i18n="n1s">the re-fly works, but the detector was trained at 12 m: retrain it on low-altitude frames so a close look can confirm or reject an alert</small></li>
           <li><b data-i18n="n2">Real fence data</b><small data-i18n="n2s">field collection is ready: real photos, labels and retraining to close the gap between simulation and reality</small></li>
           <li><b data-i18n="n3">Calibrated sensors</b><small data-i18n="n3s">camera calibration and the real mounting offsets of every sensor on the airframe</small></li>
-          <li><b data-i18n="n4">Faults from the ground</b><small data-i18n="n4s">a detector for the ground robot's side view, then a walk along a real forest fence</small></li>
+          <li><b data-i18n="n4">A real forest fence</b><small data-i18n="n4s">the first real ground-view images: a walk along a real forest fence with the Jetson and a camera at the robot's height</small></li>
         </ul>
       </div>
       <div class="lane later">

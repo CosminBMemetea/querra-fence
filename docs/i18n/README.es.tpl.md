@@ -235,10 +235,10 @@ ROS 2 en el Jetson.
   con la posición del SLAM a 0,26 m de la real (mediana) y siempre por debajo de 1 m. Bajo los árboles el GNSS se
   equivocó 4,3 m (mediana), y solo con la odometría de las ruedas el robot se quedó atascado hacia los 100 m.
 - **En el Orin Nano**, toda la pila del robot terrestre usa alrededor de 1,2 de los 6 núcleos.
-- **Pendiente:** encontrar las averías desde el suelo. Las cinco pasan por el campo de visión de la cámara, pero el
-  detector de la cerca solo conoce la vista del dron.
+- **Averías desde el suelo:** el detector de vista desde el suelo ground-v0.1 funciona con la cámara lateral del
+  robot, en el Jetson. En 10 patrullas en vivo encontró las 5 averías cada vez, 50 de 50, sin ninguna falsa alarma.
 
-Para ejecutarlo: `./ugv.sh` en el Mac y `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` en el Jetson. Detalles, figuras y resultados: [docs/ugv.md](docs/ugv.md).
+Para ejecutarlo: `./ugv.sh` en el Mac y `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization detect:=true` en el Jetson. Detalles, figuras y resultados: [docs/ugv.md](docs/ugv.md).
 
 ## Simulado frente a real
 

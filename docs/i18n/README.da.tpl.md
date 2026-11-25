@@ -232,10 +232,10 @@ kamera, IMU og GNSS, der bliver dårligere under kronerne, og patruljens "hjerne
   SLAM-positionen 0,26 m fra den sande (median) og hele tiden under 1 m. Under træerne ramte GNSS 4,3 m forkert
   (median), og på hjulodometri alene sad robotten fast efter omkring 100 m.
 - **På Orin Nano** bruger hele jordrobottens stak omkring 1,2 af de 6 kerner.
-- **Ikke færdigt endnu:** at finde fejlene fra jorden. Alle fem passerer gennem kameraets synsfelt, men
-  hegnsdetektoren kender kun dronens udsyn.
+- **Fejl fra jorden:** jordudsynsdetektoren ground-v0.1 kører på robottens sidekamera, på Jetson. I 10 patruljer
+  live fandt den alle 5 fejl hver gang, 50 af 50, uden én falsk alarm.
 
-Kør det med `./ugv.sh` på Mac'en og `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization` på Jetson. Detaljer, figurer og resultater: [docs/ugv.md](docs/ugv.md).
+Kør det med `./ugv.sh` på Mac'en og `./ros.sh ugv tcp://<mac>:5611 pose:=slam slam:=localization detect:=true` på Jetson. Detaljer, figurer og resultater: [docs/ugv.md](docs/ugv.md).
 
 ## Simuleret kontra virkelig
 

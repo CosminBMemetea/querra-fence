@@ -93,9 +93,11 @@
 "alt_c5": "Skovstriben i jordrobottens LiDAR: træstammer, hegnstråden og den kørte rute",
 "c5_1": "Hvor dronen ikke kan se hegnet, patruljerer en lille jordrobot 500 m skovhegn i Gazebo, med hjernen i ROS 2 på Jetson.",
 "c5_2": "LiDAR-SLAM, teach and repeat: 10 af 10 runder gennemført, 0,26 m fra den sande position (median), mens GNSS under træerne ramte 4,3 m forkert.",
-"c5_3": "Ikke endnu: at finde fejlene fra jorden, hvilket kræver en detektor trænet på robottens sideudsyn.",
+"c5_3": "Fejl fra jorden: jordudsynsdetektoren ground-v0.1 fandt 50 af 50 fejl i 10 live-patruljer på Jetson, uden én falsk alarm.",
 "d9": "Jordrobot, fase 0",
 "d9s": "v0.12 · en skovpatrulje i Gazebo: LiDAR-SLAM teach and repeat på Jetson, 10 af 10 runder",
-"n4": "Fejl set fra jorden",
-"n4s": "en detektor til jordrobottens sideudsyn og derefter en gåtur langs et rigtigt skovhegn"
+"d10": "Fejl fra jorden",
+"d10s": "v0.13 · jordudsynsdetektoren live på Jetson: 50 af 50 fejl i 10 patruljer, 0 falske alarmer; et værktøj til rigtig dronevideo",
+"n4": "Et rigtigt skovhegn",
+"n4s": "de første rigtige billeder fra jorden: en tur langs et rigtigt skovhegn med Jetson og et kamera i robottens højde"
 }

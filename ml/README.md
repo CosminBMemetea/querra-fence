@@ -45,6 +45,24 @@ trained, how it scored offline and in live flights, and why it is or is not used
   - `live-sim`: used for live Gazebo flights (`ros.sh demo tcp://…`).
   - `retired`: kept for comparison.
 
+### Ground robot models
+
+The ground robot's camera looks at the fence from the side, 0.7 m up, so it has its own models, trained on frames
+from that view ([docs/ugv.md](../docs/ugv.md)). Same 7 classes.
+
+<!-- ground-registry:start -->
+| Model | Status | Date | Trained on | Test mAP50 | Patrol frames offline: faults, false alerts | Live patrols: faults, false alerts | Run |
+|---|---|---|---|---|---|---|---|
+| **ground-v0.1** | default | 2026-11-25 | 3,600 frames, 1 dataset | 0.957 | 5 of 5, 0 false | 10 patrols: 50 of 50, 0 | [ground-v0.1](runs/ground-v0.1) |
+<!-- ground-registry:end -->
+
+- **Test:** 3 random forest enclosures of their own seed range (900–902), JPEG like the robot's camera stream.
+- **Patrol frames offline:** the real forest world along the robot's route, one frame every 0.5 m, scored by
+  `tools/ground_patrol_eval.py` like the alert chain: 5 of 8 frames confirm, conf 0.7.
+- **Live patrols:** repeat patrols on the Jetson (`tools/ugv_series.sh 10 … detect:=true`), each from a clean start.
+  `ugv_alerts` confirms 5 of 8 frames 0.5 m apart (fallen posts from conf 0.5, the others from 0.7); an alert is
+  real when its class matches a fault within 5 m.
+
 ## Releases
 
 ![Releases: the platform and the fence detector models](../docs/img/release-map.png)
@@ -55,6 +73,7 @@ One repository, two release tracks:
 |---|---|---|---|
 | Platform (simulation, Jetson, ROS 2, panel) | `vX.Y.Z` | `vX.Y.Z · <theme>` | **Models:** line, Highlights, (Measured), (Architecture), Install or run, Known limits, (Files) |
 | Fence detector | `model-vX.Y` | `model-vX.Y · <theme>` | Evolution chart, role table, What changed, Scores, In flight on the Jetson, Known limits, Files |
+| Ground robot's detector | `ground-vX.Y` | `ground-vX.Y · <theme>` | Role table, What changed, Scores, Live on the Jetson, Known limits, Files |
 
 - The release text lives in `docs/release-notes/<tag>.md`. The first line is the title.
 - Images are pinned to a commit, so a release page never changes when `main` does.

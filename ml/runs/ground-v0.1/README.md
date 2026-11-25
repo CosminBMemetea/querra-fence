@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **live in simulation**: 10 of 10 live patrols on the Jetson, 50 of 50 faults found, 0 false alerts. Not released and not in [models.json](../../models.json) yet |
+| Status | **default** for the ground robot's fault alerts from platform v0.13.0 (`./ros.sh ugv … detect:=true`); released as [ground-v0.1](https://github.com/CosminBMemetea/querra-fence/releases/tag/ground-v0.1). 10 of 10 live patrols on the Jetson, 50 of 50 faults found, 0 false alerts |
 | Date | 2026-11-25 |
 | Parent | model-v0.5 (fine-tuned) |
 | Code | `dcd017a` (the ground dataset generator and patrol scorer of `54f574b`, test frames named `T`) |
@@ -136,8 +136,6 @@ The fallen post is still the thin margin: 6–7 steps show it where 5 are needed
 
 ## Next
 
-1. **Register and release** when asked: an entry in [models.json](../../models.json) (the registry's table is built
-   for drone models, so ground models need their own table) and the release notes.
-2. **ground-v0.2:** more fallen-post frames (the rarest class: 372 against 812 broken wires and 693 branches) and
+1. **ground-v0.2:** more fallen-post frames (the rarest class: 372 against 812 broken wires and 693 branches) and
    more epochs, so fallen posts are confident at 0.7 like the other faults and `class_conf` can go.
-3. **The real walk:** the first real ground-view images (see [docs/ugv.md](../../../docs/ugv.md)).
+2. **The real walk:** the first real ground-view images (see [docs/ugv.md](../../../docs/ugv.md)).
