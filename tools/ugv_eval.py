@@ -7,6 +7,8 @@ For each patrol (from the patrol node's "driving" to "done", "blocked" or "stopp
   - GNSS: fix availability, 3D share, error (median, p95) overall and by sky cover (open, partial, dense canopy)
   - faults: which ones passed through the side camera's view (left side, within 50 degrees of its axis, closer than
     6 m), and for how long
+  - alerts (with detect:=true on the Jetson: ugv_alerts' confirmed faults, logged through the relay): a find when a
+    fault of the alert's class lies within 5 m of the alert's position on the fence; otherwise a false alert
   - obstacle stops (from the patrol node)
 
   python3 tools/ugv_eval.py                 the newest log
@@ -21,6 +23,8 @@ import statistics
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 META = os.path.join(ROOT, "worlds", "forest_meta.json")
+ALERT_CLASS = {"wire_break": "wire_break", "post_down": "fallen_post", "branch_short": "branch"}
+ALERT_MATCH_M = 5.0
 
 
 def pct(xs, q):
@@ -134,6 +138,26 @@ def score(rows, meta, t0, t1, pose_topic, final):
             if yr > 0 and d < 6.0 and abs(math.degrees(math.atan2(xr, yr))) < 50:
                 seen_t += b["wall"] - a["wall"]
         faults.append({"id": ft["id"], "type": ft["type"], "closest_m": r2(best), "in_view_s": r2(seen_t)})
+    # alerts raised on the Jetson during the patrol
+    alerts, found = [], set()
+    for a in (r for r in win if r["k"] == "event" and r.get("src") == "alert"):
+        cand = [(math.hypot(ft["x"] - a["x"], ft["y"] - a["y"]), ft["id"]) for ft in meta["faults"]
+                if ALERT_CLASS.get(ft["type"]) == a.get("class")]
+        d, fid = min(cand) if cand else (None, None)
+        hit = d is not None and d <= ALERT_MATCH_M
+        if hit:
+            found.add(fid)
+        alerts.append({"id": a.get("id"), "class": a.get("class"), "x": a["x"], "y": a["y"], "conf": a.get("max_conf"),
+                       "fault": fid if hit else None, "nearest_fault_m": r2(d)})
+    # the alert node's 0.5 m steps: how many near each fault (robot within 4 m, as tools/ground_patrol_eval.py)
+    # showed its class at conf >= 0.7 within ALERT_MATCH_M of it
+    steps = [r for r in win if r["k"] == "event" and r.get("src") == "step"]
+    for f, ft in zip(faults, meta["faults"]):
+        near = [r for r in steps if math.hypot(r["r"][0] - ft["x"], r["r"][1] - ft["y"]) <= 4.0]
+        f["steps_in_view"] = len(near) if steps else None
+        f["steps_with_its_class"] = sum(1 for r in near if any(
+            c == ALERT_CLASS[ft["type"]] and cf >= 0.7 and math.hypot(sx - ft["x"], sy - ft["y"]) <= ALERT_MATCH_M
+            for c, cf, sx, sy in r["s"])) if steps else None
     st = final if final and final.get("src") == "patrol" else {}
     return {
         "pose_topic": pose_topic, "result": st.get("state", "running"),
@@ -154,6 +178,8 @@ def score(rows, meta, t0, t1, pose_topic, final):
                               for k, v in buckets.items()}},
         "faults_in_view": faults, "faults_seen": sum(1 for f in faults if f["in_view_s"] and f["in_view_s"] > 0.5),
         "obstacle_stops": st.get("obstacle_stops"),
+        "alerts": {"count": len(alerts), "faults_found": len(found), "found": sorted(found),
+                   "false": sum(1 for a in alerts if not a["fault"]), "list": alerts},
     }
 
 
@@ -189,6 +215,19 @@ def main():
         print("  faults     %d of %d through the camera's view: %s" % (sc["faults_seen"], len(sc["faults_in_view"]),
               ", ".join("%s %ss" % (f["id"], f["in_view_s"]) for f in sc["faults_in_view"])))
         print("  obstacles  %s stop(s)" % sc["obstacle_stops"])
+        A = sc["alerts"]
+        if A["count"]:
+            print("  alerts     %d of %d faults found (%s), %d false alert(s)" % (
+                A["faults_found"], len(sc["faults_in_view"]), ", ".join(A["found"]) or "none", A["false"]))
+            for al in A["list"]:
+                print("             #%s %-11s at (%.1f, %.1f) conf %s: %s" % (al["id"], al["class"], al["x"], al["y"], al["conf"],
+                      "%s, %.1f m away" % (al["fault"], al["nearest_fault_m"]) if al["fault"] else
+                      "FALSE (nearest fault of its class %s m)" % al["nearest_fault_m"]))
+        else:
+            print("  alerts     none logged (detect:=true on the Jetson raises them)")
+        if any(f.get("steps_in_view") for f in sc["faults_in_view"]):
+            print("  steps      0.5 m steps near each fault that show its class (conf >= 0.7): " + ", ".join(
+                "%s %s of %s" % (f["id"], f["steps_with_its_class"], f["steps_in_view"]) for f in sc["faults_in_view"]))
     if a.json:
         with open(os.path.join(run, "summary.json"), "w") as f:
             json.dump({"run": os.path.basename(run), "patrols": out}, f, indent=1)

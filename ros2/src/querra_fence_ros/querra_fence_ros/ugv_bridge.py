@@ -27,7 +27,9 @@ With slam:=true:
 Clock: every sample carries Gazebo's simulation time; the bridge stamps all of them with it and publishes /clock, so
 the nodes that combine streams (pointcloud_to_laserscan, slam_toolbox) run with use_sim_time and see one clock.
 In:  /ugv/cmd_vel (geometry_msgs/Twist), /ugv/reset (std_msgs/Empty: back to the spawn pose, odometry zeroed),
-     /ugv/patrol/status (forwarded to the relay's log, so a patrol can be scored from one file).
+     /ugv/patrol/status (forwarded to the relay's log, so a patrol can be scored from one file), and
+     /ugv/alerts/event (ugv_alerts' confirmed faults, forwarded the same way).
+Also /ugv/origin (NavSatFix, latched): the world frame's latitude/longitude origin, for ugv_alerts.
 """
 import array, json, math, socket, struct, threading, time
 import numpy as np
@@ -75,7 +77,7 @@ class UgvBridge(Node):
             "truth": p("/ugv/ground_truth", Odometry), "trail_truth": p("/ugv/trail/truth", Path), "trail_odom": p("/ugv/trail/odom", Path),
             "drift": p("/ugv/eval/odom_drift_m", Float32), "gps_err": p("/ugv/eval/gps_error_m", Float32),
             "route": p("/ugv/route", Path, LATCHED), "fence": p("/ugv/fence", MarkerArray, LATCHED),
-            "faults": p("/ugv/faults", MarkerArray, LATCHED),
+            "faults": p("/ugv/faults", MarkerArray, LATCHED), "origin": p("/ugv/origin", NavSatFix, LATCHED),
             "slam_pose": p("/ugv/slam_pose", Odometry), "trail_slam": p("/ugv/trail/slam", Path),
             "slam_err": p("/ugv/eval/slam_error_m", Float32), "clock": p("/clock", Clock),
         }
@@ -85,6 +87,7 @@ class UgvBridge(Node):
         self.create_subscription(Twist, "/ugv/cmd_vel", self.on_cmd, 10)
         self.create_subscription(Empty, "/ugv/reset", lambda _: self.send({"reset": True}), 10)
         self.create_subscription(String, "/ugv/patrol/status", self.on_status, 10)
+        self.create_subscription(String, "/ugv/alerts/event", self.on_alert, 10)
         self.sock, self.sock_lock = None, threading.Lock()
         self.meta, self.spawn = None, (0.0, 0.0, 0.0)
         self.truth, self.odom_map = None, None
@@ -143,6 +146,12 @@ class UgvBridge(Node):
         if key != self.last_status:                          # state changes only
             self.last_status = key
             self.send({"event": dict(st, src="patrol")})
+
+    def on_alert(self, m):
+        try:
+            self.send({"event": {"src": "alert", **json.loads(m.data)}})   # ugv_alerts' steps say "src": "step"
+        except ValueError:
+            pass
 
     def loop(self):
         host, port = self.source.replace("tcp://", "").rsplit(":", 1)
@@ -238,6 +247,9 @@ class UgvBridge(Node):
         self.pub["route"].publish(path)
         self.pub["fence"].publish(self.fence_markers(meta, stamp))
         self.pub["faults"].publish(self.fault_markers(meta, stamp))
+        o = NavSatFix(latitude=float(self.lat0), longitude=float(self.lon0), altitude=float(meta["origin"].get("alt_m", 0.0)))
+        o.header.stamp, o.header.frame_id = stamp, "ugv_map"
+        self.pub["origin"].publish(o)
         self.trails = {"truth": Path(), "odom": Path(), "slam": Path()}
         self.last_status = None                              # a new relay log gets the current patrol state once
         self.get_logger().info(f"robot meta: world {meta['world']}, route {meta['route_length_m']} m, "

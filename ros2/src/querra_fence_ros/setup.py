@@ -19,5 +19,6 @@ setup(
         "refly = querra_fence_ros.refly:main",
         "ugv_bridge = querra_fence_ros.ugv_bridge:main",
         "ugv_patrol = querra_fence_ros.ugv_patrol:main",
+        "ugv_alerts = querra_fence_ros.ugv_alerts:main",
     ]},
 )

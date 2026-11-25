@@ -11,6 +11,9 @@
   map:=/ws/maps/forest         slam_toolbox's serialized map (/ws is /ssd/querra/ros2 on the Jetson)
   patrol:=true                 drive the taught route around the enclosure as soon as it arrives
   speed:=0.8                   patrol speed, m/s
+  detect:=false                true: the fence detector on the side camera (TensorRT, engine:=, ground-v0.1 by
+                               default) and ugv_alerts, which confirms faults 5 of 8 frames 0.5 m apart and logs
+                               them on the Mac for tools/ugv_eval.py
 
 ugv_bridge turns the relay's stream into /ugv/* topics (LiDAR point cloud, IMU, odometry, GNSS, camera, route,
 fence, faults, ground truth for scoring) stamped with Gazebo's simulation time, and publishes /clock;
@@ -43,11 +46,15 @@ def generate_launch_description():
         DeclareLaunchArgument("patrol", default_value="true"),
         DeclareLaunchArgument("speed", default_value="0.8"),
         DeclareLaunchArgument("foxglove", default_value="true"),
+        DeclareLaunchArgument("detect", default_value="false", description="fence detector + ugv_alerts on the side camera"),
+        DeclareLaunchArgument("engine", default_value="/models/ground-yolo11n-v0.1-fp16.engine",
+                              description="the ground-view detector's TensorRT engine (ml/runs/ground-v0.1)"),
         # the panel's topic rates, without the high-rate and bulky topics (each message costs a Python callback;
         # /map is a 14 MB occupancy grid)
         Node(package="querra_fence_ros", executable="stats", name="querra_stats", output="log",
              parameters=[{"skip_prefixes": ["/clock", "/tf", "/map", "/slam_toolbox/", "/ugv/eval/", "/ugv/trail/",
-                                            "/ugv/patrol/target", "/ugv/cmd_vel", "/ugv/odom_map"]}]),
+                                            "/ugv/patrol/target", "/ugv/cmd_vel", "/ugv/odom_map",
+                                            "/detections/image"]}]),
         Node(package="querra_fence_ros", executable="ugv_bridge", name="ugv_bridge",
              parameters=[{"source": LaunchConfiguration("source"), "slam": slam_on}], output="screen"),
         Node(package="pointcloud_to_laserscan", executable="pointcloud_to_laserscan_node", name="ugv_scan",
@@ -68,6 +75,11 @@ def generate_launch_description():
         Node(package="querra_fence_ros", executable="ugv_patrol", name="ugv_patrol", condition=IfCondition(LaunchConfiguration("patrol")),
              parameters=[{"pose_topic": pose_topic, "speed": LaunchConfiguration("speed"), "save_map": save_map,
                           "save_route": save_route, "route_file": route_file}], output="screen"),
+        Node(package="querra_fence_ros", executable="detector", name="fence_detector", condition=IfCondition(LaunchConfiguration("detect")),
+             parameters=[{"engine": LaunchConfiguration("engine"), "image": "/ugv/camera/image_raw/compressed", "conf": 0.35}],
+             output="screen"),
+        Node(package="querra_fence_ros", executable="ugv_alerts", name="ugv_alerts", condition=IfCondition(LaunchConfiguration("detect")),
+             parameters=[{"pose_topic": pose_topic}], output="screen"),
         Node(package="foxglove_bridge", executable="foxglove_bridge", name="foxglove_bridge", condition=IfCondition(LaunchConfiguration("foxglove")),
              parameters=[{"port": 8765, "address": "0.0.0.0", "send_buffer_limit": 20000000}], output="log"),
     ])
