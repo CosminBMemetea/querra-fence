@@ -28,10 +28,13 @@ ap.add_argument("--frames", default=os.path.expanduser("~/querra-data/ground_pat
 ap.add_argument("--meta", default=os.path.expanduser("~/querra-data/ground_patrol"),
                 help="folder with patrol_poses.jsonl and patrol_faults.json")
 ap.add_argument("--conf", type=float, default=0.5)
+ap.add_argument("--class-conf", default="", help="per-class thresholds, e.g. fallen_post=0.5 (as ugv_alerts on the Jetson)")
 ap.add_argument("--window", type=int, default=8)
 ap.add_argument("--need", type=int, default=5)
 ap.add_argument("--json", help="write the result here")
 a = ap.parse_args()
+CLASS_CONF = {k.strip(): float(v) for k, v in (kv.split("=") for kv in a.class_conf.split(",") if "=" in kv)}
+THRESH = {c: CLASS_CONF.get(n, a.conf) for c, n in FAULT_CLASSES.items()}
 
 poses = [json.loads(line) for line in open(os.path.join(a.meta, "patrol_poses.jsonl"))]
 faults = json.load(open(os.path.join(a.meta, "patrol_faults.json")))["faults"]
@@ -42,11 +45,11 @@ model = YOLO(a.model)
 hits = []                                   # per frame: {class: best confidence}
 for k in range(0, len(frames), 32):
     batch = frames[k:k + 32]
-    for res in model.predict([f for _, f in batch], conf=a.conf, verbose=False, device="cpu"):
+    for res in model.predict([f for _, f in batch], conf=min([a.conf] + list(CLASS_CONF.values())), verbose=False, device="cpu"):
         best = {}
         for c, s in zip(res.boxes.cls.tolist(), res.boxes.conf.tolist()):
             c = int(c)
-            if c in FAULT_CLASSES:
+            if c in FAULT_CLASSES and s >= THRESH[c]:
                 best[c] = max(best.get(c, 0.0), s)
         hits.append(best)
 
@@ -61,7 +64,7 @@ for c in FAULT_CLASSES:
             else:
                 run = {"cls": c, "first": i, "last": i}
                 alerts.append(run)
-result = {"model": os.path.abspath(a.model), "frames": len(frames), "conf": a.conf,
+result = {"model": os.path.abspath(a.model), "frames": len(frames), "conf": a.conf, "class_conf": CLASS_CONF,
           "confirm": "%d of %d frames" % (a.need, a.window), "faults": [], "false_alerts": []}
 found = set()
 for al in alerts:
@@ -90,8 +93,9 @@ result["frames_with_false_class"] = {FAULT_CLASSES[c]: sum(
     1 for i, (p, _) in enumerate(frames) if c in hits[i] and not any(
         TYPE_CLASS[ft["type"]] == c and math.hypot(p["x"] - ft["x"], p["y"] - ft["y"]) <= 4.0 for ft in faults))
     for c in FAULT_CLASSES}
-print("%s: %d of %d faults found, %d false alert(s) (%s, conf %.2f)" % (
-    os.path.basename(a.model), len(found), len(faults), len(result["false_alerts"]), result["confirm"], a.conf))
+print("%s: %d of %d faults found, %d false alert(s) (%s, conf %.2f%s)" % (
+    os.path.basename(a.model), len(found), len(faults), len(result["false_alerts"]), result["confirm"], a.conf,
+    "".join(", %s %.2f" % kv for kv in CLASS_CONF.items())))
 for f in result["faults"]:
     print("  %-3s %-12s %-5s %d of %d frames in view show its class" % (
         f["id"], f["type"], "found" if f["found"] else "MISSED", f["frames_with_its_class"], f["frames_in_view"]))

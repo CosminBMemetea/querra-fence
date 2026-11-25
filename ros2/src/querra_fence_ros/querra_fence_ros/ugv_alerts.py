@@ -1,6 +1,10 @@
-"""Ground robot alerts: a fault becomes an alert when the same fault class (conf >= 0.7) is seen in 5 of 8 frames
-taken 0.5 m of travel apart, at spots within 5 m of each other on the fence. This is the rule
-tools/ground_patrol_eval.py scored ground-v0.1 with offline, and the drone's alert_confirm logic, in metres.
+"""Ground robot alerts: a fault becomes an alert when the same fault class is seen in 5 of 8 frames taken 0.5 m of
+travel apart, at spots within 5 m of each other on the fence. This is the rule tools/ground_patrol_eval.py scored
+ground-v0.1 with offline, and the drone's alert_confirm logic, in metres.
+
+A sighting counts from conf 0.7, and fallen posts from 0.5 (class_conf): ground-v0.1 scores fallen posts lower than
+the other faults. On its held-out test forests, 0.7 kept 52% of the fallen posts and 0.5 kept 90%, with false fallen
+posts in 0.5% of the frames (validation forests: 62% and 86%, 0.3%). At 0.7 the first live patrols missed F3.
 
 Why frames by distance: the robot drives at 0.8 m/s and its camera runs at 10 Hz, so consecutive frames are 8 cm
 apart. Counted directly, 5 of 8 frames would be 0.4 s, and a bush mistaken for a branch for half a second would
@@ -42,15 +46,16 @@ class LocalConfirmer:
     """confirm.AlertConfirmer on a flat frame in metres: a sighting (class, conf, x, y) confirms when n of the last m
     frames hold one of its class within radius_m; sightings within merge_m of an existing alert only update it."""
 
-    def __init__(self, n=5, m=8, radius_m=5.0, conf=0.7, merge_m=10.0):
+    def __init__(self, n=5, m=8, radius_m=5.0, conf=0.7, merge_m=10.0, class_conf=None):
         self.n, self.m, self.radius, self.conf, self.merge = n, m, radius_m, conf, max(merge_m, radius_m)
+        self.class_conf = class_conf or {}           # per-class thresholds that replace conf
         self.window = collections.deque(maxlen=m)
         self.alerts = []
 
     def update(self, sightings):
         frame = collections.defaultdict(list)
         for c, cf, x, y in sightings:
-            if c in FAULTS and cf >= self.conf:
+            if c in FAULTS and cf >= self.class_conf.get(c, self.conf):
                 frame[c].append((x, y, cf))
         self.window.append(frame)
         new = []
@@ -77,7 +82,8 @@ class UgvAlerts(Node):
     def __init__(self):
         super().__init__("ugv_alerts")
         p = lambda k, v: self.declare_parameter(k, v).value
-        self.c = LocalConfirmer(p("n", 5), p("m", 8), p("radius_m", 5.0), p("conf", 0.7), p("merge_m", 10.0))
+        class_conf = {k.strip(): float(v) for k, v in (kv.split("=") for kv in p("class_conf", "fallen_post=0.5").split(",") if "=" in kv)}
+        self.c = LocalConfirmer(p("n", 5), p("m", 8), p("radius_m", 5.0), p("conf", 0.7), p("merge_m", 10.0), class_conf)
         self.step = p("step_m", 0.5)
         self.offset = p("fence_offset_m", 1.9)           # route to fence
         self.cam_x, self.cam_y = p("camera_x", 0.0), p("camera_y", 0.22)   # camera mount on the robot (forest_meta.json)
@@ -93,7 +99,7 @@ class UgvAlerts(Node):
                                  QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
         self.create_subscription(Detection2DArray, "/detections", self.on_dets, 10)
         self.get_logger().info(f"confirm {self.c.n} of {self.c.m} frames {self.step} m apart, "
-                               f"within {self.c.radius} m, conf {self.c.conf}; pose from {pose_topic}; fence {self.offset} m left")
+                               f"within {self.c.radius} m, conf {self.c.conf} {self.c.class_conf}; pose from {pose_topic}; fence {self.offset} m left")
 
     def on_pose(self, m):
         q = m.pose.pose.orientation

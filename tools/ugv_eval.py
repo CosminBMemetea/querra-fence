@@ -25,6 +25,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 META = os.path.join(ROOT, "worlds", "forest_meta.json")
 ALERT_CLASS = {"wire_break": "wire_break", "post_down": "fallen_post", "branch_short": "branch"}
 ALERT_MATCH_M = 5.0
+STEP_CONF = {"fallen_post": 0.5}   # as ugv_alerts' class_conf; the other classes count from 0.7
 
 
 def pct(xs, q):
@@ -150,13 +151,13 @@ def score(rows, meta, t0, t1, pose_topic, final):
         alerts.append({"id": a.get("id"), "class": a.get("class"), "x": a["x"], "y": a["y"], "conf": a.get("max_conf"),
                        "fault": fid if hit else None, "nearest_fault_m": r2(d)})
     # the alert node's 0.5 m steps: how many near each fault (robot within 4 m, as tools/ground_patrol_eval.py)
-    # showed its class at conf >= 0.7 within ALERT_MATCH_M of it
+    # showed its class (conf >= 0.7, fallen posts >= 0.5, as the alert node counts) within ALERT_MATCH_M of it
     steps = [r for r in win if r["k"] == "event" and r.get("src") == "step"]
     for f, ft in zip(faults, meta["faults"]):
         near = [r for r in steps if math.hypot(r["r"][0] - ft["x"], r["r"][1] - ft["y"]) <= 4.0]
         f["steps_in_view"] = len(near) if steps else None
         f["steps_with_its_class"] = sum(1 for r in near if any(
-            c == ALERT_CLASS[ft["type"]] and cf >= 0.7 and math.hypot(sx - ft["x"], sy - ft["y"]) <= ALERT_MATCH_M
+            c == ALERT_CLASS[ft["type"]] and cf >= STEP_CONF.get(c, 0.7) and math.hypot(sx - ft["x"], sy - ft["y"]) <= ALERT_MATCH_M
             for c, cf, sx, sy in r["s"])) if steps else None
     st = final if final and final.get("src") == "patrol" else {}
     return {
@@ -226,7 +227,7 @@ def main():
         else:
             print("  alerts     none logged (detect:=true on the Jetson raises them)")
         if any(f.get("steps_in_view") for f in sc["faults_in_view"]):
-            print("  steps      0.5 m steps near each fault that show its class (conf >= 0.7): " + ", ".join(
+            print("  steps      0.5 m steps near each fault that show its class as the alert node counts: " + ", ".join(
                 "%s %s of %s" % (f["id"], f["steps_with_its_class"], f["steps_in_view"]) for f in sc["faults_in_view"]))
     if a.json:
         with open(os.path.join(run, "summary.json"), "w") as f:
