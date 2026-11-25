@@ -1,0 +1,204 @@
+{
+ "model": "~/querra-data/models/fence-yolo11n-v0.5.pt",
+ "frames": 1032,
+ "conf": 0.5,
+ "confirm": "5 of 8 frames",
+ "faults": [
+  {
+   "id": "F1",
+   "type": "wire_break",
+   "found": false,
+   "frames_with_its_class": 0,
+   "frames_in_view": 14
+  },
+  {
+   "id": "F2",
+   "type": "branch_short",
+   "found": true,
+   "frames_with_its_class": 6,
+   "frames_in_view": 18
+  },
+  {
+   "id": "F3",
+   "type": "post_down",
+   "found": false,
+   "frames_with_its_class": 0,
+   "frames_in_view": 15
+  },
+  {
+   "id": "F4",
+   "type": "wire_break",
+   "found": false,
+   "frames_with_its_class": 3,
+   "frames_in_view": 16
+  },
+  {
+   "id": "F5",
+   "type": "branch_short",
+   "found": true,
+   "frames_with_its_class": 7,
+   "frames_in_view": 14
+  }
+ ],
+ "false_alerts": [
+  {
+   "cls": "branch",
+   "first": 21,
+   "last": 21,
+   "x": 18.8,
+   "y": -4.0,
+   "conf": 0.51
+  },
+  {
+   "cls": "branch",
+   "first": 42,
+   "last": 44,
+   "x": 29.2,
+   "y": -5.3,
+   "conf": 0.62
+  },
+  {
+   "cls": "branch",
+   "first": 60,
+   "last": 81,
+   "x": 38.1,
+   "y": -6.3,
+   "conf": 0.67
+  },
+  {
+   "cls": "branch",
+   "first": 125,
+   "last": 127,
+   "x": 70.4,
+   "y": -10.3,
+   "conf": 0.53
+  },
+  {
+   "cls": "branch",
+   "first": 152,
+   "last": 188,
+   "x": 83.7,
+   "y": -11.4,
+   "conf": 0.72
+  },
+  {
+   "cls": "branch",
+   "first": 224,
+   "last": 228,
+   "x": 119.0,
+   "y": -4.0,
+   "conf": 0.58
+  },
+  {
+   "cls": "branch",
+   "first": 257,
+   "last": 266,
+   "x": 135.2,
+   "y": -0.6,
+   "conf": 0.62
+  },
+  {
+   "cls": "branch",
+   "first": 338,
+   "last": 374,
+   "x": 167.0,
+   "y": 15.7,
+   "conf": 0.67
+  },
+  {
+   "cls": "branch",
+   "first": 415,
+   "last": 440,
+   "x": 176.6,
+   "y": 53.0,
+   "conf": 0.72
+  },
+  {
+   "cls": "branch",
+   "first": 459,
+   "last": 467,
+   "x": 170.2,
+   "y": 71.2,
+   "conf": 0.7
+  },
+  {
+   "cls": "branch",
+   "first": 513,
+   "last": 526,
+   "x": 152.3,
+   "y": 91.4,
+   "conf": 0.72
+  },
+  {
+   "cls": "branch",
+   "first": 559,
+   "last": 565,
+   "x": 135.9,
+   "y": 106.1,
+   "conf": 0.6
+  },
+  {
+   "cls": "branch",
+   "first": 753,
+   "last": 828,
+   "x": 42.3,
+   "y": 104.1,
+   "conf": 0.75
+  },
+  {
+   "cls": "branch",
+   "first": 879,
+   "last": 898,
+   "x": -0.0,
+   "y": 62.6,
+   "conf": 0.66
+  },
+  {
+   "cls": "branch",
+   "first": 910,
+   "last": 955,
+   "x": -5.2,
+   "y": 48.0,
+   "conf": 0.71
+  },
+  {
+   "cls": "branch",
+   "first": 967,
+   "last": 967,
+   "x": -5.5,
+   "y": 20.5,
+   "conf": 0.54
+  },
+  {
+   "cls": "branch",
+   "first": 981,
+   "last": 982,
+   "x": -4.2,
+   "y": 13.6,
+   "conf": 0.63
+  },
+  {
+   "cls": "branch",
+   "first": 999,
+   "last": 1003,
+   "x": -2.6,
+   "y": 4.7,
+   "conf": 0.57
+  },
+  {
+   "cls": "branch",
+   "first": 1019,
+   "last": 1031,
+   "x": 1.9,
+   "y": -1.9,
+   "conf": 0.71
+  }
+ ],
+ "found": 2,
+ "false_alert_count": 19,
+ "frames_with_false_class": {
+  "wire_break": 2,
+  "fallen_post": 0,
+  "branch": 408
+ }
+}

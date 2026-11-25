@@ -1,0 +1,13 @@
+{
+ "mAP50": 0.957,
+ "mAP50-95": 0.764,
+ "precision": 0.928,
+ "recall": 0.909,
+ "ap50_per_class": {
+  "post": 0.98,
+  "wire": 0.95,
+  "wire_break": 0.957,
+  "fallen_post": 0.942,
+  "branch": 0.958
+ }
+}

@@ -276,8 +276,9 @@ Open: the stats node (28%) and the patrol's point-cloud check, if the CPU is nee
    under 1 m). Next, test it against a forest that changed after the teach run (trees and bushes added or removed),
    and fuse the IMU and GNSS in an EKF (`robot_localization`) so the pose holds when scan matching weakens. The
    patrol takes its pose from a topic, so it switches without code changes.
-2. **Ground-view detector.** Render fence frames from the robot's camera pose (0.7 m up, 1.9 m from the fence,
-   looking sideways), train and score as for the drone models, then run it on `/ugv/camera`.
+2. **Ground-view detector.** The first one, ground-v0.1 ([run record](../ml/runs/ground-v0.1)), was trained on
+   frames rendered from the robot's camera pose in random forests. Offline, on the patrol of this forest, it finds
+   5 of 5 faults with no false alerts (model-v0.5: 2 of 5 and 19 false). Next, run it on `/ugv/camera` on the Jetson.
 3. **Ten patrols per change** with `tools/ugv_series.sh 10` (each from a clean start, scored with
    `tools/ugv_eval.py`), as with the drone's models.
 4. **The real walk.** Walk a real forest fence with the Jetson, the camera at 0.7 m and the u-blox logging its

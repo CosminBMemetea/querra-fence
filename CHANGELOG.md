@@ -8,6 +8,10 @@
   video, the alerts with map links and the frame of each. Tested on a simulated mission turned into a DJI-style video:
   the same 5 alerts on 3 faults, none false, as `tools/eval_mission.py`. `tools/confirm.py` takes the camera's
   geometry (`cam=`), like the ROS 2 copy.
+- **Ground-view detector ground-v0.1** ([run record](ml/runs/ground-v0.1)): model-v0.5 fine-tuned for 10 epochs on
+  3,600 frames from the robot's camera in random forests. On the patrol of the forest, offline: 5 of 5 faults, 0
+  false alerts at the Jetson's conf 0.7 (model-v0.5: 2 of 5, 19 false); test enclosures mAP50 0.957 (model-v0.5:
+  0.040). The fallen post is the thin margin (5 of 15 frames, 5 needed). Not yet run live on the Jetson.
 - **Ground-view dataset** for the robot's side camera: `tools/make_ground_dataset.sh` renders random forests (frames
   `G..` for train and val, `T..` for test) and the patrol of the real forest; `tools/ground_patrol_eval.py` scores a
   model on that patrol, as the alert chain would. model-v0.5 on it: 2 of 5 faults, 19 false alerts.

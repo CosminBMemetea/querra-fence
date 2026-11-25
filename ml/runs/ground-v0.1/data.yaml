@@ -1,0 +1,12 @@
+path: ~/querra-data/ground_yolo_stream
+train: images/train
+val: images/val
+test: images/test
+names:
+  0: post
+  1: wire
+  2: wire_break
+  3: fallen_post
+  4: branch
+  5: cow
+  6: sheep

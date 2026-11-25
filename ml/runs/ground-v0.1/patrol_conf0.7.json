@@ -1,0 +1,51 @@
+{
+ "model": "~/querra-data/train/ground-yolo11n-v0.1/weights/best.pt",
+ "frames": 1032,
+ "conf": 0.7,
+ "confirm": "5 of 8 frames",
+ "faults": [
+  {
+   "id": "F1",
+   "type": "wire_break",
+   "found": true,
+   "frames_with_its_class": 14,
+   "frames_in_view": 14
+  },
+  {
+   "id": "F2",
+   "type": "branch_short",
+   "found": true,
+   "frames_with_its_class": 12,
+   "frames_in_view": 18
+  },
+  {
+   "id": "F3",
+   "type": "post_down",
+   "found": true,
+   "frames_with_its_class": 5,
+   "frames_in_view": 15
+  },
+  {
+   "id": "F4",
+   "type": "wire_break",
+   "found": true,
+   "frames_with_its_class": 16,
+   "frames_in_view": 16
+  },
+  {
+   "id": "F5",
+   "type": "branch_short",
+   "found": true,
+   "frames_with_its_class": 12,
+   "frames_in_view": 14
+  }
+ ],
+ "false_alerts": [],
+ "found": 5,
+ "false_alert_count": 0,
+ "frames_with_false_class": {
+  "wire_break": 0,
+  "fallen_post": 0,
+  "branch": 4
+ }
+}
