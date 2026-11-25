@@ -9,9 +9,14 @@
   the same 5 alerts on 3 faults, none false, as `tools/eval_mission.py`. `tools/confirm.py` takes the camera's
   geometry (`cam=`), like the ROS 2 copy.
 - **Ground-view detector ground-v0.1** ([run record](ml/runs/ground-v0.1)): model-v0.5 fine-tuned for 10 epochs on
-  3,600 frames from the robot's camera in random forests. On the patrol of the forest, offline: 5 of 5 faults, 0
-  false alerts at the Jetson's conf 0.7 (model-v0.5: 2 of 5, 19 false); test enclosures mAP50 0.957 (model-v0.5:
-  0.040). The fallen post is the thin margin (5 of 15 frames, 5 needed). Not yet run live on the Jetson.
+  3,600 frames from the robot's camera in random forests. Test enclosures mAP50 0.957 (model-v0.5: 0.040).
+  **Live on the Jetson, 10 patrols in a row: 50 of 50 faults found, 0 false alerts** (offline, on the patrol
+  frames: 5 of 5, 0 false; model-v0.5: 2 of 5, 19 false). The fallen post is the thin margin.
+- **Fault alerts on the ground robot** (`./ros.sh ugv … detect:=true`): the detector on the side camera (TensorRT)
+  and `ugv_alerts`, which confirms 5 of 8 frames taken 0.5 m of travel apart at the same spot on the fence, from
+  the SLAM pose. Fallen posts count from conf 0.5, the others from 0.7: at 0.7 ground-v0.1 kept only half the
+  fallen posts of its held-out forests, and the first live patrols missed F3. `tools/ugv_eval.py` scores the
+  alerts and the steps near each fault; `tools/ugv_series.sh` passes launch arguments.
 - **Ground-view dataset** for the robot's side camera: `tools/make_ground_dataset.sh` renders random forests (frames
   `G..` for train and val, `T..` for test) and the patrol of the real forest; `tools/ground_patrol_eval.py` scores a
   model on that patrol, as the alert chain would. model-v0.5 on it: 2 of 5 faults, 19 false alerts.

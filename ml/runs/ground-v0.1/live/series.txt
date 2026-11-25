@@ -1,0 +1,12 @@
+series of 10 repeat patrols, Mac 192.168.1.136, Jetson mmx@192.168.1.163 (detect:=true) -> ~/Desktop/Gardian-X500/run/ugv/series-20261125-091745.txt
+#1 20261125-091757: done | 99.7% in 715 s | off route p95 0.19 m, max 0.6 m | SLAM median 0.26 m, max 0.91 m | link gaps 0 | stops 0 | faults in view 5 | alerts: 5 of 5 found, 0 false
+#2 20261125-093020: done | 99.7% in 713 s | off route p95 0.19 m, max 0.58 m | SLAM median 0.26 m, max 0.93 m | link gaps 0 | stops 0 | faults in view 5 | alerts: 5 of 5 found, 0 false
+#3 20261125-094232: done | 99.7% in 692 s | off route p95 0.19 m, max 0.59 m | SLAM median 0.26 m, max 0.85 m | link gaps 0 | stops 0 | faults in view 5 | alerts: 5 of 5 found, 0 false
+#4 20261125-095426: done | 99.7% in 704 s | off route p95 0.18 m, max 0.61 m | SLAM median 0.26 m, max 0.95 m | link gaps 0 | stops 0 | faults in view 5 | alerts: 5 of 5 found, 0 false
+#5 20261125-100635: done | 99.7% in 730 s | off route p95 0.19 m, max 0.61 m | SLAM median 0.26 m, max 0.85 m | link gaps 0 | stops 0 | faults in view 5 | alerts: 5 of 5 found, 0 false
+#6 20261125-101909: done | 99.7% in 721 s | off route p95 0.19 m, max 0.61 m | SLAM median 0.26 m, max 0.81 m | link gaps 0 | stops 0 | faults in view 5 | alerts: 5 of 5 found, 0 false
+#7 20261125-103132: done | 99.7% in 734 s | off route p95 0.18 m, max 0.6 m | SLAM median 0.26 m, max 1.01 m | link gaps 0 | stops 0 | faults in view 5 | alerts: 5 of 5 found, 0 false
+#8 20261125-104407: done | 99.7% in 780 s | off route p95 0.2 m, max 0.61 m | SLAM median 0.25 m, max 0.85 m | link gaps 0 | stops 0 | faults in view 5 | alerts: 5 of 5 found, 0 false
+#9 20261125-105727: done | 99.7% in 713 s | off route p95 0.18 m, max 0.59 m | SLAM median 0.27 m, max 0.82 m | link gaps 0 | stops 0 | faults in view 5 | alerts: 5 of 5 found, 0 false
+#10 20261125-110941: done | 99.7% in 718 s | off route p95 0.19 m, max 0.61 m | SLAM median 0.26 m, max 0.95 m | link gaps 0 | stops 0 | faults in view 5 | alerts: 5 of 5 found, 0 false
+completed the loop in 10 of 10 patrols

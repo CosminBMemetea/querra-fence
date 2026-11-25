@@ -69,8 +69,15 @@ cd /ssd/querra/ros2 && ./ros.sh ugv tcp://<mac-ip>:5611            # Jetson: pat
 ./ros.sh ugv tcp://<mac-ip>:5611 pose:=truth                       # patrol on ground truth (tests the chain)
 ./ros.sh ugv tcp://<mac-ip>:5611 pose:=truth slam:=mapping         # teach: map while driving, saved to /ws/maps/forest
 ./ros.sh ugv tcp://<mac-ip>:5611 pose:=slam slam:=localization     # repeat: patrol on the SLAM pose against that map
+./ros.sh ugv tcp://<mac-ip>:5611 pose:=slam slam:=localization detect:=true   # ... and look for faults on the way
 python3 tools/ugv_eval.py --json                                   # Mac: score the patrols in the newest log
+tools/ugv_series.sh 10 mmx@<jetson-ip> detect:=true                # Mac: ten patrols from clean starts, each scored
 ```
+
+- **Fault alerts** (`detect:=true`): the ground-view detector ground-v0.1 runs on the side camera (TensorRT on the
+  Jetson's GPU) and `ugv_alerts` confirms a fault when 5 of 8 frames taken 0.5 m of travel apart see it at the same
+  spot on the fence (fallen posts from conf 0.5, the others from 0.7). Alerts go to `/fence/alerts` and
+  `/ugv/alerts/markers` (yellow in the 3D view) and to the relay's log, where `tools/ugv_eval.py` scores them.
 
 - **Foxglove:** connect to `ws://<jetson>:8765`, or `ws://localhost:8765` through an SSH tunnel for the web app, and
   import `ros2/foxglove/ugv-layout.json`. The layout shows the 3D view (point cloud, route, fence, faults, true
@@ -277,8 +284,9 @@ Open: the stats node (28%) and the patrol's point-cloud check, if the CPU is nee
    and fuse the IMU and GNSS in an EKF (`robot_localization`) so the pose holds when scan matching weakens. The
    patrol takes its pose from a topic, so it switches without code changes.
 2. **Ground-view detector.** The first one, ground-v0.1 ([run record](../ml/runs/ground-v0.1)), was trained on
-   frames rendered from the robot's camera pose in random forests. Offline, on the patrol of this forest, it finds
-   5 of 5 faults with no false alerts (model-v0.5: 2 of 5 and 19 false). Next, run it on `/ugv/camera` on the Jetson.
+   frames rendered from the robot's camera pose in random forests. Live on the Jetson (`detect:=true`): 10 of 10
+   patrols, **50 of 50 faults found, 0 false alerts**, each alert 0.4–1.4 m from its fault. The fallen post is the
+   thin margin (6–7 steps show it where 5 are needed); ground-v0.2 with more fallen-post data is next.
 3. **Ten patrols per change** with `tools/ugv_series.sh 10` (each from a clean start, scored with
    `tools/ugv_eval.py`), as with the drone's models.
 4. **The real walk.** Walk a real forest fence with the Jetson, the camera at 0.7 m and the u-blox logging its

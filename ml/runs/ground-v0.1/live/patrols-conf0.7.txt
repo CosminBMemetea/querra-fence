@@ -1,0 +1,5 @@
+Live patrols with the first alert rule (every fault class from conf 0.7), before the fallen-post fix.
+Scored with tools/ugv_eval.py (the first run's series line said 'no score': the scorer crashed writing
+summary.json; fixed and rescored the same log).
+20261125-084409 (single patrol): done | 99.7% in 715 s | alerts: 4 of 5 found (F1, F2, F4, F5), 0 false | steps not logged yet
+20261125-085800 (patrol 1 of a series stopped after it for the fix): done | 99.7% in 718 s | alerts: 4 of 5 found (F1, F2, F4, F5), 0 false | F3 steps showing it at 0.7: 4 of 13
