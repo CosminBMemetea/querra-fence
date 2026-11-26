@@ -14,6 +14,8 @@ Classes (the drone's, so model-v0.5 can be fine-tuned): 0 post, 1 wire, 2 wire_b
   tools/make_ground_dataset.sh [--layouts 14 --val-layouts 2 --frames 300 --seed 500 --out ~/querra-data/ground_yolo]
   tools/make_ground_dataset.sh --split test --seed 900 --layouts 3 --frames 200 --out ...      held-out layouts
   tools/make_ground_dataset.sh --patrol --out ...    the real forest.json world along its patrol route (never trained on)
+  tools/make_ground_dataset.sh --patrol --patrol-seed 700 --out ...   a new random forest (random_forest(700), as the
+                                                     training layouts but from seeds never trained on) along its route
   --preview N also writes the first N frames with their boxes drawn (preview/), to check the labels by eye.
 """
 import argparse
@@ -304,7 +306,11 @@ def draw_boxes(img, labs):
 
 
 def run_layout(li, seed, n_frames, split, out, args):
-    cfg, sun = patrol_forest() if args.patrol else random_forest(seed)
+    if args.patrol and args.patrol_seed is not None:
+        cfg, sun = random_forest(args.patrol_seed)
+        seed = args.patrol_seed
+    else:
+        cfg, sun = patrol_forest() if args.patrol else random_forest(seed)
     wpath = os.path.join(out, "worlds", ("patrol" if args.patrol else "layout_%02d" % li) + ".sdf")
     os.makedirs(os.path.dirname(wpath), exist_ok=True)
     write_world(cfg, sun, wpath)
@@ -398,6 +404,7 @@ def main():
     ap.add_argument("--settle", type=int, default=3, help="frames to wait after moving the camera")
     ap.add_argument("--split", choices=("train", "val", "test"), help="force every layout into this split")
     ap.add_argument("--patrol", action="store_true", help="the real forest.json world along the patrol route (test)")
+    ap.add_argument("--patrol-seed", type=int, help="with --patrol: a random forest of this seed instead of forest.json")
     ap.add_argument("--preview", type=int, default=0, help="also write the first N frames with boxes drawn")
     args = ap.parse_args()
     for d in ("images/train", "images/val", "images/test", "labels/train", "labels/val", "labels/test"):
