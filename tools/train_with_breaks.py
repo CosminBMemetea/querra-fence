@@ -8,6 +8,11 @@ It runs tools/train_yolo.py with the given arguments. When N more epochs are wri
 saved after them, it stops the run with Ctrl+C (SIGINT), waits --pause minutes and continues with --resume, which
 keeps the optimizer state, so the result is the same as one uninterrupted run. The last session ends on its own with
 the final validation and the ONNX export. Output goes to stdout; it says when each break ends.
+
+Safe to start detached (`( nohup ... & )`): a shell without job control starts background jobs with SIGINT ignored,
+and the training child would inherit that and never stop for a break (ground-v0.2 ran epochs 3-8 without one). So the
+SIGINT handler is reset before starting the child, and a child that does not stop within STOP_WAIT_S of the signal is
+terminated (last.pt is already saved by then).
 """
 import argparse
 import os
@@ -17,6 +22,7 @@ import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STOP_WAIT_S = 120
 
 
 def arg(args, name, default=None):
@@ -44,6 +50,7 @@ def main():
     ap.add_argument("--pause-first", type=float, default=0, help="minutes to wait before the first session")
     ap.add_argument("train", nargs=argparse.REMAINDER, help="-- then the tools/train_yolo.py arguments")
     a = ap.parse_args()
+    signal.signal(signal.SIGINT, signal.default_int_handler)   # undo an inherited SIG_IGN, so the child can be stopped
     targs = a.train[1:] if a.train[:1] == ["--"] else a.train
     run = os.path.join(os.path.expanduser(arg(targs, "--project", "~/querra-data/train")), arg(targs, "--name", "fence-yolo11n"))
     total = int(arg(targs, "--epochs", 25))
@@ -62,10 +69,15 @@ def main():
         first = False
         while p.poll() is None:
             time.sleep(10)
-            if target < total and epochs_done(csv) >= target and os.path.getmtime(last) > os.path.getmtime(csv):
+            if target < total and epochs_done(csv) >= target and os.path.exists(last) and os.path.getmtime(last) > os.path.getmtime(csv):
                 time.sleep(15)  # let last.pt finish writing
                 p.send_signal(signal.SIGINT)
-                p.wait()
+                try:
+                    p.wait(timeout=STOP_WAIT_S)
+                except subprocess.TimeoutExpired:
+                    print("[breaks] the run ignored the stop signal; terminating it (last.pt is saved)", flush=True)
+                    p.terminate()
+                    p.wait()
                 break
         if p.returncode not in (0, None) and epochs_done(csv) < target:
             print("[breaks] training stopped with code %s before epoch %d" % (p.returncode, target), flush=True)
