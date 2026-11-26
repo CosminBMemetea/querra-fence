@@ -43,6 +43,7 @@ trained, how it scored offline and in live flights, and why it is or is not used
 - **Statuses:**
   - `default`: what the system uses unless told otherwise (the ROS 2 detector, the replay demo, field mode).
   - `live-sim`: used for live Gazebo flights (`ros.sh demo tcp://…`).
+  - `candidate`: better than the default offline; waits for live tests before it is used by default.
   - `retired`: kept for comparison.
 
 ### Ground robot models
@@ -51,14 +52,16 @@ The ground robot's camera looks at the fence from the side, 0.7 m up, so it has 
 from that view ([docs/ugv.md](../docs/ugv.md)). Same 7 classes.
 
 <!-- ground-registry:start -->
-| Model | Status | Date | Trained on | Test mAP50 | Patrol frames offline: faults, false alerts | Live patrols: faults, false alerts | Run |
+| Model | Status | Date | Trained on | Test mAP50 | Patrol frames offline, every fault from conf 0.7: faults, false alerts | Live patrols: faults, false alerts | Run |
 |---|---|---|---|---|---|---|---|
-| **ground-v0.1** | default | 2026-11-25 | 3,600 frames, 1 dataset | 0.957 | 5 of 5, 0 false | 10 patrols: 50 of 50, 0 | [ground-v0.1](runs/ground-v0.1) |
+| **ground-v0.1** | default | 2026-11-25 | 3,600 frames, 1 dataset | 0.957 | 5 of 5, 0 false; all 4 forests: 25 of 29, 0 false | 10 patrols: 50 of 50, 0 | [ground-v0.1](runs/ground-v0.1) |
+| **ground-v0.2** | candidate | 2026-11-26 | 5,100 frames, 2 datasets | 0.979 | 5 of 5, 0 false; all 4 forests: 29 of 29, 0 false | – | [ground-v0.2](runs/ground-v0.2) |
 <!-- ground-registry:end -->
 
 - **Test:** 3 random forest enclosures of their own seed range (900–902), JPEG like the robot's camera stream.
 - **Patrol frames offline:** the real forest world along the robot's route, one frame every 0.5 m, scored by
-  `tools/ground_patrol_eval.py` like the alert chain: 5 of 8 frames confirm, conf 0.7.
+  `tools/ground_patrol_eval.py` like the alert chain: 5 of 8 frames confirm, every fault from conf 0.7. "All 4
+  forests" adds the patrols of three random forests never trained on (seeds 700–702): 29 faults in all.
 - **Live patrols:** repeat patrols on the Jetson (`tools/ugv_series.sh 10 … detect:=true`), each from a clean start.
   `ugv_alerts` confirms 5 of 8 frames 0.5 m apart (fallen posts from conf 0.5, the others from 0.7); an alert is
   real when its class matches a fault within 5 m.

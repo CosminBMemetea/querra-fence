@@ -403,6 +403,33 @@
     "test": {"frames": 647, "role": "test"}
    },
    "notes": "The patrol frames as the Jetson would receive them from the robot's camera stream."
+  },
+  {
+   "id": "ground_yolo_fp",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot side camera, fallen-post focus",
+   "created": "2026-11-26",
+   "code": "5ab9979",
+   "command": "tools/make_ground_dataset.sh --out ~/querra-data/ground_yolo_fp --layouts 6 --val-layouts 0 --frames 250 --seed 520 --focus post_down --posts-down 4-6",
+   "size": "276 MB",
+   "splits": {
+    "train": {"layouts": "0-5", "seeds": "520-525", "frames": 1500, "role": "train"}
+   },
+   "notes": "Extra fallen posts for ground-v0.2: random forest enclosures as in ground_yolo, but with 4-6 fallen posts each (ground_yolo: 2-3), and 70% of the poses near a fault, 70% of those near a fallen post (ground_yolo: 45% near a fault, each type equally often). Labels: post 1290, wire 2465, wire_break 158, fallen_post 536, branch 105. Some layouts have no branch fault: the fallen posts take the places a branch could go. Seeds 520-525 are outside the training (500-513), patrol (700-702) and test (900-902) ranges."
+  },
+  {
+   "id": "ground_yolo_fp_stream",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "copy of ground_yolo_fp, stream-like JPEG",
+   "created": "2026-11-26",
+   "code": "5ab9979",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/ground_yolo_fp train ~/querra-data/ground_yolo_fp_stream --share 0.75 --seed 0",
+   "derived_from": "ground_yolo_fp",
+   "size": "30 MB",
+   "splits": {
+    "train": {"frames": 1500, "role": "train"}
+   },
+   "notes": "1143 of the 1500 frames compressed like the robot's camera stream at a random -q:v of 2, 3, 4, 5, 6 or 8, as ground_yolo_stream; the rest are hard links to the PNGs. Same labels."
   }
  ]
 }

@@ -100,7 +100,7 @@ def table(reg):
 
 
 def ground_table(reg):
-    rows = ["| Model | Status | Date | Trained on | Test mAP50 | Patrol frames offline: faults, false alerts "
+    rows = ["| Model | Status | Date | Trained on | Test mAP50 | Patrol frames offline, every fault from conf 0.7: faults, false alerts "
             "| Live patrols: faults, false alerts | Run |", "|---|---|---|---|---|---|---|---|"]
     for m in reg.get("ground_models", []):
         s, tr = m["scores"], m["data"]["train"]
@@ -108,9 +108,11 @@ def ground_table(reg):
         lv = m.get("live", {}).get("forest_patrols")
         live = "%d patrols: %s, %d" % (lv["patrols"], lv["faults_found"], lv["false_alerts"]) if lv else "–"
         run = "[%s](%s)" % (os.path.basename(m["run"]), os.path.relpath(os.path.join(ROOT, m["run"]), ML)) if m.get("run") else "–"
+        po = s.get("patrol_offline") or {}
+        patrol = po.get("conf0.7", "–") + ("; all 4 forests: " + po["four_forests_conf0.7"] if po.get("four_forests_conf0.7") else "")
         rows.append("| **%s** | %s | %s | %s frames, %d dataset%s | %s | %s | %s | %s |" % (
             m["id"], m["status"], m["date"], format(frames, ","), len(tr), "s" if len(tr) > 1 else "",
-            fmt(s.get("test_mAP50")), (s.get("patrol_offline") or {}).get("conf0.7", "–"), live, run))
+            fmt(s.get("test_mAP50")), patrol, live, run))
     return "\n".join(rows)
 
 

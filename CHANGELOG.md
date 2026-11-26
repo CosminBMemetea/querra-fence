@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- **ground-v0.2, a candidate** ([run record](ml/runs/ground-v0.2)): ground-v0.1 fine-tuned with 1,500 more frames
+  from 6 enclosures full of fallen posts (`make_ground_dataset.sh --focus post_down --posts-down 4-6`), 908 fallen
+  posts in training instead of 372. Offline it beats ground-v0.1 everywhere the alerts look: test mAP50 0.979
+  (0.957), fallen posts kept at conf 0.7 on the test forests 82% (52%), and on the four patrols every fault found
+  with every class from 0.7, 29 of 29 (25 of 29), 0 false alerts. It becomes the default after live patrols.
+- **`tools/train_with_breaks.py` stops for its breaks when started detached.** A shell without job control starts a
+  background job with Ctrl+C ignored, and the training inherited that: ground-v0.2 ran epochs 3–8 without a break.
+  It now resets the signal, and terminates a run that ignores the stop.
+- **The ground model table** shows the patrols of all four forests (`tools/model_registry.py`), and a model can be a
+  `candidate`: better offline, waiting for live tests.
 - **ground-v0.1 on three new forests** ([run record](ml/runs/ground-v0.1)): `make_ground_dataset.sh --patrol
   --patrol-seed S` renders the patrol of a random forest never trained on. Seeds 700–702, offline with the live
   alert rule: 24 of 24 faults, 0 false alerts. With every fault at 0.7: 20 of 24, all four misses fallen posts.

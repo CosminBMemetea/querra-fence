@@ -160,6 +160,7 @@ The fallen post is still the thin margin: 6–7 steps show it where 5 are needed
 ## Next
 
 1. **ground-v0.2:** more fallen-post frames (the rarest class: 372 against 812 broken wires and 693 branches, and
-   the only class missed at 0.7, in all four forests) and more epochs, so fallen posts are confident at 0.7 like the
-   other faults and `class_conf` can go. Branches of more than one shape would make the branch score mean more.
+   the only class missed at 0.7, in all four forests). Done offline, a candidate since 2026-11-26
+   ([ground-v0.2](../ground-v0.2)): 29 of 29 faults on the four patrols with every fault from 0.7. Live next.
+   Branches of more than one shape would make the branch score mean more.
 2. **The real walk:** the first real ground-view images (see [docs/ugv.md](../../../docs/ugv.md)).
