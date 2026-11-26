@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fence labels</title>
+<!-- The review page of tools/label_drafts.py serve. Plain HTML and JS, no network beyond the local server. -->
+<style>
+:root {
+  --bg: #16171a; --stage: #0c0d0f; --panel: #1d1f23; --raise: #26292e; --line: #33363c;
+  --ink: #ecebe7; --ink2: #b3b2ac; --muted: #85847d;
+  --accent: #4c8df6; --accent-ink: #0b1626; --done: #3fae79; --skip: #6c6b66; --todo: #2b2e33; --warn: #e5a63b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+       display: grid; grid-template-rows: auto auto 1fr; overflow: hidden; }
+header { display: flex; align-items: center; gap: 16px; padding: 10px 16px; border-bottom: 1px solid var(--line); min-width: 0; }
+header h1 { font-size: 14px; font-weight: 600; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+header .sub { color: var(--ink2); white-space: nowrap; }
+header .grow { flex: 1; }
+header label { color: var(--ink2); display: flex; align-items: center; gap: 6px; }
+header input { width: 70px; background: var(--raise); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; font: inherit; }
+#strip { display: flex; gap: 1px; height: 10px; margin: 8px 16px; }
+#strip div { flex: 1 1 0; min-width: 0; background: var(--todo); border-radius: 1px; cursor: pointer; }
+#strip div.done { background: var(--done); }
+#strip div.skip { background: var(--skip); }
+#strip div.cur { outline: 2px solid var(--ink); outline-offset: 1px; position: relative; z-index: 1; }
+main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: 0; }
+#stage { position: relative; min-width: 0; min-height: 0; background: var(--stage); }
+#cv { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; display: block; }
+#cv.grab { cursor: grab; } #cv.move { cursor: move; } #cv.pointer { cursor: pointer; }
+#cv.nwse { cursor: nwse-resize; } #cv.nesw { cursor: nesw-resize; } #cv.ns { cursor: ns-resize; } #cv.ew { cursor: ew-resize; }
+aside { overflow: auto; border-left: 1px solid var(--line); background: var(--panel); padding: 14px 16px 20px; display: flex; flex-direction: column; gap: 18px; }
+h2 { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; color: var(--ink); background: var(--raise); border: 1px solid var(--line); border-radius: 7px; padding: 6px 10px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; flex: 1; }
+button.link { background: none; border: 0; padding: 2px 0; color: var(--ink2); text-decoration: underline; }
+kbd { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink2); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
+button kbd { margin-left: 6px; color: inherit; border-color: currentColor; opacity: .7; }
+.chip { display: inline-block; border-radius: 999px; padding: 1px 8px; font-size: 12px; background: var(--raise); color: var(--ink2); }
+.chip.done { background: color-mix(in srgb, var(--done) 25%, transparent); color: #9fe0bf; }
+.chip.skip { background: color-mix(in srgb, var(--skip) 35%, transparent); color: var(--ink); }
+.chip.dirty { background: color-mix(in srgb, var(--warn) 25%, transparent); color: #f3cf8c; }
+.frameinfo { display: flex; flex-direction: column; gap: 6px; }
+.frameinfo .name { color: var(--muted); font-size: 12px; word-break: break-all; }
+.list { display: flex; flex-direction: column; gap: 2px; }
+.item { display: grid; grid-template-columns: 18px 12px 1fr auto; gap: 8px; align-items: center; padding: 4px 6px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
+.item:hover { background: var(--raise); }
+.item.on { background: var(--raise); border-color: var(--muted); }
+.item .key { font: 11px ui-monospace, Menlo, monospace; color: var(--muted); text-align: center; }
+.sw { width: 12px; height: 12px; border-radius: 3px; }
+.item .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+.boxes .item { grid-template-columns: 12px 1fr auto 18px; }
+.boxes .x { color: var(--muted); text-align: center; border-radius: 4px; }
+.boxes .x:hover { color: var(--ink); background: var(--line); }
+.empty { color: var(--muted); font-style: italic; padding: 4px 6px; }
+.help { color: var(--ink2); display: grid; grid-template-columns: auto 1fr; gap: 5px 10px; align-items: baseline; }
+.note { color: var(--muted); font-size: 12px; }
+#toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--raise); border: 1px solid var(--line); color: var(--ink);
+         padding: 8px 14px; border-radius: 8px; opacity: 0; transition: opacity .15s; pointer-events: none; }
+#toast.show { opacity: 1; } #toast.bad { border-color: #e2584b; color: #f6b2aa; }
+@media (max-width: 820px) {
+  body { overflow: auto; } main { grid-template-columns: 1fr; grid-template-rows: 60vh auto; }
+  aside { border-left: 0; border-top: 1px solid var(--line); }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Fence labels</h1>
+  <span class="sub" id="progress"></span>
+  <span class="grow"></span>
+  <label>Frame <input id="jump" type="number" min="1"> <span id="of"></span></label>
+</header>
+<div id="strip" aria-label="Frames: green reviewed, grey skipped, dark to review"></div>
+<main>
+  <div id="stage"><canvas id="cv"></canvas></div>
+  <aside>
+    <section class="frameinfo">
+      <div class="row"><strong id="fname">–</strong><span id="status" class="chip">–</span><span id="dirty" class="chip dirty" hidden>unsaved</span></div>
+      <div class="name" id="fmeta"></div>
+      <div class="row"><button class="primary" id="b-save">Save and next <kbd>⏎</kbd></button></div>
+      <div class="row">
+        <button id="b-prev">← Prev</button><button id="b-next">Next →</button>
+        <button id="b-todo">Next to review <kbd>N</kbd></button><button id="b-skip">Skip <kbd>S</kbd></button>
+      </div>
+      <button class="link" id="b-unreview" hidden>Mark as not reviewed</button>
+    </section>
+    <section>
+      <h2>Class <span class="note">(new boxes, or the selected one)</span></h2>
+      <div class="list" id="classes"></div>
+    </section>
+    <section class="boxes">
+      <h2 id="boxes-h">Boxes</h2>
+      <div class="list" id="boxes"></div>
+    </section>
+    <section>
+      <h2>Keys</h2>
+      <div class="help">
+        <span>drag</span><span>on the image: a new box; on a box: move it; on a handle: resize</span>
+        <span><kbd>1</kbd>–<kbd>7</kbd></span><span>class of the selected box, or of the next new one</span>
+        <span><kbd>⌫</kbd></span><span>delete the selected box; <kbd>X</kbd> every box</span>
+        <span><kbd>Tab</kbd></span><span>select the next box</span>
+        <span><kbd>⏎</kbd></span><span>save the frame as reviewed, go to the next</span>
+        <span><kbd>S</kbd></span><span>skip: blurred, or no fence in view</span>
+        <span><kbd>←</kbd> <kbd>→</kbd></span><span>previous / next frame (edits are kept)</span>
+        <span><kbd>⌘Z</kbd></span><span>undo</span>
+        <span>scroll</span><span>zoom; <kbd>space</kbd>+drag or right-drag to pan; <kbd>F</kbd> fit</span>
+        <span><kbd>H</kbd></span><span>hide the boxes to see the image</span>
+      </div>
+    </section>
+    <section class="note" id="drafts"></section>
+  </aside>
+</main>
+<div id="toast"></div>
+<script>
+"use strict";
+const COLORS = ["#4f8ff7", "#2fc6d8", "#f2503f", "#f5a524", "#b57cf2", "#f472b6", "#e9e7e0"];
+const $ = (s) => document.querySelector(s);
+const cv = $("#cv"), stage = $("#stage");
+const S = {
+  name: "", classes: [], frames: [], drafts: null, i: -1, cur: 0, boxes: [], sel: -1, undo: [], cache: {},
+  img: null, iw: 0, ih: 0, v: { s: 1, x: 0, y: 0, fit: 1 }, hide: false, drag: null, space: false,
+  status: "todo", dirty: false, ready: false, busy: false, mouse: null, token: 0, cw: 0, ch: 0,
+};
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const snap = () => JSON.stringify(S.boxes);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function toast(msg, bad) {
+  const t = $("#toast");
+  t.textContent = msg; t.className = "show" + (bad ? " bad" : "");
+  clearTimeout(toast.h); toast.h = setTimeout(() => (t.className = ""), bad ? 4000 : 1400);
+}
+function mmss(t) {
+  if (t == null) return "";
+  const m = Math.floor(t / 60), s = t - 60 * m;
+  return m + ":" + (s < 10 ? "0" : "") + s.toFixed(s % 1 ? 1 : 0);
+}
+
+// ------------------------------------------------------------ loading
+
+async function init() {
+  const st = await (await fetch("/api/state")).json();
+  Object.assign(S, { name: st.name, classes: st.classes, frames: st.frames, drafts: st.drafts });
+  document.title = "Labels · " + st.name;
+  $("#title").textContent = st.name;
+  $("#of").textContent = "of " + st.frames.length;
+  $("#jump").max = st.frames.length;
+  if (st.drafts) {
+    const m = st.drafts.model.split("/").pop();
+    $("#drafts").innerHTML = "Drafts by <strong>" + esc(m) + "</strong> from conf " + st.drafts.conf +
+      ". Dashed boxes are below 0.5: check them first. The drafts miss things too: look for what has no box.";
+  }
+  buildClasses(); buildStrip(); size();
+  const h = parseInt(location.hash.slice(1), 10) - 1;
+  const first = S.frames.findIndex((f) => f.status === "todo");
+  go(h >= 0 && h < S.frames.length ? h : Math.max(0, first));
+}
+
+function loadImg(src) {
+  return new Promise((ok, bad) => { const im = new Image(); im.onload = () => ok(im); im.onerror = bad; im.src = src; });
+}
+
+function stash() {
+  if (S.i < 0 || !S.ready) return;                    // a frame still loading has nothing of its own to keep
+  const n = S.frames[S.i].name;
+  if (S.dirty) S.cache[n] = snap(); else delete S.cache[n];
+}
+
+async function go(i) {
+  if (i < 0 || i >= S.frames.length) return;
+  stash();
+  const f = S.frames[i], token = ++S.token;
+  S.i = i; S.sel = -1; S.undo = []; S.drag = null; S.ready = false; S.dirty = false;
+  history.replaceState(null, "", "#" + (i + 1));
+  stripCur(); $("#jump").value = i + 1;
+  let data, img;
+  try {
+    [data, img] = await Promise.all([
+      fetch("/api/frame?name=" + encodeURIComponent(f.name)).then((r) => r.json()),
+      loadImg("/img?name=" + encodeURIComponent(f.name)),
+    ]);
+  } catch (e) { toast("Could not load the frame: is the server still running?", true); return; }
+  if (token !== S.token) return;                       // a newer frame was asked for meanwhile
+  S.img = img; S.iw = img.naturalWidth; S.ih = img.naturalHeight; S.status = data.status;
+  const px = (b, src) => ({ c: b[0], x0: (b[1] - b[3] / 2) * S.iw, y0: (b[2] - b[4] / 2) * S.ih,
+                            x1: (b[1] + b[3] / 2) * S.iw, y1: (b[2] + b[4] / 2) * S.ih, conf: b.length > 5 ? b[5] : null, src });
+  if (S.cache[f.name]) { S.boxes = JSON.parse(S.cache[f.name]); S.dirty = true; }
+  else { S.boxes = data.label ? data.label.map((b) => px(b, "label")) : data.draft.map((b) => px(b, "draft")); S.dirty = false; }
+  S.ready = true; fit(); render(); panel();
+  if (i + 1 < S.frames.length) loadImg("/img?name=" + encodeURIComponent(S.frames[i + 1].name)).catch(() => {});
+}
+
+function nextTodo() {
+  for (let k = 1; k <= S.frames.length; k++) {
+    const j = (S.i + k) % S.frames.length;
+    if (S.frames[j].status === "todo") return go(j);
+  }
+  toast("Every frame is reviewed or skipped");
+}
+
+async function saveFrame(status) {
+  if (S.busy || S.i < 0 || !S.ready) return;
+  const f = S.frames[S.i];
+  const boxes = status !== "done" ? [] : S.boxes.map((b) => {
+    const x0 = Math.min(b.x0, b.x1), x1 = Math.max(b.x0, b.x1), y0 = Math.min(b.y0, b.y1), y1 = Math.max(b.y0, b.y1);
+    return [b.c, (x0 + x1) / 2 / S.iw, (y0 + y1) / 2 / S.ih, (x1 - x0) / S.iw, (y1 - y0) / S.ih];
+  });
+  S.busy = true;
+  try {
+    const r = await fetch("/api/save", { method: "POST", headers: { "Content-Type": "application/json" },
+                                         body: JSON.stringify({ name: f.name, status, boxes }) });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    f.status = status; S.status = status; S.dirty = false; delete S.cache[f.name];
+    stripCell(S.i);
+    toast(status === "done" ? "Saved: " + boxes.length + " box" + (boxes.length === 1 ? "" : "es")
+          : status === "skip" ? "Skipped" : "Marked as not reviewed");
+    if (status === "todo") { panel(); progress(); }
+    else if (S.i + 1 < S.frames.length) go(S.i + 1);
+    else { progress(); go(S.i); toast("That was the last frame"); }
+  } catch (e) {
+    toast("Not saved (" + e.message + "): is the server still running?", true);
+  } finally { S.busy = false; }
+}
+
+// ------------------------------------------------------------ editing
+
+function edited() { S.dirty = true; panel(); }
+function touch(k) { if (S.boxes[k].src === "draft") S.boxes[k].src = "edited"; }
+function norm(b) {
+  [b.x0, b.x1] = [Math.min(b.x0, b.x1), Math.max(b.x0, b.x1)];
+  [b.y0, b.y1] = [Math.min(b.y0, b.y1), Math.max(b.y0, b.y1)];
+}
+function setClass(c) {
+  if (c < 0 || c >= S.classes.length || !S.ready) return;
+  S.cur = c;
+  if (S.sel >= 0 && S.boxes[S.sel].c !== c) {
+    S.undo.push(snap()); S.boxes[S.sel].c = c; touch(S.sel); edited();
+  }
+  render(); panel();
+}
+function del(k) {
+  if (!S.ready || k < 0 || k >= S.boxes.length) return;
+  S.undo.push(snap()); S.boxes.splice(k, 1); S.sel = -1; edited(); render();
+}
+function clearAll() {
+  if (!S.boxes.length) return;
+  S.undo.push(snap()); S.boxes = []; S.sel = -1; edited(); render();
+}
+function undo() {
+  if (!S.undo.length) return toast("Nothing to undo");
+  S.boxes = JSON.parse(S.undo.pop()); S.sel = -1; edited(); render();
+}
+
+// ------------------------------------------------------------ view and drawing
+
+function size() {
+  const r = stage.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  S.cw = r.width; S.ch = r.height;
+  cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+}
+function fit() {
+  if (!S.img) return;
+  const s = Math.min(S.cw / S.iw, S.ch / S.ih);
+  S.v = { s, fit: s, x: (S.cw - S.iw * s) / 2, y: (S.ch - S.ih * s) / 2 };
+}
+const sx = (x) => S.v.x + x * S.v.s, sy = (y) => S.v.y + y * S.v.s;
+
+function handles(b) {
+  const x0 = sx(Math.min(b.x0, b.x1)), x1 = sx(Math.max(b.x0, b.x1)), y0 = sy(Math.min(b.y0, b.y1)), y1 = sy(Math.max(b.y0, b.y1));
+  const xm = (x0 + x1) / 2, ym = (y0 + y1) / 2;
+  return { nw: [x0, y0], n: [xm, y0], ne: [x1, y0], e: [x1, ym], se: [x1, y1], s: [xm, y1], sw: [x0, y1], w: [x0, ym] };
+}
+
+function render() {
+  const ctx = cv.getContext("2d"), dpr = window.devicePixelRatio || 1;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, S.cw, S.ch);
+  if (!S.img) return;
+  ctx.imageSmoothingEnabled = S.v.s < 2.5;
+  ctx.drawImage(S.img, S.v.x, S.v.y, S.iw * S.v.s, S.ih * S.v.s);
+  if (!S.hide) {
+    const order = S.boxes.map((_, k) => k).filter((k) => k !== S.sel);
+    if (S.sel >= 0) order.push(S.sel);
+    ctx.font = "600 12px -apple-system, system-ui, sans-serif";
+    for (const k of order) {
+      const b = S.boxes[k], on = k === S.sel, col = COLORS[b.c] || "#fff";
+      const x0 = sx(Math.min(b.x0, b.x1)), y0 = sy(Math.min(b.y0, b.y1));
+      const w = Math.abs(b.x1 - b.x0) * S.v.s, h = Math.abs(b.y1 - b.y0) * S.v.s;
+      if (on) { ctx.fillStyle = col + "26"; ctx.fillRect(x0, y0, w, h); }
+      ctx.setLineDash(b.src === "draft" && b.conf != null && b.conf < 0.5 ? [6, 4] : []);
+      ctx.lineWidth = on ? 2.5 : 1.75; ctx.strokeStyle = col;
+      ctx.strokeRect(x0, y0, w, h);
+      ctx.setLineDash([]);
+      const tag = S.classes[b.c] + (b.src === "draft" && b.conf != null ? " " + b.conf.toFixed(2) : "");
+      const tw = ctx.measureText(tag).width + 8, ty = y0 >= 17 ? y0 - 17 : y0;
+      ctx.fillStyle = col; ctx.fillRect(x0 - (on ? 1.25 : 0.9), ty, tw, 17);
+      ctx.fillStyle = "#101113"; ctx.fillText(tag, x0 + 4 - (on ? 1.25 : 0.9), ty + 12.5);
+      if (on) {
+        for (const [hx, hy] of Object.values(handles(b))) {
+          ctx.fillStyle = "#fff"; ctx.fillRect(hx - 4, hy - 4, 8, 8);
+          ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.strokeRect(hx - 4, hy - 4, 8, 8);
+        }
+      }
+    }
+  }
+  const d = S.drag;
+  if (d && d.kind === "new") {
+    ctx.setLineDash([5, 3]); ctx.lineWidth = 1.75; ctx.strokeStyle = COLORS[S.cur];
+    ctx.strokeRect(sx(Math.min(d.x0, d.x1)), sy(Math.min(d.y0, d.y1)), Math.abs(d.x1 - d.x0) * S.v.s, Math.abs(d.y1 - d.y0) * S.v.s);
+    ctx.setLineDash([]);
+  }
+  const m = S.mouse;
+  if (m && !S.hide && (!d || d.kind === "new") && m.sx >= 0 && m.sy >= 0 && m.sx <= S.cw && m.sy <= S.ch) {
+    ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, m.sy + 0.5); ctx.lineTo(S.cw, m.sy + 0.5); ctx.moveTo(m.sx + 0.5, 0); ctx.lineTo(m.sx + 0.5, S.ch); ctx.stroke();
+  }
+}
+
+function at(e) {
+  const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  return { sx: x, sy: y, x: (x - S.v.x) / S.v.s, y: (y - S.v.y) / S.v.s };
+}
+function hitHandle(p) {
+  if (S.sel < 0 || S.hide) return null;
+  for (const [k, [hx, hy]] of Object.entries(handles(S.boxes[S.sel])))
+    if (Math.abs(p.sx - hx) <= 7 && Math.abs(p.sy - hy) <= 7) return k;
+  return null;
+}
+function hitBox(p) {
+  if (S.hide) return -1;
+  const tol = 4 / S.v.s;
+  let best = -1, area = Infinity;
+  S.boxes.forEach((b, k) => {
+    const x0 = Math.min(b.x0, b.x1) - tol, x1 = Math.max(b.x0, b.x1) + tol, y0 = Math.min(b.y0, b.y1) - tol, y1 = Math.max(b.y0, b.y1) + tol;
+    const a = (x1 - x0) * (y1 - y0);
+    if (p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1 && a < area) { best = k; area = a; }
+  });
+  return best;                                         // the smallest box under the pointer: a break inside a wire box
+}
+const CURSOR = { nw: "nwse", se: "nwse", ne: "nesw", sw: "nesw", n: "ns", s: "ns", e: "ew", w: "ew" };
+function cursor(p) {
+  const h = hitHandle(p);
+  cv.className = S.space ? "grab" : h ? CURSOR[h] : hitBox(p) >= 0 ? "move" : "";
+}
+
+cv.addEventListener("contextmenu", (e) => e.preventDefault());
+cv.addEventListener("mousedown", (e) => {
+  if (!S.ready) return;
+  const p = at(e);
+  if (e.button === 1 || e.button === 2 || S.space) {
+    S.drag = { kind: "pan", sx: p.sx, sy: p.sy, vx: S.v.x, vy: S.v.y }; e.preventDefault(); return;
+  }
+  if (e.button !== 0) return;
+  const h = hitHandle(p);
+  if (h) { S.drag = { kind: "resize", h, snap: snap(), moved: false }; return; }
+  const k = hitBox(p);
+  if (k >= 0) {
+    S.sel = k;
+    const b = S.boxes[k];
+    S.drag = { kind: "move", px: p.x, py: p.y, b: { ...b }, snap: snap(), moved: false };
+  } else {
+    S.sel = -1;
+    const x = clamp(p.x, 0, S.iw), y = clamp(p.y, 0, S.ih);
+    S.drag = { kind: "new", x0: x, y0: y, x1: x, y1: y };
+  }
+  render(); panel();
+});
+window.addEventListener("mousemove", (e) => {
+  if (!S.img) return;
+  const p = at(e), d = S.drag;
+  S.mouse = p;
+  if (!d) { cursor(p); render(); return; }
+  if (d.kind === "pan") { S.v.x = d.vx + p.sx - d.sx; S.v.y = d.vy + p.sy - d.sy; }
+  else if (d.kind === "new") { d.x1 = clamp(p.x, 0, S.iw); d.y1 = clamp(p.y, 0, S.ih); }
+  else if (d.kind === "move") {
+    const b = S.boxes[S.sel], o = d.b;
+    const dx = clamp(p.x - d.px, -Math.min(o.x0, o.x1), S.iw - Math.max(o.x0, o.x1));
+    const dy = clamp(p.y - d.py, -Math.min(o.y0, o.y1), S.ih - Math.max(o.y0, o.y1));
+    b.x0 = o.x0 + dx; b.x1 = o.x1 + dx; b.y0 = o.y0 + dy; b.y1 = o.y1 + dy;
+    if (dx || dy) d.moved = true;
+  } else if (d.kind === "resize") {
+    const b = S.boxes[S.sel], x = clamp(p.x, 0, S.iw), y = clamp(p.y, 0, S.ih);
+    if (d.h.includes("w")) b.x0 = x;
+    if (d.h.includes("e")) b.x1 = x;
+    if (d.h.includes("n")) b.y0 = y;
+    if (d.h.includes("s")) b.y1 = y;
+    d.moved = true;
+  }
+  render();
+});
+window.addEventListener("mouseup", () => {
+  const d = S.drag;
+  if (!d) return;
+  S.drag = null;
+  if (d.kind === "new") {
+    const x0 = Math.min(d.x0, d.x1), x1 = Math.max(d.x0, d.x1), y0 = Math.min(d.y0, d.y1), y1 = Math.max(d.y0, d.y1);
+    if ((x1 - x0) * S.v.s >= 4 && (y1 - y0) * S.v.s >= 4) {
+      S.undo.push(snap());
+      S.boxes.push({ c: S.cur, x0, y0, x1, y1, conf: null, src: "new" });
+      S.sel = S.boxes.length - 1; edited();
+    }
+  } else if ((d.kind === "move" || d.kind === "resize") && d.moved) {
+    S.undo.push(d.snap); norm(S.boxes[S.sel]); touch(S.sel); edited();
+  }
+  render(); panel();
+});
+cv.addEventListener("mouseleave", () => { S.mouse = null; render(); });
+cv.addEventListener("wheel", (e) => {
+  if (!S.img) return;
+  e.preventDefault();
+  const p = at(e), s = clamp(S.v.s * Math.exp(-e.deltaY * 0.0015), S.v.fit * 0.5, S.v.fit * 16);
+  S.v.x = p.sx - p.x * s; S.v.y = p.sy - p.y * s; S.v.s = s;
+  render();
+}, { passive: false });
+cv.addEventListener("dblclick", (e) => { if (hitBox(at(e)) < 0) { fit(); render(); } });
+
+window.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") { if (e.key === "Enter") e.target.blur(); return; }
+  const k = e.key;
+  if (k === " ") { S.space = true; cv.className = "grab"; e.preventDefault(); return; }
+  if (!S.ready && !["ArrowLeft", "ArrowRight", "n", "N"].includes(k)) return;   // keys act on a loaded frame only
+  if ((e.metaKey || e.ctrlKey) && k.toLowerCase() === "z") { e.preventDefault(); undo(); return; }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (/^[1-9]$/.test(k)) { setClass(+k - 1); return; }
+  switch (k) {
+    case "Enter": e.preventDefault(); saveFrame("done"); break;
+    case "s": case "S": saveFrame("skip"); break;
+    case "ArrowRight": e.preventDefault(); go(S.i + 1); break;
+    case "ArrowLeft": e.preventDefault(); go(S.i - 1); break;
+    case "n": case "N": nextTodo(); break;
+    case "Delete": case "Backspace": e.preventDefault(); del(S.sel); break;
+    case "x": case "X": clearAll(); break;
+    case "Escape": S.sel = -1; render(); panel(); break;
+    case "h": case "H": S.hide = !S.hide; S.sel = S.hide ? -1 : S.sel; render(); panel(); break;
+    case "f": case "F": fit(); render(); break;
+    case "Tab":
+      e.preventDefault();
+      if (S.boxes.length) {
+        const n = S.boxes.length;
+        S.sel = S.sel < 0 ? (e.shiftKey ? n - 1 : 0) : (S.sel + (e.shiftKey ? n - 1 : 1)) % n;
+        S.cur = S.boxes[S.sel].c;
+      }
+      render(); panel(); break;
+  }
+});
+window.addEventListener("keyup", (e) => { if (e.key === " ") { S.space = false; cv.className = ""; } });
+window.addEventListener("resize", () => { size(); fit(); render(); });
+window.addEventListener("beforeunload", (e) => {
+  stash();
+  if (Object.keys(S.cache).length) { e.preventDefault(); e.returnValue = ""; }
+});
+
+// ------------------------------------------------------------ side panel
+
+function buildClasses() {
+  $("#classes").innerHTML = S.classes.map((c, k) =>
+    '<div class="item" data-c="' + k + '"><span class="key">' + (k + 1) + '</span><span class="sw" style="background:' + COLORS[k] +
+    '"></span><span>' + esc(c) + '</span><span class="n"></span></div>').join("");
+  $("#classes").addEventListener("click", (e) => { const it = e.target.closest(".item"); if (it) setClass(+it.dataset.c); });
+}
+function buildStrip() {
+  $("#strip").innerHTML = S.frames.map((f, k) => '<div class="' + (f.status === "todo" ? "" : f.status) + '" title="Frame ' + (k + 1) + '"></div>').join("");
+  $("#strip").addEventListener("click", (e) => { const k = [...$("#strip").children].indexOf(e.target); if (k >= 0) go(k); });
+  progress();
+}
+function stripCell(k) { const el = $("#strip").children[k]; if (el) el.className = (S.frames[k].status === "todo" ? "" : S.frames[k].status) + (k === S.i ? " cur" : ""); }
+function stripCur() { [...$("#strip").children].forEach((el, k) => el.classList.toggle("cur", k === S.i)); }
+function progress() {
+  const done = S.frames.filter((f) => f.status === "done").length, skip = S.frames.filter((f) => f.status === "skip").length;
+  $("#progress").textContent = done + " reviewed · " + skip + " skipped · " + (S.frames.length - done - skip) + " to go";
+}
+function panel() {
+  if (S.i < 0) return;
+  const f = S.frames[S.i];
+  $("#fname").textContent = "Frame " + (S.i + 1);
+  const st = $("#status");
+  st.className = "chip " + (f.status === "todo" ? "" : f.status);
+  st.textContent = f.status === "done" ? "reviewed" : f.status === "skip" ? "skipped" : "to review";
+  $("#dirty").hidden = !S.dirty;
+  $("#b-unreview").hidden = f.status === "todo";
+  $("#fmeta").textContent = f.name + (f.t != null ? " · " + mmss(f.t) + " into the video" : "") + (S.iw ? " · " + S.iw + "×" + S.ih : "");
+  const counts = S.classes.map((_, c) => S.boxes.filter((b) => b.c === c).length);
+  [...$("#classes").children].forEach((el, c) => { el.classList.toggle("on", c === S.cur); el.querySelector(".n").textContent = counts[c] || ""; });
+  $("#boxes-h").textContent = "Boxes in this frame (" + S.boxes.length + ")";
+  $("#boxes").innerHTML = S.boxes.length ? S.boxes.map((b, k) =>
+    '<div class="item' + (k === S.sel ? " on" : "") + '" data-k="' + k + '"><span class="sw" style="background:' + COLORS[b.c] + '"></span><span>' +
+    esc(S.classes[b.c]) + '</span><span class="n">' + (b.src === "draft" ? "draft " + b.conf.toFixed(2) : b.src === "edited" ? "draft, edited" : b.src === "new" ? "new" : "") +
+    '</span><span class="x" data-x="' + k + '" title="Delete">×</span></div>').join("")
+    : '<div class="empty">No boxes. Draw one, or save the frame as empty if it shows nothing to label.</div>';
+  progress();
+}
+$("#boxes").addEventListener("click", (e) => {
+  const x = e.target.closest("[data-x]");
+  if (x) return del(+x.dataset.x);
+  const it = e.target.closest(".item");
+  if (it) { S.sel = +it.dataset.k; S.cur = S.boxes[S.sel].c; render(); panel(); }
+});
+$("#b-save").onclick = () => saveFrame("done");
+$("#b-skip").onclick = () => saveFrame("skip");
+$("#b-prev").onclick = () => go(S.i - 1);
+$("#b-next").onclick = () => go(S.i + 1);
+$("#b-todo").onclick = nextTodo;
+$("#b-unreview").onclick = () => saveFrame("todo");
+$("#jump").addEventListener("change", (e) => go(clamp(parseInt(e.target.value, 10) || 1, 1, S.frames.length) - 1));
+document.querySelectorAll("button").forEach((b) => b.addEventListener("mouseup", () => b.blur()));
+
+init().catch(() => toast("Could not reach the server", true));
+</script>
+</body>
+</html>

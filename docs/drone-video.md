@@ -51,6 +51,9 @@ A 10-minute flight takes about 5 minutes on the Mac.
 3 faults, none false, each 2.3–5.8 m from its fault; the same as `tools/eval_mission.py` gives with the drone's own
 heading. A 4K H.265 clip runs at about 30 frames per second.
 
+To turn the footage into a real test set, label frames of it with `tools/label_drafts.py`
+([labelling.md](labelling.md)): model-v0.5 drafts the boxes, you correct them, and any model can be scored on them.
+
 ## Limits
 
 - Flat ground: positions assume the fence is at the take-off height.

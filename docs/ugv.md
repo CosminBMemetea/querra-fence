@@ -286,11 +286,15 @@ Open: the stats node (28%) and the patrol's point-cloud check, if the CPU is nee
 2. **Ground-view detector.** The first one, ground-v0.1 ([run record](../ml/runs/ground-v0.1)), was trained on
    frames rendered from the robot's camera pose in random forests. Live on the Jetson (`detect:=true`): 10 of 10
    patrols, **50 of 50 faults found, 0 false alerts**, each alert 0.4–1.4 m from its fault. The fallen post is the
-   thin margin (6–7 steps show it where 5 are needed); ground-v0.2 with more fallen-post data is next.
+   thin margin (6–7 steps show it where 5 are needed). ground-v0.2 ([run record](../ml/runs/ground-v0.2)), with
+   more fallen-post data, finds every fault with every class from conf 0.7 offline (29 of 29 on four patrols); it
+   is a candidate until its live patrols.
 3. **Ten patrols per change** with `tools/ugv_series.sh 10` (each from a clean start, scored with
    `tools/ugv_eval.py`), as with the drone's models.
 4. **The real walk.** Walk a real forest fence with the Jetson, the camera at 0.7 m and the u-blox logging its
-   accuracy. That calibrates the GNSS and odometry models and gives the first real ground-view images.
+   accuracy. That calibrates the GNSS and odometry models. The first real ground-view images can come before it,
+   from a phone held where the camera would be ([phone-walk.md](phone-walk.md)), labelled with
+   [labelling.md](labelling.md).
 
 ## Known limits
 

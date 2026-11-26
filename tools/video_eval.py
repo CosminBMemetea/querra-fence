@@ -1,5 +1,5 @@
 """Runs a fence detector over a drone video, such as one filmed with the DJI Mini 4 Pro, and raises alerts the way
-the Jetson does in flight.
+the Jetson does in flight. Also a phone video of the ground view (docs/phone-walk.md) with a ground model.
 
     ~/.querra-train-venv/bin/python tools/video_eval.py VIDEO.MP4 [--model MODEL.pt] [--out DIR] [--pitch 55]
         [--start S] [--end S] [--srt FILE | --no-srt] [--fps 15] [--width 1280] [--hfov 69.7] [--no-video]
@@ -14,7 +14,8 @@ must lie within 5 m of each other and every alert gets a position, as in flight.
 gimbal angle: the heading is the course over ground (fly forward with the camera ahead, like the simulated drone),
 and --pitch is the gimbal angle you flew with, in degrees below the horizon. Frames below --min-alt (take-off,
 landing) do not count. Without the SRT, 5 of 8 consecutive frames confirm an alert, and sightings of one class less
-than --merge-s seconds apart belong to the same alert.
+than --merge-s seconds apart belong to the same alert. --class-conf sets a threshold per fault class, as the ground
+robot's ugv_alerts does (fallen_post=0.5).
 
 The lens: the Mini 4 Pro's covers 82.1 deg diagonally on a 4:3 sensor, so 16:9 video from the full sensor width
 covers 69.7 deg across (--hfov), close to the simulated drone camera's 69.0 deg. Set --hfov for a cropped mode.
@@ -145,11 +146,12 @@ def probe(ffmpeg, video):
 
 
 def draw(img, dets, alert_conf, hud, banner, scale):
+    """alert_conf(class): the confidence from which a box of that class counts toward an alert."""
     th = max(1, round(scale))
     for d in dets:
         x0, y0, x1, y1 = (int(v) for v in d["box_xyxy"])
         c, col = d["class"], COL.get(d["class"], (200, 200, 200))
-        counts = c in FAULTS and d["conf"] >= alert_conf
+        counts = c in FAULTS and d["conf"] >= alert_conf(c)
         cv2.rectangle(img, (x0, y0), (x1, y1), col, 3 * th if counts else th)
         if c in FAULTS:
             label = "%s %.2f" % (c, d["conf"])
@@ -187,7 +189,13 @@ def main():
     ap.add_argument("--hfov", type=float, default=69.7, help="horizontal field of view of the video, degrees")
     ap.add_argument("--min-alt", type=float, default=3.0, help="with the SRT: lower frames do not count")
     ap.add_argument("--no-video", action="store_true", help="skip annotated.mp4")
+    ap.add_argument("--class-conf", default="", help="per-class thresholds that replace --conf, e.g. fallen_post=0.5 "
+                    "(the ground robot's rule)")
     a = ap.parse_args()
+    class_conf = {k.strip(): float(v) for k, v in (kv.split("=") for kv in a.class_conf.split(",") if "=" in kv)}
+    thr = lambda c: class_conf.get(c, a.conf)
+    base_conf = min([a.conf] + list(class_conf.values()))    # the confirmers' own threshold; the rest is filtered here
+    rule_conf = "conf %.2f%s" % (a.conf, "".join(", %s %.2f" % kv for kv in class_conf.items()))
 
     ffmpeg = find_ffmpeg()
     vw, vh, duration = probe(ffmpeg, a.video)
@@ -209,11 +217,11 @@ def main():
     fx = (W / 2.0) / math.tan(math.radians(a.hfov) / 2.0)
     cam = {"img_w": W, "img_h": H, "fx": fx, "pitch_deg": a.pitch}
     if track:
-        confirmer = AlertConfirmer(a.n, a.m, a.radius, a.conf, merge_m=a.merge, cam=cam)
-        rule = "%d of %d frames within %.0f m on the ground, conf %.2f" % (a.n, a.m, a.radius, a.conf)
+        confirmer = AlertConfirmer(a.n, a.m, a.radius, base_conf, merge_m=a.merge, cam=cam)
+        rule = "%d of %d frames within %.0f m on the ground, %s" % (a.n, a.m, a.radius, rule_conf)
     else:
-        confirmer = FrameConfirmer(a.n, a.m, a.conf, merge=int(round(a.merge_s * a.fps)))
-        rule = "%d of %d consecutive frames, conf %.2f" % (a.n, a.m, a.conf)
+        confirmer = FrameConfirmer(a.n, a.m, base_conf, merge=int(round(a.merge_s * a.fps)))
+        rule = "%d of %d consecutive frames, %s" % (a.n, a.m, rule_conf)
     print("%s: %dx%d, %.0f s; detector on %.1f s at %g fps, %dx%d (%d frames); %s; alerts: %s" % (
         os.path.basename(a.video), vw, vh, duration, end - a.start, a.fps, W, H, total,
         "positions from " + os.path.basename(srt) if track else "no positions", rule), flush=True)
@@ -249,19 +257,20 @@ def main():
             dets = [{"class": names[int(c)], "conf": round(float(s), 3), "box_xyxy": [round(float(v), 1) for v in b]}
                     for b, c, s in zip(res.boxes.xyxy.tolist(), res.boxes.cls.tolist(), res.boxes.conf.tolist())]
             row = {"frame": k, "t": round(t, 3), "detections": dets}
+            counted = [d for d in dets if d["class"] not in FAULTS or d["conf"] >= thr(d["class"])]
             meta = {"t": round(t, 2), "frame": k}
             if track:
                 pos = track.at(t)
                 lat, lon, alt, course, speed = pos if pos else (None, None, None, None, None)
                 counts = lat is not None and alt is not None and alt >= a.min_alt
-                new = confirmer.update(dets if counts else [], lat, lon, alt, course, meta)
+                new = confirmer.update(counted if counts else [], lat, lon, alt, course, meta)
                 row.update(lat=lat, lon=lon, alt_m=alt, course_deg=None if course is None else round(course, 1),
                            counts=counts)
                 hud = "%6.1f s   %s   alerts %d" % (t, "%.6f, %.6f  %.0f m  %s" % (
                     lat, lon, alt or 0, "%.1f m/s" % speed if speed is not None else "") if lat is not None
                     else "no GPS fix", len(confirmer.alerts))
             else:
-                new = confirmer.update(dets, meta)
+                new = confirmer.update(counted, meta)
                 hud = "%6.1f s   alerts %d" % (t, len(confirmer.alerts))
             for al in new:
                 al["id"] = len(confirmer.alerts) - len(new) + new.index(al) + 1
@@ -272,7 +281,7 @@ def main():
                       ", at %.6f, %.6f" % (al["lat"], al["lon"]) if "lat" in al else ""), flush=True)
             log.write(json.dumps(row) + "\n")
             if enc or new:
-                draw(img, dets, a.conf, hud, banner if t <= banner_until else "", scale)
+                draw(img, dets, thr, hud, banner if t <= banner_until else "", scale)
             for al in new:
                 cv2.imwrite(os.path.join(out, "alerts", "A%02d_%s_%07.1fs.jpg" % (al["id"], al["class"], t)), img,
                             [cv2.IMWRITE_JPEG_QUALITY, 90])
@@ -292,7 +301,7 @@ def main():
     alerts = [{key: al[key] for key in order if key in al} for al in confirmer.alerts]
     summary = {"video": os.path.abspath(a.video), "srt": os.path.abspath(srt) if track else None,
                "model": os.path.abspath(a.model), "fps": a.fps, "size": [W, H], "start_s": a.start, "end_s": round(end, 2),
-               "frames": k, "confirm": rule, "det_conf": a.det_conf, "pitch_deg": a.pitch, "hfov_deg": a.hfov,
+               "frames": k, "confirm": rule, "class_conf": class_conf, "det_conf": a.det_conf, "pitch_deg": a.pitch, "hfov_deg": a.hfov,
                "alerts_by_class": dict(collections.Counter(al["class"] for al in alerts)), "alerts": alerts}
     json.dump(summary, open(os.path.join(out, "alerts.json"), "w"), indent=1)
     print("%d frames in %.0f s; %d alert(s) %s -> %s" % (k, time.time() - t_wall, len(alerts),

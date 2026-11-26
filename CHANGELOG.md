@@ -1,7 +1,20 @@
 # Changelog
 
-## Unreleased
+## v0.14.0 · 2026-11-26 · ready for real footage: a phone walk, a labelling page, and ground-v0.2 (candidate)
 
+- **Labelling real footage** ([docs/labelling.md](docs/labelling.md)): `tools/label_drafts.py draft` takes frames
+  from a video (or a folder of photos) and lets a model draft the boxes; `serve` opens a review page on 127.0.0.1
+  (`tools/label_ui.html`: draw, move, resize, class keys, undo, zoom; each frame saved on Enter, skipped frames left
+  out); `score` scores any model on the reviewed frames: mAP50 per class and, per fault class, recall, precision and
+  frames with a false box at conf 0.5 and 0.7. No internet and no extra packages for the page; the server answers
+  only its own page (Host check, JSON-only saves). Tested on a simulated walk, and the page driven in headless
+  Chrome.
+- **The phone walk** ([docs/phone-walk.md](docs/phone-walk.md)): how to film a real fence the way the ground robot's
+  camera sees it (the ultra-wide lens at 0.7 m, 1.5–2.5 m from the fence, a slow walk), safely staging faults on an
+  electric fence, and running a ground model over the video. On a simulated walk, ground-v0.2 raised 8 alerts for
+  the 8 faults, none false.
+- **`tools/video_eval.py --class-conf`**: a threshold per fault class, as `ugv_alerts` on the robot
+  (`fallen_post=0.5`). The drone's path is unchanged.
 - **ground-v0.2, a candidate** ([run record](ml/runs/ground-v0.2)): ground-v0.1 fine-tuned with 1,500 more frames
   from 6 enclosures full of fallen posts (`make_ground_dataset.sh --focus post_down --posts-down 4-6`), 908 fallen
   posts in training instead of 372. Offline it beats ground-v0.1 everywhere the alerts look: test mAP50 0.979
