@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **candidate**: better than [ground-v0.1](../ground-v0.1) on every offline check; not used by default until it passes live patrols on the Jetson |
+| Status | **candidate**: better than [ground-v0.1](../ground-v0.1) on every offline check; not used by default until it passes live patrols on the Jetson. Released as [ground-v0.2](https://github.com/CosminBMemetea/querra-fence/releases/tag/ground-v0.2) with platform v0.14.0 |
 | Date | 2026-11-26 |
 | Parent | ground-v0.1 (fine-tuned) |
 | Code | `5ab9979` (`make_ground_dataset.py --focus --posts-down`) |

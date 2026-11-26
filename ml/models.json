@@ -721,6 +721,7 @@
    "date": "2026-11-26",
    "parent": "ground-v0.1",
    "code": "5ab9979",
+   "release": "ground-v0.2",
    "run": "ml/runs/ground-v0.2",
    "used_for": [],
    "data": {
