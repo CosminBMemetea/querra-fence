@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **Fence looks, a stress test** ([ml/runs/ground-v0.2](ml/runs/ground-v0.2)): every model so far learned strands drawn
+  as 3.6 cm glowing yellow rods. `make_ground_dataset.sh --fence-look` draws real conductors at their real size
+  (steel 2.5 mm, polywire 3 mm, polyrope 6 mm, polytape 40 mm; `sim/gen_world.py` FENCE_LOOKS, classic unchanged) and
+  `--supersample 3` renders a wire thinner than a pixel as the faint line a camera records. On the same test forests
+  ground-v0.2 holds on tape and rope (mAP50 0.98, 0.97) but not on thin wire: `wire` mAP50 0.44 (steel) and 0.20
+  (polywire), broken wires found from conf 0.7 in 17% and 1% of the frames (classic: 86%). Part of it is the camera:
+  640 pixels across 100 degrees puts a 2.5 mm wire 1.9 m away at half a pixel.
+- **Training on the M2's GPU:** `--device mps --batch 8` is 4x faster than the CPU with the same first-epoch scores;
+  batch 16 does not fit in 8 GB.
 - **Phone alerts** ([docs/phone-alerts.md](docs/phone-alerts.md)): each new fence alert, from the drone or the ground
   robot, arrives on the phone through ntfy or Telegram with the camera frame that confirmed it (the fault boxed) and
   a map link. `tools/notify.py setup ntfy|telegram`, `status`, `test`; the settings live in

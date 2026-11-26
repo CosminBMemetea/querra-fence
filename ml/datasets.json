@@ -430,6 +430,101 @@
     "train": {"frames": 1500, "role": "train"}
    },
    "notes": "1143 of the 1500 frames compressed like the robot's camera stream at a random -q:v of 2, 3, 4, 5, 6 or 8, as ground_yolo_stream; the rest are hard links to the PNGs. Same labels."
+  },
+  {
+   "id": "ground_look_classic_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot side camera, fence look classic, 3x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-26",
+   "code": "da01160",
+   "command": "tools/make_ground_dataset.sh --split test --seed 900 --layouts 3 --frames 200 --fence-look classic --supersample 3 --out ~/querra-data/ground_look_classic; tools/jpeg_like_stream.py ~/querra-data/ground_look_classic test ~/querra-data/ground_look_classic_q4 --quality 4 --share 1 --seed 2",
+   "size": "15 MB",
+   "splits": {
+    "test": {
+     "layouts": "0-2",
+     "seeds": "900-902",
+     "frames": 600,
+     "role": "test",
+     "prefix": "T00,T01,T02"
+    }
+   },
+   "notes": "The test forests of ground_yolo (seeds 900-902) with the strands drawn as the classic look (3.6 cm glowing yellow rods), as every model so far was trained on (sim/gen_world.py FENCE_LOOKS). The colour camera rendered at 3x and averaged in linear light, so a wire thinner than a pixel shows as a faint line. Same forests and pose distribution as ground_yolo_stream's test split, but not frame for frame: the strands change what the depth camera hides, and so which frames are kept. Scoring only: ml/runs/ground-v0.2/fence_looks."
+  },
+  {
+   "id": "ground_look_steel_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot side camera, fence look steel, 3x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-26",
+   "code": "da01160",
+   "command": "tools/make_ground_dataset.sh --split test --seed 900 --layouts 3 --frames 200 --fence-look steel --supersample 3 --out ~/querra-data/ground_look_steel; tools/jpeg_like_stream.py ~/querra-data/ground_look_steel test ~/querra-data/ground_look_steel_q4 --quality 4 --share 1 --seed 2",
+   "size": "15 MB",
+   "splits": {
+    "test": {
+     "layouts": "0-2",
+     "seeds": "900-902",
+     "frames": 600,
+     "role": "test",
+     "prefix": "T00,T01,T02"
+    }
+   },
+   "notes": "The test forests of ground_yolo (seeds 900-902) with the strands drawn as 2.5 mm galvanised steel wire, grey (sim/gen_world.py FENCE_LOOKS). The colour camera rendered at 3x and averaged in linear light, so a wire thinner than a pixel shows as a faint line. Same forests and pose distribution as ground_yolo_stream's test split, but not frame for frame: the strands change what the depth camera hides, and so which frames are kept. Scoring only: ml/runs/ground-v0.2/fence_looks."
+  },
+  {
+   "id": "ground_look_polywire_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot side camera, fence look polywire, 3x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-26",
+   "code": "da01160",
+   "command": "tools/make_ground_dataset.sh --split test --seed 900 --layouts 3 --frames 200 --fence-look polywire --supersample 3 --out ~/querra-data/ground_look_polywire; tools/jpeg_like_stream.py ~/querra-data/ground_look_polywire test ~/querra-data/ground_look_polywire_q4 --quality 4 --share 1 --seed 2",
+   "size": "15 MB",
+   "splits": {
+    "test": {
+     "layouts": "0-2",
+     "seeds": "900-902",
+     "frames": 600,
+     "role": "test",
+     "prefix": "T00,T01,T02"
+    }
+   },
+   "notes": "The test forests of ground_yolo (seeds 900-902) with the strands drawn as 3 mm yellow polywire, not glowing (sim/gen_world.py FENCE_LOOKS). The colour camera rendered at 3x and averaged in linear light, so a wire thinner than a pixel shows as a faint line. Same forests and pose distribution as ground_yolo_stream's test split, but not frame for frame: the strands change what the depth camera hides, and so which frames are kept. Scoring only: ml/runs/ground-v0.2/fence_looks."
+  },
+  {
+   "id": "ground_look_polyrope_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot side camera, fence look polyrope, 3x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-26",
+   "code": "da01160",
+   "command": "tools/make_ground_dataset.sh --split test --seed 900 --layouts 3 --frames 200 --fence-look polyrope --supersample 3 --out ~/querra-data/ground_look_polyrope; tools/jpeg_like_stream.py ~/querra-data/ground_look_polyrope test ~/querra-data/ground_look_polyrope_q4 --quality 4 --share 1 --seed 2",
+   "size": "15 MB",
+   "splits": {
+    "test": {
+     "layouts": "0-2",
+     "seeds": "900-902",
+     "frames": 600,
+     "role": "test",
+     "prefix": "T00,T01,T02"
+    }
+   },
+   "notes": "The test forests of ground_yolo (seeds 900-902) with the strands drawn as 6 mm white polyrope (sim/gen_world.py FENCE_LOOKS). The colour camera rendered at 3x and averaged in linear light, so a wire thinner than a pixel shows as a faint line. Same forests and pose distribution as ground_yolo_stream's test split, but not frame for frame: the strands change what the depth camera hides, and so which frames are kept. Scoring only: ml/runs/ground-v0.2/fence_looks."
+  },
+  {
+   "id": "ground_look_polytape_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot side camera, fence look polytape, 3x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-26",
+   "code": "da01160",
+   "command": "tools/make_ground_dataset.sh --split test --seed 900 --layouts 3 --frames 200 --fence-look polytape --supersample 3 --out ~/querra-data/ground_look_polytape; tools/jpeg_like_stream.py ~/querra-data/ground_look_polytape test ~/querra-data/ground_look_polytape_q4 --quality 4 --share 1 --seed 2",
+   "size": "15 MB",
+   "splits": {
+    "test": {
+     "layouts": "0-2",
+     "seeds": "900-902",
+     "frames": 600,
+     "role": "test",
+     "prefix": "T00,T01,T02"
+    }
+   },
+   "notes": "The test forests of ground_yolo (seeds 900-902) with the strands drawn as 40 mm white polytape, a ribbon on edge (sim/gen_world.py FENCE_LOOKS). The colour camera rendered at 3x and averaged in linear light, so a wire thinner than a pixel shows as a faint line. Same forests and pose distribution as ground_yolo_stream's test split, but not frame for frame: the strands change what the depth camera hides, and so which frames are kept. Scoring only: ml/runs/ground-v0.2/fence_looks."
   }
  ]
 }

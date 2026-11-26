@@ -114,6 +114,35 @@ its class lies within 4 m ([patrols/](patrols)).
   the wire (ground-v0.1: 4); it never lasts 5 of 8 frames. The others are the real faults seen from 4.1–6.9 m, just
   beyond the 4 m the scorer matches within: a broken wire in forests 701 and 702, and fallen post P1 in forest 702.
 
+### Fence looks: a stress test
+
+Every ground model so far learned one fence look: strands drawn as rods 3.6 cm thick, glowing yellow, and grey where a
+break cut the current. A real fence's conductors are 2.5 mm steel, 3 mm polywire, 6 mm polyrope or 4 cm tape, and none
+glows. The same 3 test forests were rendered in each look (`make_ground_dataset.sh --fence-look`, code `da01160`), at 3x
+supersampling so that a wire thinner than a pixel shows as the faint line a camera records, and compressed like the
+stream ([fence_looks/looks.json](fence_looks/looks.json)).
+
+| ground-v0.2, 600 test frames per look | mAP50 | `wire` mAP50 | Broken wires found from 0.7 | Fallen posts from 0.7 | Branches from 0.7 |
+|---|---|---|---|---|---|
+| Classic (as trained) | 0.977 | 0.962 | 86% | 82% | 86% |
+| Polytape, 40 mm white | **0.983** | 0.965 | 78% | 79% | 87% |
+| Polyrope, 6 mm white | **0.971** | 0.922 | 81% | 78% | 93% |
+| Steel wire, 2.5 mm grey | 0.777 | **0.436** | **17%** | 63% | 83% |
+| Polywire, 3 mm yellow | 0.669 | **0.196** | **1%** | 55% | 84% |
+
+- **Thick conductors are fine:** on tape and rope the model scores as on the look it learned, so it learned the fence,
+  not the yellow.
+- **Thin wire is not:** the wire itself is mostly missed and broken wires almost never reach 0.7. Fallen posts drop too
+  (the dragged-down wires are part of how the model sees them). Posts and branches hold. No look adds false boxes
+  (0-0.8% of frames at 0.7).
+- **The rendering is not the cause:** the classic look supersampled scores 0.977, the original test set 0.979.
+- **Part of it is the camera.** 640 pixels across 100 degrees: a 2.5 mm wire 1.9 m away covers half a pixel. A real
+  robot needs about 2,000 pixels across, a narrower lens or a closer route to see it as a line.
+
+ground-v0.1 is lower in every look (steel 0.752, polywire 0.649).
+
+![One broken wire, close up, in each look: found (red) or not](fence_looks/broken-wire-by-look.jpg)
+
 ## Decision
 
 **Candidate.** It meets the goal set for it offline: every fallen post found with every fault class at 0.7, in all
@@ -126,8 +155,9 @@ showed 1–2 fewer than its offline frames.
 
 ## Next
 
-1. **Live on the Jetson:** build the engine from the ONNX, then `tools/ugv_series.sh 10 … detect:=true` with
+1. **ground-v0.3:** trained on a mix of fence looks, thin wire most of all (above).
+2. **Live on the Jetson:** build the engine from the ONNX, then `tools/ugv_series.sh 10 … detect:=true` with
    `engine:=/models/ground-yolo11n-v0.2-fp16.engine`. Then a few patrols with every fault from 0.7, which needs
    `ugv_alerts`' `class_conf` as a launch argument.
-2. **Branches of more than one shape:** every branch fault is the same model, so the branch score says little yet.
-3. **The real walk:** the first real ground-view images ([docs/ugv.md](../../../docs/ugv.md)).
+3. **Branches of more than one shape:** every branch fault is the same model, so the branch score says little yet.
+4. **The real walk:** the first real ground-view images ([docs/ugv.md](../../../docs/ugv.md)).
