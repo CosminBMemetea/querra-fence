@@ -1,7 +1,7 @@
 # Tests
 
 ```bash
-~/.querra-train-venv/bin/python -m pytest -q          # on the Mac, about 15 s
+~/.querra-train-venv/bin/python -m pytest -q          # on the Mac, about 20 s
 ```
 
 They run on every push too (`.github/workflows/checks.yml`), with the registry, release-notes and README checks.
@@ -16,6 +16,7 @@ the ground robot's nodes are tested on the Mac.
 | `test_ugv_eval.py` | scoring a patrol from the relay's log, end to end |
 | `test_label_drafts.py` | the labelling server: what it writes, what it refuses |
 | `test_train_with_breaks.py` | the cooling breaks, also when training is started detached |
+| `test_notify.py` | phone alerts: what goes to ntfy and Telegram, retries, refusals, the rate limit, the node sending the alert's own frame (a local server plays both services) |
 | `test_registry.py` | the model registry is valid, and its checks catch two defaults, a test split in training, a bad hash |
 
 Each was checked against a real bug of this project put back in: a renamed loop variable in `ugv_eval.py`, the

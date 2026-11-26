@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **Phone alerts** ([docs/phone-alerts.md](docs/phone-alerts.md)): each new fence alert, from the drone or the ground
+  robot, arrives on the phone through ntfy or Telegram with the camera frame that confirmed it (the fault boxed) and
+  a map link. `tools/notify.py setup ntfy|telegram`, `status`, `test`; the settings live in
+  `~/.config/querra/notify.json`, never in git, and `ros.sh` mounts them read-only into the container. The ROS 2
+  node `phone_alerts` (`notify:=true` with `./ros.sh ugv … detect:=true` or `./ros.sh demo`) picks the alert's own
+  frame by its time stamp, at no extra cost to the detector. 5 messages at once, then one every 5 minutes, with
+  waiting alerts sent together as a summary; retries for about an hour without a network; tokens and topics never
+  in the logs. `tools/video_eval.py --notify` sends a video's alerts. Tested against a local stand-in for both
+  services (20 tests) and on the simulated walk: 8 alerts as 6 messages. Not yet on a real phone or the Jetson.
 - **Tests and checks on every push** ([tests/](tests)): 64 tests with pytest, about 15 s on the Mac, no GPU, Gazebo or
   ROS 2 needed (ROS 2 stand-ins in `tests/conftest.py`). They cover the drone's and the ground robot's alert
   confirmation (and that the Jetson's `confirm.py` keeps the same logic as `tools/confirm.py`), DJI subtitles,

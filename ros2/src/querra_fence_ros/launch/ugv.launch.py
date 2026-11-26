@@ -14,6 +14,8 @@
   detect:=false                true: the fence detector on the side camera (TensorRT, engine:=, ground-v0.1 by
                                default) and ugv_alerts, which confirms faults 5 of 8 frames 0.5 m apart and logs
                                them on the Mac for tools/ugv_eval.py
+  notify:=false                true (with detect:=true): each new alert to the phone, with its photo
+                               (phone_alerts; set up with tools/notify.py, docs/phone-alerts.md)
 
 ugv_bridge turns the relay's stream into /ugv/* topics (LiDAR point cloud, IMU, odometry, GNSS, camera, route,
 fence, faults, ground truth for scoring) stamped with Gazebo's simulation time, and publishes /clock;
@@ -49,6 +51,8 @@ def generate_launch_description():
         DeclareLaunchArgument("detect", default_value="false", description="fence detector + ugv_alerts on the side camera"),
         DeclareLaunchArgument("engine", default_value="/models/ground-yolo11n-v0.1-fp16.engine",
                               description="the ground-view detector's TensorRT engine (ml/runs/ground-v0.1)"),
+        DeclareLaunchArgument("notify", default_value="false",
+                              description="with detect:=true, each new alert to the phone (phone_alerts, docs/phone-alerts.md)"),
         # the panel's topic rates, without the high-rate and bulky topics (each message costs a Python callback;
         # /map is a 14 MB occupancy grid)
         Node(package="querra_fence_ros", executable="stats", name="querra_stats", output="log",
@@ -80,6 +84,10 @@ def generate_launch_description():
              output="screen"),
         Node(package="querra_fence_ros", executable="ugv_alerts", name="ugv_alerts", condition=IfCondition(LaunchConfiguration("detect")),
              parameters=[{"pose_topic": pose_topic}], output="screen"),
+        Node(package="querra_fence_ros", executable="phone_alerts", name="phone_alerts",
+             condition=IfCondition(PythonExpression(["'", LaunchConfiguration("detect"), "'.lower() in ('true', '1') and '",
+                                                     LaunchConfiguration("notify"), "'.lower() in ('true', '1')"])),
+             parameters=[{"source": "ground robot", "image": "/ugv/camera/image_raw/compressed"}], output="screen"),
         Node(package="foxglove_bridge", executable="foxglove_bridge", name="foxglove_bridge", condition=IfCondition(LaunchConfiguration("foxglove")),
              parameters=[{"port": 8765, "address": "0.0.0.0", "send_buffer_limit": 20000000}], output="log"),
     ])

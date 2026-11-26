@@ -15,7 +15,8 @@ gimbal angle: the heading is the course over ground (fly forward with the camera
 and --pitch is the gimbal angle you flew with, in degrees below the horizon. Frames below --min-alt (take-off,
 landing) do not count. Without the SRT, 5 of 8 consecutive frames confirm an alert, and sightings of one class less
 than --merge-s seconds apart belong to the same alert. --class-conf sets a threshold per fault class, as the ground
-robot's ugv_alerts does (fallen_post=0.5).
+robot's ugv_alerts does (fallen_post=0.5). --notify sends each alert to the phone with its frame, as the robot would
+(tools/notify.py sets the phone link up; docs/phone-alerts.md).
 
 The lens: the Mini 4 Pro's covers 82.1 deg diagonally on a 4:3 sensor, so 16:9 video from the full sensor width
 covers 69.7 deg across (--hfov), close to the simulated drone camera's 69.0 deg. Set --hfov for a cropped mode.
@@ -189,6 +190,7 @@ def main():
     ap.add_argument("--hfov", type=float, default=69.7, help="horizontal field of view of the video, degrees")
     ap.add_argument("--min-alt", type=float, default=3.0, help="with the SRT: lower frames do not count")
     ap.add_argument("--no-video", action="store_true", help="skip annotated.mp4")
+    ap.add_argument("--notify", action="store_true", help="send each alert to the phone (tools/notify.py setup first)")
     ap.add_argument("--class-conf", default="", help="per-class thresholds that replace --conf, e.g. fallen_post=0.5 "
                     "(the ground robot's rule)")
     a = ap.parse_args()
@@ -233,6 +235,13 @@ def main():
         [ffmpeg, "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", "%dx%d" % (W, H), "-r", "%g" % a.fps,
          "-i", "-", "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-pix_fmt", "yuv420p",
          "-movflags", "+faststart", os.path.join(out, "annotated.mp4")], stdin=subprocess.PIPE)
+    phone = None
+    if a.notify:
+        sys.path.insert(0, os.path.join(ROOT, "ros2", "src", "querra_fence_ros"))
+        from querra_fence_ros import notify
+        phone = notify.Notifier(notify.load_config(), log=print)
+        if not phone.backends:
+            sys.exit("--notify: no phone link set up (python3 tools/notify.py setup ntfy or telegram)")
     model = YOLO(a.model)
     names = model.names
     log = open(os.path.join(out, "detections.jsonl"), "w")
@@ -285,6 +294,11 @@ def main():
             for al in new:
                 cv2.imwrite(os.path.join(out, "alerts", "A%02d_%s_%07.1fs.jpg" % (al["id"], al["class"], t)), img,
                             [cv2.IMWRITE_JPEG_QUALITY, 90])
+                if phone:
+                    phone.alert({"source": "video", "class": al["class"], "id": al["id"], "conf": al["max_conf"],
+                                 "frames": al.get("frames"), "lat": al.get("lat"), "lon": al.get("lon"), "time": time.time(),
+                                 "note": "%s at %d:%04.1f" % (os.path.basename(a.video), t // 60, t % 60)},
+                                cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 85])[1].tobytes())
             if enc:
                 enc.stdin.write(img.tobytes())
             k += 1
@@ -296,6 +310,9 @@ def main():
         enc.stdin.close()
         enc.wait()
     log.close()
+    if phone:
+        phone.close()
+        print("phone: %d message(s) sent, %d failed" % (len(phone.sent), len(phone.failed)))
 
     order = ("id", "class", "t", "frame", "max_conf", "frames", "sightings", "lat", "lon", "map")
     alerts = [{key: al[key] for key in order if key in al} for al in confirmer.alerts]

@@ -79,5 +79,6 @@ The relay (MediaMTX) has no authentication. Use `--share` only on a trusted netw
 
 1. Run `ground/node.py` on the Jetson against the simulated streams, with a `JetsonEyes` class that reads RTSP frames and runs the detector
 2. Replace the simulated streams with the real RGB, thermal and iToF cameras
-3. Send alerts to a phone (Telegram or ntfy) and keep short video clips around each alert
+3. Send alerts to a phone: done for the fence faults ([phone-alerts.md](phone-alerts.md), ntfy or Telegram, with the
+   alert's photo). Still to do: short video clips around each alert
 4. A week of recordings on a friend's farm to train and tune the detector on real animals, real gates and real nights

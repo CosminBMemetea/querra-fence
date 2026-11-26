@@ -42,19 +42,26 @@ class Pub:
 
 
 class Node:
-    """rclpy.node.Node stand-in: parameters take their defaults; publishers record their messages."""
+    """rclpy.node.Node stand-in: parameters take their defaults, or Node.overrides (set it in a test); publishers
+    record their messages; subscriptions keep their callbacks by topic (node.subs[topic](msg) delivers one)."""
+    overrides = {}
 
     def __init__(self, name, *a, **k):
-        self.node_name, self.pubs = name, {}
+        self.node_name, self.pubs, self.subs = name, {}, {}
 
     def declare_parameter(self, name, value):
-        return types.SimpleNamespace(value=value)
+        declared = self.__dict__.setdefault("_declared", set())
+        if name in declared:                              # as rclpy: ParameterAlreadyDeclaredException
+            raise RuntimeError("parameter %s declared twice" % name)
+        declared.add(name)
+        return types.SimpleNamespace(value=Node.overrides.get(name, value))
 
     def create_publisher(self, typ, topic, qos):
         self.pubs[topic] = Pub(topic)
         return self.pubs[topic]
 
-    def create_subscription(self, *a, **k):
+    def create_subscription(self, typ, topic, callback, qos=None):
+        self.subs[topic] = callback
         return None
 
     def create_timer(self, *a, **k):

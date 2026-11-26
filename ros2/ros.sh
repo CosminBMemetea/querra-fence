@@ -47,6 +47,9 @@ mnt /usr/lib/python3.10/dist-packages/tensorrt /usr/lib/python3/dist-packages/te
 mnt "$Q/querra_scout" /opt/querra_scout/querra_scout
 mnt "$Q/models/fence-yolo" /models
 mnt "$SIM" /sim
+# phone alerts (notify:=true): the settings and secrets stay on the host, read-only in the container
+NOTIFY=${QUERRA_NOTIFY:-$HOME/.config/querra/notify.json}
+[ -f "$NOTIFY" ] && TRT+=(-v "$NOTIFY:/etc/querra/notify.json:ro")
 for f in libnvinfer.so.10 libnvinfer_plugin.so.10 libnvonnxparser.so.10; do [ -e "$L/$f" ] && TRT+=(-v "$(readlink -f "$L/$f"):$L/$f:ro"); done
 # GPU access: ask for the NVIDIA runtime explicitly instead of relying on the daemon's default-runtime.
 nvidia_rt() { docker info -f '{{json .Runtimes}}' 2>/dev/null | grep -q '"nvidia"'; }

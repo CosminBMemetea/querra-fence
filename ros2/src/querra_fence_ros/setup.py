@@ -20,5 +20,6 @@ setup(
         "ugv_bridge = querra_fence_ros.ugv_bridge:main",
         "ugv_patrol = querra_fence_ros.ugv_patrol:main",
         "ugv_alerts = querra_fence_ros.ugv_alerts:main",
+        "phone_alerts = querra_fence_ros.phone_alerts:main",
     ]},
 )

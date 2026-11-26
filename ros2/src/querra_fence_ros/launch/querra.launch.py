@@ -8,6 +8,8 @@ Phase 2 (detector:=sim or detector:=usb): YOLO11n TensorRT detector + 5-of-8 GPS
 Phase 3 (px4:=true): the micro-ROS agent on UDP 8888 bridges PX4's uXRCE-DDS client into ROS 2 (/fmu/out/*), and
   px4_pose turns the vehicle's own position and heading into /px4/telemetry, which alert_confirm then uses
   instead of the simulator's telemetry.
+notify:=true (with detector:=sim): each new alert to the phone, with its photo (phone_alerts; tools/notify.py sets it
+  up, docs/phone-alerts.md).
 """
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
@@ -41,6 +43,7 @@ def generate_launch_description():
         DeclareLaunchArgument("detector", default_value="none", description="none | sim | usb"),
         DeclareLaunchArgument("engine", default_value="/models/fence-yolo11n-v0.5-fp16.engine",
                               description="TensorRT engine for the detector (container path; /models is the models dir)"),
+        DeclareLaunchArgument("notify", default_value="false", description="each new alert to the phone (phone_alerts)"),
         DeclareLaunchArgument("sim_source", default_value="/sim/m1", description="recording dir or tcp://host:port"),
         DeclareLaunchArgument("px4", default_value="false", description="true: PX4 over uXRCE-DDS (agent on UDP px4_port)"),
         DeclareLaunchArgument("px4_port", default_value="8888"),
@@ -64,6 +67,10 @@ def generate_launch_description():
              parameters=[{"image": "/sim/camera/image_raw/compressed", "engine": LaunchConfiguration("engine")}], output="screen"),
         Node(package="querra_fence_ros", executable="alerts", name="alert_confirm", condition=is_sim,
              parameters=[{"telemetry": telemetry}], output="screen"),
+        Node(package="querra_fence_ros", executable="phone_alerts", name="phone_alerts",
+             condition=IfCondition(PythonExpression(["'", det, "' == 'sim' and '", LaunchConfiguration("notify"),
+                                                     "'.lower() in ('true', '1')"])),
+             parameters=[{"source": "drone", "image": "/sim/camera/image_raw/compressed"}], output="screen"),
         # ---- phase 3: PX4 over uXRCE-DDS (SITL on the Mac through tools/uxrce_relay.py, or the flight controller) ----
         Node(package="micro_ros_agent", executable="micro_ros_agent", name="xrce_agent", condition=is_px4,
              arguments=["udp4", "-p", LaunchConfiguration("px4_port")], output="log"),

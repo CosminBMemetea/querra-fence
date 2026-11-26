@@ -5,7 +5,7 @@ import math
 
 import pytest
 
-from conftest import Msg
+from conftest import Msg, STUBBED
 from querra_fence_ros.ugv_alerts import LocalConfirmer, UgvAlerts
 from querra_fence_ros.ugv_bridge import m_per_deg
 
@@ -57,7 +57,10 @@ def test_posts_and_wires_never_raise_alerts():
     assert feed(LocalConfirmer(), [[("post", 0.99, 1, 1), ("wire", 0.99, 1, 1)]] * 8) == {}
 
 
-# ------------------------------------------------------------------ the node
+# ------------------------------------------------------------------ the node (built on the stand-in Node)
+
+needs_stubs = pytest.mark.skipif(not STUBBED, reason="builds the node on the ROS 2 stand-ins")
+
 
 def node(x=0.0, y=0.0, yaw=0.0):
     n = UgvAlerts()                 # its own parameter defaults (the stand-in Node hands them back)
@@ -66,10 +69,12 @@ def node(x=0.0, y=0.0, yaw=0.0):
     return n
 
 
+@needs_stubs
 def test_the_image_centre_is_the_fence_beside_the_robot():
     assert node().on_fence(320) == pytest.approx((0.0, 1.9))
 
 
+@needs_stubs
 def test_the_right_of_the_image_is_ahead_and_the_left_behind():
     """The camera looks left, so ahead of the robot is to the right of the image; the image edge is 50 deg off."""
     ahead = (1.9 - 0.22) * math.tan(math.radians(50))
@@ -77,6 +82,7 @@ def test_the_right_of_the_image_is_ahead_and_the_left_behind():
     assert node().on_fence(0) == pytest.approx((-ahead, 1.9))
 
 
+@needs_stubs
 def test_the_fence_turns_with_the_robot():
     """Heading north (+y): the fence on the left is to the west (-x)."""
     assert node(5.0, 5.0, math.pi / 2).on_fence(320) == pytest.approx((5.0 - 1.9, 5.0))
@@ -89,6 +95,7 @@ def dets(*items):
                                bbox=Msg(center=Msg(position=Msg(x=u)))) for c, s, u in items])
 
 
+@needs_stubs
 def test_one_step_per_half_metre_and_an_alert_on_the_fifth():
     """10 frames per second at 0.8 m/s are 8 cm apart; only the first frame after each 0.5 m of travel counts."""
     n = node()
@@ -105,6 +112,7 @@ def test_one_step_per_half_metre_and_an_alert_on_the_fifth():
     assert len(n.pubs["/fence/alerts"].msgs) == 1
 
 
+@needs_stubs
 def test_no_pose_no_steps():
     n = node()
     n.pose = None
