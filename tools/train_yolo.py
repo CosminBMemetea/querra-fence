@@ -4,6 +4,10 @@
     python tools/train_yolo.py --resume ~/querra-data/train/<name>/weights/last.pt   (after Ctrl+C / a pause)
     (needs: pip install ultralytics onnx onnxslim)
 
+On the 8 GB M2 Mac: --device mps --batch 8 --workers 0 trains 4x faster than the CPU with the same scores (ground-v0.2's
+first epoch: 4.9 min, mAP50 0.923, against 19.8 min and 0.923). --batch 16 on mps does not fit: memory and swap fill
+up and it runs slower than the CPU.
+
 Output: ~/querra-data/train/<name>/weights/best.pt and best.onnx (input 1x3x416x640, for 640x400 frames).
 """
 import argparse

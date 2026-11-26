@@ -142,6 +142,33 @@ WOOD = mat(0.42, 0.30, 0.19)
 WOOD_DARK = mat(0.30, 0.21, 0.13)
 WIRE = mat(0.95, 0.85, 0.35, emissive=(0.55, 0.42, 0.05), spec=0.4)
 WIRE_DEAD = mat(0.35, 0.33, 0.30)
+
+# How the strands look (posts stay wooden). "classic" is what every model so far was trained on: rods 3.6 cm thick, the
+# live strands glowing yellow and the strands without current after a break grey, a cue a real fence does not give.
+# The others are real fence conductors at their real size, the same colour live or dead (tools/make_ground_dataset.py
+# --fence-look; render them with --supersample, or a strand thinner than a pixel breaks up into dots).
+FENCE_LOOKS = {
+    "classic": {"kind": "rod", "r": None, "live": WIRE, "dead": WIRE_DEAD},
+    "steel": {"kind": "rod", "r": 0.00125, "live": mat(0.62, 0.63, 0.65, spec=0.5), "dead": None},   # 2.5 mm galvanised
+    "polywire": {"kind": "rod", "r": 0.0015, "live": mat(0.88, 0.80, 0.25, spec=0.2), "dead": None},  # 3 mm yellow
+    "polyrope": {"kind": "rod", "r": 0.003, "live": mat(0.86, 0.86, 0.84, spec=0.15), "dead": None},  # 6 mm white
+    "polytape": {"kind": "tape", "w": 0.04, "t": 0.002, "live": mat(0.90, 0.90, 0.88, spec=0.1), "dead": None},  # 40 mm white
+}
+FENCE_LOOK = "classic"
+
+
+def strand(v, a, b, dead=False, r=0.018):
+    """One fence conductor from a to b in FENCE_LOOK (classic: a rod of radius r, as before)."""
+    look = FENCE_LOOKS[FENCE_LOOK]
+    m = (look["dead"] if dead else None) or look["live"]
+    if look["kind"] == "tape":                     # a ribbon on edge: wide vertically, thin across the span
+        dx, dy, dz = b[0] - a[0], b[1] - a[1], b[2] - a[2]
+        L = math.sqrt(dx * dx + dy * dy + dz * dz) or 1e-3
+        mid = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2)
+        v.box((L, look["t"], look["w"]), (mid[0], mid[1], mid[2], 0, math.atan2(-dz, math.hypot(dx, dy)), math.atan2(dy, dx)),
+              m, shadows=False)
+    else:
+        v.rod(a, b, look["r"] or r, m)
 LEAF = [mat(0.20, 0.38, 0.12), mat(0.25, 0.44, 0.15), mat(0.17, 0.33, 0.13), mat(0.30, 0.45, 0.16)]
 BARK = mat(0.33, 0.24, 0.17)
 
@@ -166,20 +193,20 @@ def build_fence(fence, gate_open=False):
                 for (p0, p1, frac) in ((a, b, 0.32), (b, a, 0.38)):
                     mid = (p0[0] + (p1[0] - p0[0]) * 0.12, p0[1] + (p1[1] - p0[1]) * 0.12, p0[2] * 0.35)
                     end = (p0[0] + (p1[0] - p0[0]) * frac, p0[1] + (p1[1] - p0[1]) * frac, 0.02)
-                    v.rod(p0, mid, 0.018, WIRE_DEAD)
-                    v.rod(mid, end, 0.018, WIRE_DEAD)
+                    strand(v, p0, mid, dead=True)
+                    strand(v, mid, end, dead=True)
                 continue
             dead = any(bs == st and k > seg for seg, bs in fence.broken)
-            v.rod(a, b, 0.018, WIRE_DEAD if dead else WIRE)
+            strand(v, a, b, dead=dead)
     # gate (insulated handle) between the last post and the first
     g, f0 = P[-1], P[0]
     if gate_open:
         # left open: the spring wire and its handle lie on the ground next to the gate post
         hx, hy = g["x"] + g["out"][0] * 0.6, g["y"] + g["out"][1] * 0.6
-        v.rod((g["x"], g["y"], 1.0), (hx, hy, 0.03), 0.012, WIRE_DEAD)
+        strand(v, (g["x"], g["y"], 1.0), (hx, hy, 0.03), dead=True, r=0.012)
         v.box((0.25, 0.06, 0.06), (hx, hy, 0.03, 0, 0, 0.6), mat(0.08, 0.08, 0.08), shadows=False)
     else:
-        v.rod((g["x"], g["y"], 1.0), (f0["x"], f0["y"], 1.0), 0.012, WIRE)
+        strand(v, (g["x"], g["y"], 1.0), (f0["x"], f0["y"], 1.0), r=0.012)
         v.box((0.25, 0.06, 0.06), ((g["x"] + f0["x"]) / 2, (g["y"] + f0["y"]) / 2, 1.0, 0, 0, math.atan2(f0["y"] - g["y"], f0["x"] - g["x"])), mat(0.08, 0.08, 0.08))
     # energizer on the first post + LED
     ox, oy = f0["out"]

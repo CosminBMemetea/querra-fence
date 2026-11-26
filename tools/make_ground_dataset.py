@@ -18,6 +18,12 @@ Classes (the drone's, so model-v0.5 can be fine-tuned): 0 post, 1 wire, 2 wire_b
                                                      training layouts but from seeds never trained on) along its route
   --preview N also writes the first N frames with their boxes drawn (preview/), to check the labels by eye.
   --focus post_down --posts-down 4-6: layouts with more fallen posts and most poses near them (ground-v0.2's extra data).
+  --fence-look steel|polywire|polyrope|polytape: real fence conductors at their real size instead of the classic
+  3.6 cm glowing yellow rods (sim/gen_world.py FENCE_LOOKS); the layouts, poses and labels stay the same. A list
+  (steel,polywire,polyrope) gives the layouts one look each, in turn: a training set with a mix of fences.
+  --supersample 3 renders the colour camera 3x wider and taller and averages each 3x3 block in linear light, as a sensor
+  gathers it: a 2.5 mm wire 2 m away covers half a pixel and should show as a faint line, not as dots or nothing. The
+  colour camera then runs at fewer frames per second (cam_rate), so its larger frames do not pile up.
 """
 import argparse
 import copy
@@ -38,6 +44,7 @@ sys.path.insert(0, os.path.join(ROOT, "sim"))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 import geo  # noqa: E402
 import gen_forest  # noqa: E402
+import gen_world  # noqa: E402   (FENCE_LOOK)
 import make_dataset as md  # noqa: E402  (ground_truth, rod, rot, quat, write_png, CLASSES)
 
 from gz.transport13 import Node  # noqa: E402
@@ -58,14 +65,36 @@ MAX_RANGE = 12.0                                  # do not label fence parts far
 MIN_FRAC = {"branch": 0.15, "fallen_post": 0.3}   # share of the object's points inside the frame (else the drone's)
 DEPTH_TOL = {"branch": 1.5}                       # metres behind the depth image still counted as seen (else 0.25)
 
-CAM_XML = ('<model name="ds_cam"><pose>0 0 0.7 0 0 0</pose><link name="link"><gravity>false</gravity>'
-           '<inertial><mass>1</mass><inertia><ixx>1</ixx><ixy>0</ixy><ixz>0</ixz><iyy>1</iyy><iyz>0</iyz><izz>1</izz></inertia></inertial>'
-           '<sensor name="cam" type="camera"><camera><horizontal_fov>{f:.4f}</horizontal_fov><image><width>{w}</width><height>{h}</height></image>'
-           '<clip><near>0.1</near><far>80</far></clip></camera><always_on>1</always_on><update_rate>30</update_rate>'
-           '<topic>/ds_cam/image</topic></sensor>'
-           '<sensor name="depth" type="depth_camera"><camera><horizontal_fov>{f:.4f}</horizontal_fov><image><width>{w}</width><height>{h}</height>'
-           '<format>R_FLOAT32</format></image><clip><near>0.1</near><far>80</far></clip></camera><always_on>1</always_on>'
-           '<update_rate>30</update_rate><topic>/ds_cam/depth</topic></sensor></link></model>').format(f=HFOV, w=W, h=H)
+def cam_rate(ss):
+    """Colour frames per second: 30, or fewer when supersampled, so the frames (ss^2 times larger) stay near 40 MB/s.
+    At 30 per second, 4x frames (12 MB each) arrived faster than Python read them: memory and swap filled up."""
+    return 30 if ss == 1 else max(3, int(60 / ss ** 2))
+
+
+def cam_xml(ss=1):
+    """The dataset cameras: colour at ss times the robot camera's size (averaged back down in Frames), depth at its size."""
+    return ('<model name="ds_cam"><pose>0 0 0.7 0 0 0</pose><link name="link"><gravity>false</gravity>'
+            '<inertial><mass>1</mass><inertia><ixx>1</ixx><ixy>0</ixy><ixz>0</ixz><iyy>1</iyy><iyz>0</iyz><izz>1</izz></inertia></inertial>'
+            '<sensor name="cam" type="camera"><camera><horizontal_fov>{f:.4f}</horizontal_fov><image><width>{sw}</width><height>{sh}</height></image>'
+            '<clip><near>0.1</near><far>80</far></clip></camera><always_on>1</always_on><update_rate>{rate}</update_rate>'
+            '<topic>/ds_cam/image</topic></sensor>'
+            '<sensor name="depth" type="depth_camera"><camera><horizontal_fov>{f:.4f}</horizontal_fov><image><width>{w}</width><height>{h}</height>'
+            '<format>R_FLOAT32</format></image><clip><near>0.1</near><far>80</far></clip></camera><always_on>1</always_on>'
+            '<update_rate>30</update_rate><topic>/ds_cam/depth</topic></sensor></link></model>').format(
+        f=HFOV, w=W, h=H, sw=W * ss, sh=H * ss, rate=cam_rate(ss))
+
+
+CAM_XML = cam_xml(1)
+# sRGB <-> linear light, to average supersampled pixels as a sensor would
+_SRGB = np.arange(256) / 255.0
+TO_LINEAR = np.where(_SRGB <= 0.04045, _SRGB / 12.92, ((_SRGB + 0.055) / 1.055) ** 2.4).astype(np.float32)
+
+
+def downsample(a, k):
+    """(H*k, W*k, 3) uint8 sRGB -> (H, W, 3): each k x k block averaged in linear light."""
+    lin = TO_LINEAR[a].reshape(a.shape[0] // k, k, a.shape[1] // k, k, 3).mean(axis=(1, 3))
+    srgb = np.where(lin <= 0.0031308, lin * 12.92, 1.055 * np.power(lin, 1 / 2.4) - 0.055)
+    return np.clip(np.round(srgb * 255.0), 0, 255).astype(np.uint8)
 
 
 # ---------------------------------------------------------------- layouts
@@ -121,7 +150,7 @@ def patrol_forest():
     return cfg, None
 
 
-def write_world(cfg, sun, path):
+def write_world(cfg, sun, path, ss=1):
     """gen_forest's world for cfg at path, without the robot, with the dataset cameras, the sun randomised."""
     d = os.path.dirname(path)
     base = os.path.splitext(os.path.basename(path))[0]
@@ -149,7 +178,7 @@ def write_world(cfg, sun, path):
         s = s.replace("<intensity>0.3</intensity>", "<intensity>%.2f</intensity>" % sun["fill"], 1)
         a = sun["ambient"]
         s = s.replace("<ambient>0.40 0.42 0.44 1</ambient>", "<ambient>%.2f %.2f %.2f 1</ambient>" % (a, a + 0.02, a + 0.04), 1)
-    s = s.replace("  </world>", CAM_XML + "\n  </world>")
+    s = s.replace("  </world>", cam_xml(ss) + "\n  </world>")
     open(path, "w", encoding="utf-8").write(s)
 
 
@@ -270,16 +299,28 @@ def sample_pose(rnd, strips, cfg, f, focus=None):
 
 # ---------------------------------------------------------------- frames
 class Frames:
-    def __init__(self):
-        self.lock = threading.Lock()
+    def __init__(self, ss=1):
+        self.lock, self.ss = threading.Lock(), ss
         self.count, self.img, self.dcount, self.depth = 0, None, 0, None
 
     def cb(self, msg):
-        if msg.width != W or msg.height != H:
+        sw, sh = W * self.ss, H * self.ss
+        if msg.width != sw or msg.height != sh:
+            return
+        if self.ss > 1:                           # keep the raw bytes; averaged down only for the frames that are saved
+            with self.lock:
+                self.img, self.step, self.count = msg.data, msg.step, self.count + 1
             return
         a = np.frombuffer(msg.data, dtype=np.uint8)[: H * msg.step].reshape(H, msg.step)[:, : W * 3].reshape(H, W, 3)
         with self.lock:
             self.img, self.count = a.copy(), self.count + 1
+
+    def colour(self, img):
+        if self.ss == 1:
+            return img
+        sw, sh = W * self.ss, H * self.ss
+        a = np.frombuffer(img, dtype=np.uint8)[: sh * self.step].reshape(sh, self.step)[:, : sw * 3].reshape(sh, sw, 3)
+        return downsample(a, self.ss)
 
     def dcb(self, msg):
         if msg.width != W or msg.height != H:
@@ -293,9 +334,12 @@ class Frames:
         while time.time() - t < timeout:
             with self.lock:
                 if self.count >= n0 + k and self.dcount >= d0 + k:
-                    return self.img, self.depth
+                    img, depth = self.img, self.depth
+                    break
             time.sleep(0.005)
-        return None, None
+        else:
+            return None, None
+        return self.colour(img), depth
 
 
 def draw_boxes(img, labs):
@@ -316,15 +360,16 @@ def run_layout(li, seed, n_frames, split, out, args):
         seed = args.patrol_seed
     else:
         cfg, sun = patrol_forest() if args.patrol else random_forest(seed, args.posts_down)
+    gen_world.FENCE_LOOK = args.looks[li % len(args.looks)]
     wpath = os.path.join(out, "worlds", ("patrol" if args.patrol else "layout_%02d" % li) + ".sdf")
     os.makedirs(os.path.dirname(wpath), exist_ok=True)
-    write_world(cfg, sun, wpath)
+    write_world(cfg, sun, wpath, args.supersample)
     f, objs = ground_truth(cfg)
     strips = Strips(f)
     log = open(os.path.splitext(wpath)[0] + ".gz.log", "w")
     gz = subprocess.Popen(["gz", "sim", "-r", "-s", "--verbose=1", wpath], stdout=log, stderr=subprocess.STDOUT)
     node = Node()
-    fr = Frames()
+    fr = Frames(args.supersample)
     node.subscribe(Image, "/ds_cam/image", fr.cb)
     node.subscribe(Image, "/ds_cam/depth", fr.dcb)
     t0 = time.time()
@@ -393,8 +438,9 @@ def run_layout(li, seed, n_frames, split, out, args):
             gz.kill()
         subprocess.run(["pkill", "-f", wpath])
         log.close()
-    print("[ground] layout %d (%s, seed %d): %d frames in %.0f s, faults %s, boxes %s" % (
-        li, split, seed, saved, time.time() - t0, [ft["type"] for ft in cfg["faults"]], dict(zip(CLASSES, counts))), flush=True)
+    print("[ground] layout %d (%s, seed %d, fence %s, supersample %d): %d frames in %.0f s, faults %s, boxes %s" % (
+        li, split, seed, gen_world.FENCE_LOOK, args.supersample, saved, time.time() - t0,
+        [ft["type"] for ft in cfg["faults"]], dict(zip(CLASSES, counts))), flush=True)
     return counts
 
 
@@ -414,12 +460,22 @@ def main():
                     help="70%% of the poses near a fault (else 45%%), 70%% of those near this fault type")
     ap.add_argument("--posts-down", default="2-3", help="fallen posts per random layout, as MIN-MAX (default 2-3)")
     ap.add_argument("--preview", type=int, default=0, help="also write the first N frames with boxes drawn")
+    ap.add_argument("--fence-look", default="classic",
+                    help="the strands: classic (3.6 cm glowing yellow rods, as trained so far) or a real conductor (%s); "
+                         "a comma-separated list gives the layouts one look each, in turn" % ", ".join(sorted(gen_world.FENCE_LOOKS)))
+    ap.add_argument("--supersample", type=int, default=1, help="render the colour camera K times larger, averaged down")
     args = ap.parse_args()
+    args.looks = args.fence_look.split(",")
+    bad = [x for x in args.looks if x not in gen_world.FENCE_LOOKS]
+    if bad:
+        ap.error("unknown fence look %s (known: %s)" % (", ".join(bad), ", ".join(sorted(gen_world.FENCE_LOOKS))))
+    gen_world.FENCE_LOOK = args.looks[0]
     args.posts_down = tuple(int(v) for v in args.posts_down.split("-"))
     for d in ("images/train", "images/val", "images/test", "labels/train", "labels/val", "labels/test"):
         os.makedirs(os.path.join(args.out, d), exist_ok=True)
     with open(os.path.join(args.out, "data.yaml"), "w") as fh:
-        fh.write("path: %s\ntrain: images/train\nval: images/val\ntest: images/test\nnames:\n" % args.out +
+        fh.write("# fence look %s, supersample %d\n" % (args.fence_look, args.supersample) +
+                 "path: %s\ntrain: images/train\nval: images/val\ntest: images/test\nnames:\n" % args.out +
                  "".join("  %d: %s\n" % (i, c) for i, c in enumerate(CLASSES)))
     if args.patrol:
         run_layout(0, 0, 0, "test", args.out, args)
