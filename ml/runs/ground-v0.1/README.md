@@ -86,6 +86,29 @@ The phase 0 goal is at least 4 of 5 faults and at most 1 false alert.
 
 ![The best frame of each fault on the patrol, and the strongest false branch](patrol-faults.jpg)
 
+### Patrols of three new forests
+
+The patrol above is one forest. Three more, random forests from the training layouts' generator with seeds never
+trained on (700–702), driven along their own routes and scored the same way
+(`tools/make_ground_dataset.sh --patrol --patrol-seed S`, [new_forests/](new_forests)):
+
+| Forest | Frames | Faults | Live rule (fallen posts from 0.5): found, false alerts | Every fault from 0.7: found | Frames that show each fallen post, live rule |
+|---|---|---|---|---|---|
+| 700 | 880 | 3 broken wires, 2 fallen posts, 3 branches | **8 of 8, 0** | 7 of 8 (a fallen post missed) | 7 of 15, 8 of 14 |
+| 701 | 734 | 3 broken wires, 3 fallen posts, 2 branches | **8 of 8, 0** | 6 of 8 (two fallen posts missed) | 8 of 14, 7 of 15, 8 of 17 |
+| 702 | 647 | 3 broken wires, 3 fallen posts, 2 branches | **8 of 8, 0** | 7 of 8 (a fallen post missed) | 8 of 14, 7 of 15, 7 of 15 |
+| **All three** | 2,261 | 24 | **24 of 24, 0** | 20 of 24 | 7–8 (5 needed) |
+
+Broken wires show in 12–15 of their 14–20 frames and branches in 12–15 of 14–16, so they are far from the margin.
+Every miss at 0.7 is a fallen post: the same weakness in every forest, not a quirk of one. In forest 702 the scorer
+counts 3 broken-wire and 4 fallen-post frames "where there is none": they are the real faults, seen from 4.1–6.9 m,
+just outside the 4 m it matches within. No real false detection in any of the three.
+
+![Forest 700: the model at each fault](new_forests/forest700-faults.jpg)
+
+Limits of this check: the forests come from the same generator as the training layouts, so they vary the layout,
+forest and light, not the style; and every branch fault has the same shape.
+
 **Goal met offline.** The thin margin is the fallen post: at conf 0.7 only 5 of its 15 frames show it, exactly the
 5 an alert needs. It lies across the strip and drags the wires down, so it fills the frame only briefly. The false
 branch frames are leafy bushes behind the wire; they never last for 5 of 8 frames.
@@ -136,6 +159,7 @@ The fallen post is still the thin margin: 6–7 steps show it where 5 are needed
 
 ## Next
 
-1. **ground-v0.2:** more fallen-post frames (the rarest class: 372 against 812 broken wires and 693 branches) and
-   more epochs, so fallen posts are confident at 0.7 like the other faults and `class_conf` can go.
+1. **ground-v0.2:** more fallen-post frames (the rarest class: 372 against 812 broken wires and 693 branches, and
+   the only class missed at 0.7, in all four forests) and more epochs, so fallen posts are confident at 0.7 like the
+   other faults and `class_conf` can go. Branches of more than one shape would make the branch score mean more.
 2. **The real walk:** the first real ground-view images (see [docs/ugv.md](../../../docs/ugv.md)).

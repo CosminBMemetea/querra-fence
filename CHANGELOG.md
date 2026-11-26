@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **ground-v0.1 on three new forests** ([run record](ml/runs/ground-v0.1)): `make_ground_dataset.sh --patrol
+  --patrol-seed S` renders the patrol of a random forest never trained on. Seeds 700–702, offline with the live
+  alert rule: 24 of 24 faults, 0 false alerts. With every fault at 0.7: 20 of 24, all four misses fallen posts.
+
 ## v0.13.0 · 2026-11-25 · the ground robot finds the faults: 50 of 50 in 10 live patrols
 
 - **Real fence video** ([docs/drone-video.md](docs/drone-video.md)): `tools/video_eval.py` runs a fence model over a

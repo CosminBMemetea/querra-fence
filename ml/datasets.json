@@ -322,6 +322,87 @@
     "test": {"frames": 1032, "role": "test"}
    },
    "notes": "The patrol frames as the Jetson would receive them from the robot's camera stream."
+  },
+  {
+   "id": "ground_patrol_s700",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot patrol route, new random forest",
+   "created": "2026-11-26",
+   "code": "9df3956",
+   "command": "tools/make_ground_dataset.sh --patrol --patrol-seed 700 --out ~/querra-data/ground_patrol_s700",
+   "size": "148 MB",
+   "splits": {
+    "test": {"world": "random_forest(700)", "frames": 880, "role": "test"}
+   },
+   "notes": "A random forest enclosure from the training layouts' generator, of a seed never trained on (3 broken wires, 2 fallen posts, 3 branches), driven along the robot's route as ground_patrol. Never used for training or model selection."
+  },
+  {
+   "id": "ground_patrol_s700_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "copy of ground_patrol_s700, stream JPEG -q:v 4",
+   "created": "2026-11-26",
+   "code": "9df3956",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/ground_patrol_s700 test ~/querra-data/ground_patrol_s700_q4 --quality 4 --share 1 --seed 3",
+   "derived_from": "ground_patrol_s700:test",
+   "size": "19 MB",
+   "splits": {
+    "test": {"frames": 880, "role": "test"}
+   },
+   "notes": "The patrol frames as the Jetson would receive them from the robot's camera stream."
+  },
+  {
+   "id": "ground_patrol_s701",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot patrol route, new random forest",
+   "created": "2026-11-26",
+   "code": "9df3956",
+   "command": "tools/make_ground_dataset.sh --patrol --patrol-seed 701 --out ~/querra-data/ground_patrol_s701",
+   "size": "134 MB",
+   "splits": {
+    "test": {"world": "random_forest(701)", "frames": 734, "role": "test"}
+   },
+   "notes": "A random forest enclosure from the training layouts' generator, of a seed never trained on (3 broken wires, 3 fallen posts, 2 branches), driven along the robot's route as ground_patrol. Never used for training or model selection."
+  },
+  {
+   "id": "ground_patrol_s701_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "copy of ground_patrol_s701, stream JPEG -q:v 4",
+   "created": "2026-11-26",
+   "code": "9df3956",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/ground_patrol_s701 test ~/querra-data/ground_patrol_s701_q4 --quality 4 --share 1 --seed 3",
+   "derived_from": "ground_patrol_s701:test",
+   "size": "16 MB",
+   "splits": {
+    "test": {"frames": 734, "role": "test"}
+   },
+   "notes": "The patrol frames as the Jetson would receive them from the robot's camera stream."
+  },
+  {
+   "id": "ground_patrol_s702",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot patrol route, new random forest",
+   "created": "2026-11-26",
+   "code": "9df3956",
+   "command": "tools/make_ground_dataset.sh --patrol --patrol-seed 702 --out ~/querra-data/ground_patrol_s702",
+   "size": "126 MB",
+   "splits": {
+    "test": {"world": "random_forest(702)", "frames": 647, "role": "test"}
+   },
+   "notes": "A random forest enclosure from the training layouts' generator, of a seed never trained on (3 broken wires, 3 fallen posts, 2 branches), driven along the robot's route as ground_patrol. Never used for training or model selection."
+  },
+  {
+   "id": "ground_patrol_s702_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "copy of ground_patrol_s702, stream JPEG -q:v 4",
+   "created": "2026-11-26",
+   "code": "9df3956",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/ground_patrol_s702 test ~/querra-data/ground_patrol_s702_q4 --quality 4 --share 1 --seed 3",
+   "derived_from": "ground_patrol_s702:test",
+   "size": "17 MB",
+   "splits": {
+    "test": {"frames": 647, "role": "test"}
+   },
+   "notes": "The patrol frames as the Jetson would receive them from the robot's camera stream."
   }
  ]
 }
