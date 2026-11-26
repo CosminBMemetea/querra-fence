@@ -17,6 +17,7 @@ Classes (the drone's, so model-v0.5 can be fine-tuned): 0 post, 1 wire, 2 wire_b
   tools/make_ground_dataset.sh --patrol --patrol-seed 700 --out ...   a new random forest (random_forest(700), as the
                                                      training layouts but from seeds never trained on) along its route
   --preview N also writes the first N frames with their boxes drawn (preview/), to check the labels by eye.
+  --focus post_down --posts-down 4-6: layouts with more fallen posts and most poses near them (ground-v0.2's extra data).
 """
 import argparse
 import copy
@@ -68,7 +69,7 @@ CAM_XML = ('<model name="ds_cam"><pose>0 0 0.7 0 0 0</pose><link name="link"><gr
 
 
 # ---------------------------------------------------------------- layouts
-def random_forest(seed):
+def random_forest(seed, posts_down=(2, 3)):
     """A random enclosure in the forest style: forest.json with a new polygon, posts, faults, forest and sun."""
     rnd = random.Random(seed)
     cfg = copy.deepcopy(geo.load_config(FOREST_CFG))
@@ -95,7 +96,7 @@ def random_forest(seed):
         k = pick()
         if k is not None:
             faults.append({"id": "B%d" % i, "type": "wire_break", "segment": k, "strand": rnd.randint(0, 1)})
-    for i in range(rnd.randint(2, 3)):
+    for i in range(rnd.randint(*posts_down)):
         k = pick()
         if k is not None:
             faults.append({"id": "P%d" % i, "type": "post_down", "post": k})
@@ -246,12 +247,16 @@ def camera_pose(rx, ry, ryaw, rnd, jitter=True):
     return cx, cy, z, roll, pitch, yaw
 
 
-def sample_pose(rnd, strips, cfg, f):
+def sample_pose(rnd, strips, cfg, f, focus=None):
     d = rnd.choice(list(strips.strips))
     _, length = strips.strips[d]
     r = rnd.random()
-    if r < 0.45 and cfg["faults"]:                # near a fault: in view, or just about to be
-        kind = rnd.choice(sorted({ft["type"] for ft in cfg["faults"]}))   # each fault type equally often
+    types = sorted({ft["type"] for ft in cfg["faults"]})
+    if r < (0.7 if focus else 0.45) and cfg["faults"]:   # near a fault: in view, or just about to be
+        if focus in types and rnd.random() < 0.7:  # --focus: mostly that fault type
+            kind = focus
+        else:
+            kind = rnd.choice(types)              # each fault type equally often
         ft = rnd.choice([ft for ft in cfg["faults"] if ft["type"] == kind])
         ax, ay, _ = f.fault_anchor(ft)
         s = strips.s_near(d, ax, ay) + (rnd.uniform(-3.5, 3.5) if rnd.random() < 0.75 else rnd.uniform(-9, 9))
@@ -310,7 +315,7 @@ def run_layout(li, seed, n_frames, split, out, args):
         cfg, sun = random_forest(args.patrol_seed)
         seed = args.patrol_seed
     else:
-        cfg, sun = patrol_forest() if args.patrol else random_forest(seed)
+        cfg, sun = patrol_forest() if args.patrol else random_forest(seed, args.posts_down)
     wpath = os.path.join(out, "worlds", ("patrol" if args.patrol else "layout_%02d" % li) + ".sdf")
     os.makedirs(os.path.dirname(wpath), exist_ok=True)
     write_world(cfg, sun, wpath)
@@ -346,7 +351,7 @@ def run_layout(li, seed, n_frames, split, out, args):
             if patrol:
                 x, y, z, roll, pitch, yaw = camera_pose(*patrol[saved], rnd, jitter=False)
             else:
-                x, y, z, roll, pitch, yaw = sample_pose(rnd, strips, cfg, f)
+                x, y, z, roll, pitch, yaw = sample_pose(rnd, strips, cfg, f, args.focus)
             req = Pose()
             req.name = "ds_cam"
             req.position.x, req.position.y, req.position.z = x, y, z
@@ -405,8 +410,12 @@ def main():
     ap.add_argument("--split", choices=("train", "val", "test"), help="force every layout into this split")
     ap.add_argument("--patrol", action="store_true", help="the real forest.json world along the patrol route (test)")
     ap.add_argument("--patrol-seed", type=int, help="with --patrol: a random forest of this seed instead of forest.json")
+    ap.add_argument("--focus", choices=("wire_break", "post_down", "branch_short"),
+                    help="70%% of the poses near a fault (else 45%%), 70%% of those near this fault type")
+    ap.add_argument("--posts-down", default="2-3", help="fallen posts per random layout, as MIN-MAX (default 2-3)")
     ap.add_argument("--preview", type=int, default=0, help="also write the first N frames with boxes drawn")
     args = ap.parse_args()
+    args.posts_down = tuple(int(v) for v in args.posts_down.split("-"))
     for d in ("images/train", "images/val", "images/test", "labels/train", "labels/val", "labels/test"):
         os.makedirs(os.path.join(args.out, d), exist_ok=True)
     with open(os.path.join(args.out, "data.yaml"), "w") as fh:
