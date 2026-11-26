@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- **Tests and checks on every push** ([tests/](tests)): 64 tests with pytest, about 15 s on the Mac, no GPU, Gazebo or
+  ROS 2 needed (ROS 2 stand-ins in `tests/conftest.py`). They cover the drone's and the ground robot's alert
+  confirmation (and that the Jetson's `confirm.py` keeps the same logic as `tools/confirm.py`), DJI subtitles,
+  patrol scoring end to end, the labelling server, the cooling breaks and the model registry. Each was checked
+  against a real bug of this project put back in. `.github/workflows/checks.yml` runs them on GitHub with the
+  registry, release-notes and translated-README checks. `tools/train_with_breaks.py` takes its waits from the
+  environment (`BREAKS_POLL_S`, `BREAKS_SETTLE_S`, `BREAKS_STOP_WAIT_S`) so the tests can shorten them.
+
 ## v0.14.0 · 2026-11-26 · ready for real footage: a phone walk, a labelling page, and ground-v0.2 (candidate)
 
 - **Labelling real footage** ([docs/labelling.md](docs/labelling.md)): `tools/label_drafts.py draft` takes frames

@@ -22,7 +22,10 @@ import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STOP_WAIT_S = 120
+# seconds; the environment can shorten them (tests/test_train_with_breaks.py)
+POLL_S = float(os.environ.get("BREAKS_POLL_S", 10))           # how often results.csv is checked
+SETTLE_S = float(os.environ.get("BREAKS_SETTLE_S", 15))       # wait for last.pt to finish writing before the stop
+STOP_WAIT_S = float(os.environ.get("BREAKS_STOP_WAIT_S", 120))  # then terminate a run that ignores the stop
 
 
 def arg(args, name, default=None):
@@ -68,9 +71,9 @@ def main():
         p = subprocess.Popen(cmd)
         first = False
         while p.poll() is None:
-            time.sleep(10)
+            time.sleep(POLL_S)
             if target < total and epochs_done(csv) >= target and os.path.exists(last) and os.path.getmtime(last) > os.path.getmtime(csv):
-                time.sleep(15)  # let last.pt finish writing
+                time.sleep(SETTLE_S)
                 p.send_signal(signal.SIGINT)
                 try:
                     p.wait(timeout=STOP_WAIT_S)

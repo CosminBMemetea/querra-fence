@@ -1,0 +1,28 @@
+# On every push and pull request: the tests, and the checks that keep the registry, the release notes and the
+# translated READMEs consistent. No GPU, Gazebo or ROS 2 needed (tests/conftest.py stands in for ROS 2).
+name: checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0              # the tags, for the release-notes check
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"      # as ~/.querra-train-venv on the Mac
+      - name: Install the test dependencies
+        run: pip install pytest numpy opencv-python-headless
+      - name: Tests
+        run: python -m pytest -q
+      - name: Model registry valid, and its tables in ml/README.md up to date
+        run: python tools/model_registry.py --write && git diff --exit-code ml/README.md
+      - name: Release notes
+        run: python tools/release_notes.py
+      - name: Translated READMEs up to date with README.md
+        run: python docs/i18n/build_readmes.py && git diff --exit-code -- 'README.*.md'
