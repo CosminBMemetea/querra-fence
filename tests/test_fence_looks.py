@@ -85,3 +85,67 @@ def test_the_supersampled_camera_sends_fewer_frames(mg):
     assert m.cam_rate(1) == 30
     assert all(m.cam_rate(k) * (m.W * k) * (m.H * k) * 3 <= 50e6 for k in (2, 3, 4))   # about 40 MB/s
     assert "<update_rate>6</update_rate>" in m.cam_xml(3) and "<width>1920</width>" in m.cam_xml(3)
+
+
+# ------------------------------------------------------------------ the drone's dataset tool (tools/make_dataset.py)
+
+@pytest.fixture
+def drone_fence(mg, monkeypatch):
+    """The drone dataset's fence (its own builder, with dead-wire colours and break shapes) for one random farm."""
+    md = sys.modules["make_dataset"]
+    cfg, _ = md.random_layout(161)
+
+    def use(name):
+        monkeypatch.setattr(gen_world, "FENCE_LOOK", name)
+        return md.build_fence_v2(geo.Fence(cfg), cfg["_render"]).xml()
+    return use
+
+
+def test_the_drone_fence_keeps_its_look_in_classic(drone_fence):
+    xml = drone_fence("classic")
+    assert {0.018, 0.012} <= set(radii(xml))                           # strands and the gate wire as before
+    assert "<emissive>0.550 0.420 0.050 1</emissive>" in xml
+
+
+@pytest.mark.parametrize("name, size", [("steel", 0.0013), ("polywire", 0.0015), ("polyrope", 0.003)])
+def test_the_drone_fence_draws_real_wire(drone_fence, name, size):
+    xml = drone_fence(name)
+    assert set(r for r in radii(xml) if r < 0.01) == {size}             # strands, broken pieces and the gate wire
+    assert 0.018 not in radii(xml) and gen_world.WIRE not in xml and gen_world.WIRE_DEAD not in xml
+
+
+def test_the_drone_fence_has_the_same_strands_in_every_look(drone_fence):
+    assert len({drone_fence(name).count("<visual") for name in gen_world.FENCE_LOOKS}) == 1
+
+
+def test_the_drone_camera_supersamples(mg):
+    m, np = mg
+    md = sys.modules["make_dataset"]
+    assert md.CAM_XML == md.cam_xml(1) and "<width>640</width>" in md.CAM_XML and "<update_rate>30</update_rate>" in md.CAM_XML
+    assert "<width>1920</width><height>1200</height>" in md.cam_xml(3) and "<update_rate>6</update_rate>" in md.cam_xml(3)
+    fr = md.Frames(2)
+    raw = np.full((md.H * 2, md.W * 2, 3), 60, np.uint8)
+    raw[:, 9] = 230                                                    # 1 px of 2 at the 2x size
+    fr.cb(types.SimpleNamespace(width=md.W * 2, height=md.H * 2, step=md.W * 2 * 3, data=raw.tobytes()))
+    fr.cb(types.SimpleNamespace(width=md.W, height=md.H, step=md.W * 3, data=b""))   # a frame of the wrong size: ignored
+    img = fr.wait_new(0, k=1, timeout=0.1)
+    assert img.shape == (md.H, md.W, 3) and img[0, 4, 0] > 150 and img[0, 5, 0] == 60
+
+
+def test_a_wider_ground_camera_keeps_the_labels_and_slows_its_frames(mg, monkeypatch):
+    """--width: the same lens with more pixels. Labels are in fractions of the frame, so they must not move; the
+    larger frames come fewer per second, colour and depth."""
+    m, np = mg
+    pts = np.array([[3.0, 0.4, 0.9], [3.0, 0.2, 0.5], [3.2, -0.1, 0.2]])
+    objs = [("post", pts, 0.0)]
+    R, c = np.eye(3), np.array([0.0, 0.0, 0.7])
+    small = m.labels_for(objs, c, R, None)
+    monkeypatch.setattr(m, "W", m.W); monkeypatch.setattr(m, "H", m.H)
+    monkeypatch.setattr(m, "FX", m.FX); monkeypatch.setattr(m, "SCALE", m.SCALE)
+    m.set_width(1920)
+    assert (m.W, m.H, m.SCALE) == (1920, 1200, 3.0)
+    big = m.labels_for(objs, c, R, None)
+    assert small and len(big) == len(small) and np.allclose(big[0][1:], small[0][1:], atol=0.002)
+    xml = m.cam_xml(2)
+    assert "<width>3840</width>" in xml and "<update_rate>2</update_rate>" in xml        # colour: 3840x2400, 55 MB/s
+    assert "<update_rate>6</update_rate><topic>/ds_cam/depth" in xml                    # depth: 1920x1200 floats

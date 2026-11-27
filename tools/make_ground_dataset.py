@@ -24,6 +24,8 @@ Classes (the drone's, so model-v0.5 can be fine-tuned): 0 post, 1 wire, 2 wire_b
   --supersample 3 renders the colour camera 3x wider and taller and averages each 3x3 block in linear light, as a sensor
   gathers it: a 2.5 mm wire 2 m away covers half a pixel and should show as a faint line, not as dots or nothing. The
   colour camera then runs at fewer frames per second (cam_rate), so its larger frames do not pile up.
+  --width 1280: a camera of the same lens and aspect, 1280 pixels wide (the robot's is 640): how much a better camera
+  sees of a thin wire. The labels' pixel sizes (smallest box, padding) scale with it, so they match across widths.
 """
 import argparse
 import copy
@@ -46,6 +48,7 @@ import geo  # noqa: E402
 import gen_forest  # noqa: E402
 import gen_world  # noqa: E402   (FENCE_LOOK)
 import make_dataset as md  # noqa: E402  (ground_truth, rod, rot, quat, write_png, CLASSES)
+from supersample import TO_LINEAR, cam_rate, downsample, rgb  # noqa: E402,F401  (TO_LINEAR, downsample: tests)
 
 from gz.transport13 import Node  # noqa: E402
 from gz.msgs10.image_pb2 import Image  # noqa: E402
@@ -55,6 +58,16 @@ from gz.msgs10.boolean_pb2 import Boolean  # noqa: E402
 CAM = gen_forest.ROBOT["camera"]
 W, H, HFOV = CAM["width"], CAM["height"], math.radians(CAM["hfov_deg"])
 FX = (W / 2) / math.tan(HFOV / 2)
+SCALE = 1.0                                        # W / the robot camera's width (--width): pixel sizes in the labels scale
+
+
+def set_width(w):
+    """A camera of the same lens w pixels wide (--width): the labels' pixel sizes scale with it."""
+    global W, H, FX, SCALE
+    W, H, SCALE = w, round(w * CAM["height"] / CAM["width"]), w / CAM["width"]
+    FX = (W / 2) / math.tan(HFOV / 2)
+
+
 CAM_Z, CAM_PITCH, CAM_SIDE = 0.70, CAM["rpy"][1], CAM["xyz"][1]   # 0.28 m base link + 0.42 m mount; 0.10 rad down
 CLASSES = md.CLASSES
 WORLD = "forest"
@@ -65,12 +78,6 @@ MAX_RANGE = 12.0                                  # do not label fence parts far
 MIN_FRAC = {"branch": 0.15, "fallen_post": 0.3}   # share of the object's points inside the frame (else the drone's)
 DEPTH_TOL = {"branch": 1.5}                       # metres behind the depth image still counted as seen (else 0.25)
 
-def cam_rate(ss):
-    """Colour frames per second: 30, or fewer when supersampled, so the frames (ss^2 times larger) stay near 40 MB/s.
-    At 30 per second, 4x frames (12 MB each) arrived faster than Python read them: memory and swap filled up."""
-    return 30 if ss == 1 else max(3, int(60 / ss ** 2))
-
-
 def cam_xml(ss=1):
     """The dataset cameras: colour at ss times the robot camera's size (averaged back down in Frames), depth at its size."""
     return ('<model name="ds_cam"><pose>0 0 0.7 0 0 0</pose><link name="link"><gravity>false</gravity>'
@@ -80,21 +87,11 @@ def cam_xml(ss=1):
             '<topic>/ds_cam/image</topic></sensor>'
             '<sensor name="depth" type="depth_camera"><camera><horizontal_fov>{f:.4f}</horizontal_fov><image><width>{w}</width><height>{h}</height>'
             '<format>R_FLOAT32</format></image><clip><near>0.1</near><far>80</far></clip></camera><always_on>1</always_on>'
-            '<update_rate>30</update_rate><topic>/ds_cam/depth</topic></sensor></link></model>').format(
-        f=HFOV, w=W, h=H, sw=W * ss, sh=H * ss, rate=cam_rate(ss))
+            '<update_rate>{drate}</update_rate><topic>/ds_cam/depth</topic></sensor></link></model>').format(
+        f=HFOV, w=W, h=H, sw=W * ss, sh=H * ss, rate=cam_rate(ss, W, H), drate=cam_rate(1, W, H))
 
 
 CAM_XML = cam_xml(1)
-# sRGB <-> linear light, to average supersampled pixels as a sensor would
-_SRGB = np.arange(256) / 255.0
-TO_LINEAR = np.where(_SRGB <= 0.04045, _SRGB / 12.92, ((_SRGB + 0.055) / 1.055) ** 2.4).astype(np.float32)
-
-
-def downsample(a, k):
-    """(H*k, W*k, 3) uint8 sRGB -> (H, W, 3): each k x k block averaged in linear light."""
-    lin = TO_LINEAR[a].reshape(a.shape[0] // k, k, a.shape[1] // k, k, 3).mean(axis=(1, 3))
-    srgb = np.where(lin <= 0.0031308, lin * 12.92, 1.055 * np.power(lin, 1 / 2.4) - 0.055)
-    return np.clip(np.round(srgb * 255.0), 0, 255).astype(np.uint8)
 
 
 # ---------------------------------------------------------------- layouts
@@ -235,9 +232,9 @@ def labels_for(objs, c, R, depth):
         if seen.sum() < 3 or seen.sum() < 0.5 * inside.sum():
             continue
         x0, x1, y0, y1 = u[seen].min(), u[seen].max(), v[seen].min(), v[seen].max()
-        if max(x1 - x0, y1 - y0) < 8:
+        if max(x1 - x0, y1 - y0) < 8 * SCALE:
             continue
-        pad = 3
+        pad = 3 * SCALE
         x0, y0, x1, y1 = max(0, x0 - pad), max(0, y0 - pad), min(W - 1, x1 + pad), min(H - 1, y1 + pad)
         out.append((CLASSES.index(cls), (x0 + x1) / 2 / W, (y0 + y1) / 2 / H, (x1 - x0) / W, (y1 - y0) / H))
     return out
@@ -318,9 +315,7 @@ class Frames:
     def colour(self, img):
         if self.ss == 1:
             return img
-        sw, sh = W * self.ss, H * self.ss
-        a = np.frombuffer(img, dtype=np.uint8)[: sh * self.step].reshape(sh, self.step)[:, : sw * 3].reshape(sh, sw, 3)
-        return downsample(a, self.ss)
+        return downsample(rgb(img, self.step, W * self.ss, H * self.ss), self.ss)
 
     def dcb(self, msg):
         if msg.width != W or msg.height != H:
@@ -438,8 +433,8 @@ def run_layout(li, seed, n_frames, split, out, args):
             gz.kill()
         subprocess.run(["pkill", "-f", wpath])
         log.close()
-    print("[ground] layout %d (%s, seed %d, fence %s, supersample %d): %d frames in %.0f s, faults %s, boxes %s" % (
-        li, split, seed, gen_world.FENCE_LOOK, args.supersample, saved, time.time() - t0,
+    print("[ground] layout %d (%s, seed %d, fence %s, supersample %d%s): %d frames in %.0f s, faults %s, boxes %s" % (
+        li, split, seed, gen_world.FENCE_LOOK, args.supersample, ", width %d" % W if SCALE != 1 else "", saved, time.time() - t0,
         [ft["type"] for ft in cfg["faults"]], dict(zip(CLASSES, counts))), flush=True)
     return counts
 
@@ -464,17 +459,22 @@ def main():
                     help="the strands: classic (3.6 cm glowing yellow rods, as trained so far) or a real conductor (%s); "
                          "a comma-separated list gives the layouts one look each, in turn" % ", ".join(sorted(gen_world.FENCE_LOOKS)))
     ap.add_argument("--supersample", type=int, default=1, help="render the colour camera K times larger, averaged down")
+    ap.add_argument("--width", type=int, default=CAM["width"],
+                    help="a camera of the same lens this many pixels wide (default the robot's, %d)" % CAM["width"])
     args = ap.parse_args()
     args.looks = args.fence_look.split(",")
     bad = [x for x in args.looks if x not in gen_world.FENCE_LOOKS]
     if bad:
         ap.error("unknown fence look %s (known: %s)" % (", ".join(bad), ", ".join(sorted(gen_world.FENCE_LOOKS))))
     gen_world.FENCE_LOOK = args.looks[0]
+    if args.width != CAM["width"]:
+        set_width(args.width)
     args.posts_down = tuple(int(v) for v in args.posts_down.split("-"))
     for d in ("images/train", "images/val", "images/test", "labels/train", "labels/val", "labels/test"):
         os.makedirs(os.path.join(args.out, d), exist_ok=True)
     with open(os.path.join(args.out, "data.yaml"), "w") as fh:
-        fh.write("# fence look %s, supersample %d\n" % (args.fence_look, args.supersample) +
+        fh.write("# fence look %s, supersample %d%s\n" % (args.fence_look, args.supersample,
+                                                          ", width %d" % W if SCALE != 1 else "") +
                  "path: %s\ntrain: images/train\nval: images/val\ntest: images/test\nnames:\n" % args.out +
                  "".join("  %d: %s\n" % (i, c) for i, c in enumerate(CLASSES)))
     if args.patrol:

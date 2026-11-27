@@ -9,6 +9,10 @@ Classes: 0 post, 1 wire, 2 wire_break, 3 fallen_post, 4 branch, 5 cow, 6 sheep
 Run with tools/make_dataset.sh (Gazebo Python env). Output: $QF_DATASET (default ~/querra-data/fence_yolo)
 --look rich renders the rich world (sky, textured grass, hills) with a random sun, fill light and grass tint.
 Occlusion is ignored (a post behind a tree keeps its box); boxes come from dense 3D samples.
+--fence-look steel|polywire|polyrope|polytape draws the strands as real conductors at their real size instead of the
+classic 3.6 cm glowing yellow rods (sim/gen_world.py FENCE_LOOKS); a comma-separated list gives the layouts one look each,
+in turn. The layouts, poses and labels stay the same. --supersample K renders the camera K times wider and taller and
+averages it back down in linear light (tools/supersample.py), so a wire thinner than a pixel shows as a faint line.
 """
 import argparse
 import copy
@@ -30,6 +34,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "sim"))
 import geo  # noqa: E402
 import gen_world  # noqa: E402
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+from supersample import cam_rate, downsample, rgb  # noqa: E402
 
 # World look (--look, or GARDIAN_DATASET_LOOK). "classic" (default) is the flat-green world model-v0.1..v0.3 were trained
 # on; its light and ground are randomised by exact-string edits of the generated XML, so old datasets stay reproducible.
@@ -80,8 +86,16 @@ def break_rods(a, b, style):
 
 
 def build_fence_v2(fence, render, gate_open=False):
-    """gen_world.build_fence with a configurable dead-wire colour and break style."""
+    """gen_world.build_fence with a configurable dead-wire colour and break style. In a real-conductor fence look
+    (gen_world.FENCE_LOOK) the strands, dead or not, are drawn by gen_world.strand in that look."""
     v = gen_world.Visuals()
+    classic = gen_world.FENCE_LOOK == "classic"
+
+    def wire(p0, p1, r, m):
+        if classic:
+            v.rod(p0, p1, r, m)
+        else:
+            gen_world.strand(v, p0, p1, r=r)
     P = fence.posts
     WIRE, DEAD = gen_world.WIRE, gen_world.WIRE_DEAD
     if render.get("dead") in DEAD_COLOURS:
@@ -101,13 +115,13 @@ def build_fence_v2(fence, render, gate_open=False):
             a, b = fence.attach(k, st), fence.attach(k + 1, st)
             if broken_seg.get(k) == st:
                 for p0, p1 in break_rods(a, b, styles.get(str(k), "hang")):
-                    v.rod(p0, p1, 0.018, DEAD)
+                    wire(p0, p1, 0.018, DEAD)
                 continue
             dead = any(bs == st and k > seg for seg, bs in fence.broken)
-            v.rod(a, b, 0.018, DEAD if dead else WIRE)
+            wire(a, b, 0.018, DEAD if dead else WIRE)
     g, f0 = P[-1], P[0]
     mat = gen_world.mat
-    v.rod((g["x"], g["y"], 1.0), (f0["x"], f0["y"], 1.0), 0.012, WIRE)
+    wire((g["x"], g["y"], 1.0), (f0["x"], f0["y"], 1.0), 0.012, WIRE)
     v.box((0.25, 0.06, 0.06), ((g["x"] + f0["x"]) / 2, (g["y"] + f0["y"]) / 2, 1.0, 0, 0, math.atan2(f0["y"] - g["y"], f0["x"] - g["x"])), mat(0.08, 0.08, 0.08))
     ox, oy = f0["out"]
     ex, ey = f0["x"] + ox * 0.35, f0["y"] + oy * 0.35
@@ -194,7 +208,7 @@ def rich_light(light):
     gen_world.SCENE_RICH, gen_world.SUN_RICH, gen_world.GROUND_TINT = scene, sun, tint
 
 
-def write_world(cfg, light, path):
+def write_world(cfg, light, path, ss=1):
     gen_world.geo.load_config = lambda path=None: cfg
     gen_world.OUT = path
     gen_world.build_fence = lambda fence, gate_open=False: build_fence_v2(fence, cfg["_render"], gate_open)
@@ -203,18 +217,19 @@ def write_world(cfg, light, path):
         gen_world.GROUND_MESH = os.path.splitext(path)[0] + "_ground.obj"
         rich_light(light)
     gen_world.main()
+    cam = cam_xml(ss)
     s = open(path).read()
     s = re.sub(r"\s*<include>\s*<uri>model://x500_fence</uri>.*?</include>", "", s, flags=re.S)
     if rich:
         s = s.replace("<uri>model://pasture_ground/meshes/ground.obj</uri>", "<uri>file://%s</uri>" % gen_world.GROUND_MESH)
-        s = s.replace("  </world>", CAM_XML + "\n  </world>")
+        s = s.replace("  </world>", cam + "\n  </world>")
         with open(path, "w") as f:
             f.write(s)
         return
     if light is None:  # mission world: keep the default sun and ground
         light = dict(elev=None)
     if light["elev"] is None:
-        s = s.replace("  </world>", CAM_XML + "\n  </world>")
+        s = s.replace("  </world>", cam + "\n  </world>")
         with open(path, "w") as f:
             f.write(s)
         return
@@ -227,17 +242,21 @@ def write_world(cfg, light, path):
     g = "%.3f %.3f %.3f 1" % light["ground"]
     s = s.replace("<ambient>0.30 0.45 0.18 1</ambient><diffuse>0.30 0.45 0.18 1</diffuse>",
                   "<ambient>%s</ambient><diffuse>%s</diffuse>" % (g, g))
-    cam = CAM_XML
     s = s.replace("  </world>", cam + "\n  </world>")
     with open(path, "w") as f:
         f.write(s)
 
 
-CAM_XML = ('<model name="ds_cam"><pose>0 0 12 0 0.96 0</pose><link name="link"><gravity>false</gravity>'
-           '<inertial><mass>1</mass><inertia><ixx>1</ixx><ixy>0</ixy><ixz>0</ixz><iyy>1</iyy><iyz>0</iyz><izz>1</izz></inertia></inertial>'
-           '<sensor name="cam" type="camera"><camera><horizontal_fov>%.3f</horizontal_fov><image><width>%d</width><height>%d</height></image>'
-           '<clip><near>0.2</near><far>400</far></clip></camera><always_on>1</always_on><update_rate>30</update_rate>'
-           '<topic>/ds_cam/image</topic></sensor></link></model>' % (HFOV, W, H))
+def cam_xml(ss=1):
+    """The dataset camera, at ss times the drone camera's size when supersampled (averaged back down in Frames)."""
+    return ('<model name="ds_cam"><pose>0 0 12 0 0.96 0</pose><link name="link"><gravity>false</gravity>'
+            '<inertial><mass>1</mass><inertia><ixx>1</ixx><ixy>0</ixy><ixz>0</ixz><iyy>1</iyy><iyz>0</iyz><izz>1</izz></inertia></inertial>'
+            '<sensor name="cam" type="camera"><camera><horizontal_fov>%.3f</horizontal_fov><image><width>%d</width><height>%d</height></image>'
+            '<clip><near>0.2</near><far>400</far></clip></camera><always_on>1</always_on><update_rate>%d</update_rate>'
+            '<topic>/ds_cam/image</topic></sensor></link></model>' % (HFOV, W * ss, H * ss, cam_rate(ss)))
+
+
+CAM_XML = cam_xml(1)
 
 
 # ---------------------------------------------------------------- ground truth as 3D point samples
@@ -480,39 +499,51 @@ def write_png(path, rgb):
 
 
 class Frames:
-    def __init__(self):
-        self.lock = threading.Lock()
-        self.count, self.img = 0, None
+    def __init__(self, ss=1):
+        self.lock, self.ss = threading.Lock(), ss
+        self.count, self.img, self.step = 0, None, 0
 
     def cb(self, msg):
-        if msg.width != W or msg.height != H:
+        if msg.width != W * self.ss or msg.height != H * self.ss:
             return
-        a = np.frombuffer(msg.data, dtype=np.uint8)[: H * msg.step].reshape(H, msg.step)[:, : W * 3].reshape(H, W, 3)
+        if self.ss > 1:                           # keep the raw bytes; averaged down only for the frames that are saved
+            with self.lock:
+                self.img, self.step, self.count = msg.data, msg.step, self.count + 1
+            return
+        a = rgb(msg.data, msg.step, W, H)
         with self.lock:
             self.img = a.copy()
             self.count += 1
+
+    def colour(self, img):
+        return img if self.ss == 1 else downsample(rgb(img, self.step, W * self.ss, H * self.ss), self.ss)
 
     def wait_new(self, n0, k=3, timeout=5):
         t = time.time()
         while time.time() - t < timeout:
             with self.lock:
                 if self.count >= n0 + k:
-                    return self.img
+                    img = self.img
+                    break
             time.sleep(0.005)
+        else:
+            return None
+        return self.colour(img)
         return None
 
 
 def run_layout(li, seed, n_frames, split, out, args):
     cfg, light = random_layout(seed)
+    gen_world.FENCE_LOOK = args.looks[li % len(args.looks)]
     wpath = os.path.join(out, "worlds", "layout_%02d.sdf" % li)
     os.makedirs(os.path.dirname(wpath), exist_ok=True)
-    write_world(cfg, light, wpath)
+    write_world(cfg, light, wpath, args.supersample)
     f, objs = ground_truth(cfg)
     animals = geo.herd_layout(cfg, f)
     log = open(os.path.join(out, "worlds", "layout_%02d.gz.log" % li), "w")
     gz = subprocess.Popen(["gz", "sim", "-r", "-s", "--verbose=1", wpath], stdout=log, stderr=subprocess.STDOUT)
     node = Node()
-    fr = Frames()
+    fr = Frames(args.supersample)
     node.subscribe(Image, "/ds_cam/image", fr.cb)
     t0 = time.time()
     while fr.count < 3 and time.time() - t0 < 90:
@@ -567,8 +598,10 @@ def run_layout(li, seed, n_frames, split, out, args):
             gz.kill()
         subprocess.run(["pkill", "-f", wpath])
         log.close()
-    print("[dataset] layout %d (%s, %s, seed %d): %d frames in %.0f s, faults %s, light elev %.0f, boxes %s" % (
-        li, split, gen_world.look(), seed, saved, time.time() - t0, [ft["type"] for ft in cfg["faults"]], (light or {}).get("elev") or 0,
+    extra = "" if (gen_world.FENCE_LOOK, args.supersample) == ("classic", 1) else ", fence %s, supersample %d" % (
+        gen_world.FENCE_LOOK, args.supersample)
+    print("[dataset] layout %d (%s, %s%s, seed %d): %d frames in %.0f s, faults %s, light elev %.0f, boxes %s" % (
+        li, split, gen_world.look(), extra, seed, saved, time.time() - t0, [ft["type"] for ft in cfg["faults"]], (light or {}).get("elev") or 0,
         dict(zip(CLASSES, counts))), flush=True)
     return counts
 
@@ -588,11 +621,21 @@ def main():
     ap.add_argument("--look", choices=("classic", "rich"), default=gen_world.LOOK, help="world look (default classic, or GARDIAN_DATASET_LOOK)")
     ap.add_argument("--split", choices=("train", "val", "test"), help="force every layout into this split")
     ap.add_argument("--mission-world", action="store_true", help="the real fence.json pasture with flight-like poses only (evaluation)")
+    ap.add_argument("--fence-look", default="classic",
+                    help="strands as %s (default classic: 3.6 cm glowing rods); a comma-separated list gives the layouts "
+                         "one look each, in turn" % ", ".join(sorted(gen_world.FENCE_LOOKS)))
+    ap.add_argument("--supersample", type=int, default=1, help="render the camera K times larger, averaged down")
     args = ap.parse_args()
+    args.looks = args.fence_look.split(",")
+    bad = [x for x in args.looks if x not in gen_world.FENCE_LOOKS]
+    if bad:
+        ap.error("unknown fence look %s (known: %s)" % (", ".join(bad), ", ".join(sorted(gen_world.FENCE_LOOKS))))
     gen_world.LOOK = args.look
     for d in ("images/train", "images/val", "images/test", "labels/train", "labels/val", "labels/test"):
         os.makedirs(os.path.join(args.out, d), exist_ok=True)
     with open(os.path.join(args.out, "data.yaml"), "w") as fh:
+        if (args.fence_look, args.supersample) != ("classic", 1):
+            fh.write("# fence look %s, supersample %d\n" % (args.fence_look, args.supersample))
         fh.write("path: %s\ntrain: images/train\nval: images/val\ntest: images/test\nnames:\n" % args.out +
                  "".join("  %d: %s\n" % (i, c) for i, c in enumerate(CLASSES)))
     for li in range(args.start, args.layouts):
