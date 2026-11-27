@@ -6,7 +6,8 @@
 
 draft   takes one frame every --every seconds of a video (or every image of a folder) into DIR/images/all and writes
         the model's boxes from --conf (0.25) to DIR/drafts. It never touches reviewed labels: run it again on the same
-        DIR with another --model to redraw the drafts only. DIR defaults to ~/querra-data/real/<video name>.
+        DIR with another --model to redraw the drafts only; from a folder, photos added since join first.
+        DIR defaults to ~/querra-data/real/<video name>.
 serve   a page on 127.0.0.1 to review the frames. The drafts load as editable boxes: delete the wrong ones, fix the
         rest, draw what the model missed, Enter saves. A saved frame's boxes go to DIR/labels/all (YOLO format) and
         the frame to DIR/reviewed.txt; a skipped frame (S: blurred, no fence in view) is left out of the test set.
@@ -146,13 +147,18 @@ def cmd_draft(a):
     for k in ("img", "lab", "draft"):
         os.makedirs(P[k], exist_ok=True)
     meta = load(P["meta"], {})
-    if frames(d):
-        print("[label] %s already has %d frames: redrawing the drafts only" % (d, len(frames(d))))
-    elif os.path.isdir(src):
+    if os.path.isdir(src):                    # a folder of photos: new ones join (a folder that grows), drafts redrawn
+        had, new = len(frames(d)), 0
         for p in sorted(glob.glob(os.path.join(src, "*"))):
-            if p.lower().endswith(IMG_EXT):
-                shutil.copy2(p, os.path.join(P["img"], os.path.basename(p).replace(" ", "_")))
+            dst = os.path.join(P["img"], os.path.basename(p).replace(" ", "_"))
+            if p.lower().endswith(IMG_EXT) and not os.path.exists(dst):
+                shutil.copy2(p, dst)
+                new += 1
+        if had:
+            print("[label] %s had %d frames: %d new from the folder, redrawing the drafts" % (d, had, new))
         meta.update(source=src, kind="images", times={})
+    elif frames(d):
+        print("[label] %s already has %d frames: redrawing the drafts only" % (d, len(frames(d))))
     else:
         meta.update(source=src, kind="video", every_s=a.every, start_s=a.start, end_s=a.end, width=a.width,
                     times=extract(src, d, a))
