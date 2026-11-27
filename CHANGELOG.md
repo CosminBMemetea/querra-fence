@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **A sharper camera for the ground robot, a test** ([ml/runs/ground-v0.3](ml/runs/ground-v0.3#a-sharper-camera)):
+  `make_ground_dataset.sh --width` renders the robot's lens with more pixels. At 1,280 and 1,920 pixels a 2.5 mm wire
+  is a crisp line, but ground-v0.3 cannot use it: shrunk to the 640 pixels it reads, the sharper frames score within
+  a few points of the 640 camera, and at full size it fails on every look (mAP50 0.75 at 1,280, 0.18 at 1,920),
+  because every object is 2–3 times larger than anything it learned. A sharper camera needs a model trained at its
+  size.
 - **The drone on real fence conductors, a stress test** ([ml/runs/model-v0.5](ml/runs/model-v0.5#fence-looks-a-stress-test)):
   `make_dataset.sh --fence-look` and `--supersample` for the drone's dataset tool (classic and rich worlds unchanged).
   On its flight test farms model-v0.5 finds no broken wire in any real conductor, at conf 0.7 or 0.5: from 11–12 m a

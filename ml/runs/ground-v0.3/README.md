@@ -149,6 +149,33 @@ alert chain counts: 5 of 8 frames, a find when a fault of its class lies within 
   The model now sees branches from farther away, but the same look, a bush behind the wire, could raise a false
   branch on a real fence with bushes: one to watch on real footage.
 
+## A sharper camera
+
+Would a camera with more pixels find thin wire better? The same 3 test forests, seen by a camera of the robot's lens
+1,280 and 1,920 pixels wide instead of 640 (`make_ground_dataset.sh --width`, code `1470fe3`), 2x supersampled, JPEG
+like the stream ([resolution/resolution.json](resolution/resolution.json)). A 2.5 mm wire 1.9 m away covers 0.35,
+0.7 and 1.1 pixels.
+
+![The same broken steel wire, the same part of the frame, at 640, 1,280 and 1,920 pixels](resolution/steel-wire-by-width.jpg)
+
+The camera does record more: at 1,280 and 1,920 pixels the wire is a crisp line. ground-v0.3 cannot use it:
+
+| ground-v0.3, 600 frames | 640 camera | 1,280 camera, shrunk to 640 | 1,920 camera, shrunk to 640 | 1,280 at full size | 1,920 at full size |
+|---|---|---|---|---|---|
+| Classic: mAP50 | 0.980 | 0.979 | 0.981 | 0.748 | 0.178 |
+| Steel wire: mAP50 | 0.972 | 0.980 | 0.976 | 0.742 | 0.181 |
+| Steel wire: broken wires from 0.7 / from 0.5 | 77% / 90% | 79% / 94% | 75% / 92% | 38% / 76% | 14% / 40% |
+| Polywire: mAP50 | 0.973 | 0.967 | 0.964 | 0.734 | 0.176 |
+| Polywire: broken wires from 0.7 / from 0.5 | 72% / 90% | 73% / 90% | 70% / 86% | 32% / 71% | 14% / 39% |
+
+- **Shrunk to the 640 pixels the model reads, a sharper camera adds little**, at most a few points: shrinking the
+  frame averages the wire back to what the 640 camera records.
+- **At full size the model fails, on the classic look as much as on thin wire**: every post and wire is 2 or 3 times
+  larger in pixels than anything it learned (posts mAP50 0.61 at 1,280, 0.15 at 1,920).
+- So a sharper camera helps only with a model trained at its size. That is the test still to run: training data
+  rendered at 1,280 pixels and a model trained at 1,280 (about four times the computation per frame, on the Jetson
+  too: about 14 ms instead of 3.4).
+
 ## Decision
 
 **Candidate.** It fixes what the stress test found, thin wire, and loses nothing on the checks the alerts use: the
@@ -166,6 +193,6 @@ real camera records a wire thinner than a pixel. Real footage is the test that m
    fence, labelled with [docs/labelling.md](../../../docs/labelling.md), scored against ground-v0.2.
 2. **Live on the Jetson:** build the engine from the ONNX, then `tools/ugv_series.sh 10 … detect:=true` with
    `engine:=/models/ground-yolo11n-v0.3-fp16.engine` and broken wires from 0.6.
-3. **The camera:** at 640 pixels across 100 degrees a 2.5 mm wire is half a pixel. A test at 1,280 and 1,920 pixels
-   would show how much a better camera adds.
+3. **The camera:** a 1,280-pixel camera records the wire as a line ([above](#a-sharper-camera)), but only a model
+   trained at 1,280 pixels can use it. Render training data at `--width 1280` and train at `imgsz 1280`.
 4. **Branches of more than one shape**, and bushes behind the wire as hard negatives.

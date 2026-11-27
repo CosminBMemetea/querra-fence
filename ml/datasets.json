@@ -665,6 +665,120 @@
     }
    },
    "notes": "The flight test farms of fence_yolo_flight_classic (seeds 160-162) with the strands drawn as 40 mm white polytape, a ribbon on edge (sim/gen_world.py FENCE_LOOKS, drawn by the drone tool's own fence builder). The camera rendered at 3x and averaged in linear light, so a wire thinner than a pixel shows as a faint line. Same farms, poses and labels as fence_yolo_flight_classic's test split, frame for frame. Scoring only: ml/runs/model-v0.5/fence_looks."
+  },
+  {
+   "id": "ground_look_classic_w1280_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot side camera 1280x800 (the robot's lens, more pixels), fence look classic, 2x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-27",
+   "code": "1470fe3",
+   "command": "tools/make_ground_dataset.sh --split test --seed 900 --layouts 3 --frames 200 --fence-look classic --supersample 2 --width 1280 --out ~/querra-data/ground_look_classic_w1280; tools/jpeg_like_stream.py ~/querra-data/ground_look_classic_w1280 test ~/querra-data/ground_look_classic_w1280_q4 --quality 4 --share 1 --seed 2",
+   "size": "27 MB",
+   "splits": {
+    "test": {
+     "layouts": "0-2",
+     "seeds": "900-902",
+     "frames": 600,
+     "role": "test",
+     "prefix": "T00,T01,T02"
+    }
+   },
+   "notes": "The test forests of ground_yolo (seeds 900-902) with the strands drawn as in ground_yolo (the classic look), the control, seen by a camera of the robot's lens 1280 pixels wide instead of 640 (a 2.5 mm wire 1.9 m away: 0.7 pixels). The colour camera rendered at 2x and averaged in linear light. Labels as ground_look_classic_q4, scaled to the frame. Scoring only: ml/runs/ground-v0.3/resolution."
+  },
+  {
+   "id": "ground_look_steel_w1280_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot side camera 1280x800 (the robot's lens, more pixels), fence look steel, 2x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-27",
+   "code": "1470fe3",
+   "command": "tools/make_ground_dataset.sh --split test --seed 900 --layouts 3 --frames 200 --fence-look steel --supersample 2 --width 1280 --out ~/querra-data/ground_look_steel_w1280; tools/jpeg_like_stream.py ~/querra-data/ground_look_steel_w1280 test ~/querra-data/ground_look_steel_w1280_q4 --quality 4 --share 1 --seed 2",
+   "size": "26 MB",
+   "splits": {
+    "test": {
+     "layouts": "0-2",
+     "seeds": "900-902",
+     "frames": 600,
+     "role": "test",
+     "prefix": "T00,T01,T02"
+    }
+   },
+   "notes": "The test forests of ground_yolo (seeds 900-902) with the strands drawn as 2.5 mm galvanised steel wire, grey, seen by a camera of the robot's lens 1280 pixels wide instead of 640 (a 2.5 mm wire 1.9 m away: 0.7 pixels). The colour camera rendered at 2x and averaged in linear light. Labels as ground_look_steel_q4, scaled to the frame. Scoring only: ml/runs/ground-v0.3/resolution."
+  },
+  {
+   "id": "ground_look_polywire_w1280_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot side camera 1280x800 (the robot's lens, more pixels), fence look polywire, 2x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-27",
+   "code": "1470fe3",
+   "command": "tools/make_ground_dataset.sh --split test --seed 900 --layouts 3 --frames 200 --fence-look polywire --supersample 2 --width 1280 --out ~/querra-data/ground_look_polywire_w1280; tools/jpeg_like_stream.py ~/querra-data/ground_look_polywire_w1280 test ~/querra-data/ground_look_polywire_w1280_q4 --quality 4 --share 1 --seed 2",
+   "size": "27 MB",
+   "splits": {
+    "test": {
+     "layouts": "0-2",
+     "seeds": "900-902",
+     "frames": 600,
+     "role": "test",
+     "prefix": "T00,T01,T02"
+    }
+   },
+   "notes": "The test forests of ground_yolo (seeds 900-902) with the strands drawn as 3 mm yellow polywire, seen by a camera of the robot's lens 1280 pixels wide instead of 640 (a 2.5 mm wire 1.9 m away: 0.7 pixels). The colour camera rendered at 2x and averaged in linear light. Labels as ground_look_polywire_q4, scaled to the frame. Scoring only: ml/runs/ground-v0.3/resolution."
+  },
+  {
+   "id": "ground_look_classic_w1920_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot side camera 1920x1200 (the robot's lens, more pixels), fence look classic, 2x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-27",
+   "code": "1470fe3",
+   "command": "tools/make_ground_dataset.sh --split test --seed 900 --layouts 3 --frames 200 --fence-look classic --supersample 2 --width 1920 --out ~/querra-data/ground_look_classic_w1920; tools/jpeg_like_stream.py ~/querra-data/ground_look_classic_w1920 test ~/querra-data/ground_look_classic_w1920_q4 --quality 4 --share 1 --seed 2",
+   "size": "48 MB",
+   "splits": {
+    "test": {
+     "layouts": "0-2",
+     "seeds": "900-902",
+     "frames": 600,
+     "role": "test",
+     "prefix": "T00,T01,T02"
+    }
+   },
+   "notes": "The test forests of ground_yolo (seeds 900-902) with the strands drawn as in ground_yolo (the classic look), the control, seen by a camera of the robot's lens 1920 pixels wide instead of 640 (a 2.5 mm wire 1.9 m away: 1.1 pixels). The colour camera rendered at 2x and averaged in linear light. Labels as ground_look_classic_q4, scaled to the frame. Scoring only: ml/runs/ground-v0.3/resolution."
+  },
+  {
+   "id": "ground_look_steel_w1920_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot side camera 1920x1200 (the robot's lens, more pixels), fence look steel, 2x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-27",
+   "code": "1470fe3",
+   "command": "tools/make_ground_dataset.sh --split test --seed 900 --layouts 3 --frames 200 --fence-look steel --supersample 2 --width 1920 --out ~/querra-data/ground_look_steel_w1920; tools/jpeg_like_stream.py ~/querra-data/ground_look_steel_w1920 test ~/querra-data/ground_look_steel_w1920_q4 --quality 4 --share 1 --seed 2",
+   "size": "47 MB",
+   "splits": {
+    "test": {
+     "layouts": "0-2",
+     "seeds": "900-902",
+     "frames": 600,
+     "role": "test",
+     "prefix": "T00,T01,T02"
+    }
+   },
+   "notes": "The test forests of ground_yolo (seeds 900-902) with the strands drawn as 2.5 mm galvanised steel wire, grey, seen by a camera of the robot's lens 1920 pixels wide instead of 640 (a 2.5 mm wire 1.9 m away: 1.1 pixels). The colour camera rendered at 2x and averaged in linear light. Labels as ground_look_steel_q4, scaled to the frame. Scoring only: ml/runs/ground-v0.3/resolution."
+  },
+  {
+   "id": "ground_look_polywire_w1920_q4",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot side camera 1920x1200 (the robot's lens, more pixels), fence look polywire, 2x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-27",
+   "code": "1470fe3",
+   "command": "tools/make_ground_dataset.sh --split test --seed 900 --layouts 3 --frames 200 --fence-look polywire --supersample 2 --width 1920 --out ~/querra-data/ground_look_polywire_w1920; tools/jpeg_like_stream.py ~/querra-data/ground_look_polywire_w1920 test ~/querra-data/ground_look_polywire_w1920_q4 --quality 4 --share 1 --seed 2",
+   "size": "48 MB",
+   "splits": {
+    "test": {
+     "layouts": "0-2",
+     "seeds": "900-902",
+     "frames": 600,
+     "role": "test",
+     "prefix": "T00,T01,T02"
+    }
+   },
+   "notes": "The test forests of ground_yolo (seeds 900-902) with the strands drawn as 3 mm yellow polywire, seen by a camera of the robot's lens 1920 pixels wide instead of 640 (a 2.5 mm wire 1.9 m away: 1.1 pixels). The colour camera rendered at 2x and averaged in linear light. Labels as ground_look_polywire_q4, scaled to the frame. Scoring only: ml/runs/ground-v0.3/resolution."
   }
  ]
 }
