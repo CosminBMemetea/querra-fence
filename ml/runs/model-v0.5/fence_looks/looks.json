@@ -1,0 +1,266 @@
+{
+ "what": "model-v0.5 on its flight test farms (seeds 160-162, inspection-flight poses only, 750 frames) rendered in each fence look at 3x supersampling and compressed like the stream (-q:v 4); mAP50 per class from Ultralytics val; per fault class recall, precision and frames with a false box at conf 0.5 and 0.7 (IoU 0.3)",
+ "code": "1470fe3",
+ "looks": {
+  "classic": {
+   "model-v0.5": {
+    "mAP50": 0.919,
+    "mAP50-95": 0.754,
+    "ap50": {
+     "post": 0.99,
+     "wire": 0.993,
+     "wire_break": 0.575,
+     "fallen_post": 0.988,
+     "branch": 0.974
+    },
+    "wire_break": {
+     "labelled": 158,
+     "0.5": {
+      "recall": 0.386,
+      "precision": 0.782,
+      "false_frames_pct": 2.3
+     },
+     "0.7": {
+      "recall": 0.215,
+      "precision": 0.895,
+      "false_frames_pct": 0.5
+     }
+    },
+    "fallen_post": {
+     "labelled": 101,
+     "0.5": {
+      "recall": 0.941,
+      "precision": 0.95,
+      "false_frames_pct": 0.7
+     },
+     "0.7": {
+      "recall": 0.931,
+      "precision": 0.969,
+      "false_frames_pct": 0.4
+     }
+    },
+    "branch": {
+     "labelled": 43,
+     "0.5": {
+      "recall": 0.907,
+      "precision": 0.975,
+      "false_frames_pct": 0.1
+     },
+     "0.7": {
+      "recall": 0.814,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    }
+   }
+  },
+  "steel": {
+   "model-v0.5": {
+    "mAP50": 0.712,
+    "mAP50-95": 0.564,
+    "ap50": {
+     "post": 0.976,
+     "wire": 0.293,
+     "wire_break": 0.04,
+     "fallen_post": 0.893,
+     "branch": 0.901
+    },
+    "wire_break": {
+     "labelled": 158,
+     "0.5": {
+      "recall": 0.0,
+      "precision": null,
+      "false_frames_pct": 0.0
+     },
+     "0.7": {
+      "recall": 0.0,
+      "precision": null,
+      "false_frames_pct": 0.0
+     }
+    },
+    "fallen_post": {
+     "labelled": 101,
+     "0.5": {
+      "recall": 0.653,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     },
+     "0.7": {
+      "recall": 0.594,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    },
+    "branch": {
+     "labelled": 43,
+     "0.5": {
+      "recall": 0.767,
+      "precision": 0.971,
+      "false_frames_pct": 0.1
+     },
+     "0.7": {
+      "recall": 0.767,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    }
+   }
+  },
+  "polywire": {
+   "model-v0.5": {
+    "mAP50": 0.741,
+    "mAP50-95": 0.589,
+    "ap50": {
+     "post": 0.978,
+     "wire": 0.461,
+     "wire_break": 0.028,
+     "fallen_post": 0.913,
+     "branch": 0.922
+    },
+    "wire_break": {
+     "labelled": 158,
+     "0.5": {
+      "recall": 0.0,
+      "precision": null,
+      "false_frames_pct": 0.0
+     },
+     "0.7": {
+      "recall": 0.0,
+      "precision": null,
+      "false_frames_pct": 0.0
+     }
+    },
+    "fallen_post": {
+     "labelled": 101,
+     "0.5": {
+      "recall": 0.673,
+      "precision": 0.986,
+      "false_frames_pct": 0.1
+     },
+     "0.7": {
+      "recall": 0.614,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    },
+    "branch": {
+     "labelled": 43,
+     "0.5": {
+      "recall": 0.791,
+      "precision": 0.971,
+      "false_frames_pct": 0.1
+     },
+     "0.7": {
+      "recall": 0.767,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    }
+   }
+  },
+  "polyrope": {
+   "model-v0.5": {
+    "mAP50": 0.84,
+    "mAP50-95": 0.688,
+    "ap50": {
+     "post": 0.989,
+     "wire": 0.952,
+     "wire_break": 0.123,
+     "fallen_post": 0.973,
+     "branch": 0.935
+    },
+    "wire_break": {
+     "labelled": 158,
+     "0.5": {
+      "recall": 0.019,
+      "precision": 0.13,
+      "false_frames_pct": 2.7
+     },
+     "0.7": {
+      "recall": 0.0,
+      "precision": null,
+      "false_frames_pct": 0.0
+     }
+    },
+    "fallen_post": {
+     "labelled": 101,
+     "0.5": {
+      "recall": 0.822,
+      "precision": 0.954,
+      "false_frames_pct": 0.5
+     },
+     "0.7": {
+      "recall": 0.782,
+      "precision": 0.975,
+      "false_frames_pct": 0.3
+     }
+    },
+    "branch": {
+     "labelled": 43,
+     "0.5": {
+      "recall": 0.907,
+      "precision": 0.975,
+      "false_frames_pct": 0.1
+     },
+     "0.7": {
+      "recall": 0.814,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    }
+   }
+  },
+  "polytape": {
+   "model-v0.5": {
+    "mAP50": 0.865,
+    "mAP50-95": 0.706,
+    "ap50": {
+     "post": 0.991,
+     "wire": 0.966,
+     "wire_break": 0.231,
+     "fallen_post": 0.984,
+     "branch": 0.974
+    },
+    "wire_break": {
+     "labelled": 158,
+     "0.5": {
+      "recall": 0.082,
+      "precision": 0.5,
+      "false_frames_pct": 1.7
+     },
+     "0.7": {
+      "recall": 0.044,
+      "precision": 0.875,
+      "false_frames_pct": 0.1
+     }
+    },
+    "fallen_post": {
+     "labelled": 101,
+     "0.5": {
+      "recall": 0.911,
+      "precision": 0.939,
+      "false_frames_pct": 0.8
+     },
+     "0.7": {
+      "recall": 0.871,
+      "precision": 0.978,
+      "false_frames_pct": 0.3
+     }
+    },
+    "branch": {
+     "labelled": 43,
+     "0.5": {
+      "recall": 0.907,
+      "precision": 0.975,
+      "false_frames_pct": 0.1
+     },
+     "0.7": {
+      "recall": 0.814,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    }
+   }
+  }
+ }
+}

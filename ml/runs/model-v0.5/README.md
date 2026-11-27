@@ -127,6 +127,37 @@ The same 9 sets as every model before ([eval_heldout.json](eval_heldout.json),
 On PNG, v0.5 scores like v0.4 (within ±0.01 mAP50; `wire_break` up to −0.035 on the mission pasture). It trades a
 little broken-wire recall for precision: its `wire_break` precision is equal or higher on every set.
 
+### Fence looks: a stress test
+
+Every drone model so far learned one fence look: strands drawn as rods 3.6 cm thick, glowing yellow, and dead ones in
+other colours. As for the ground robot ([ground-v0.2](../ground-v0.2#fence-looks-a-stress-test)), the flight test farms
+(seeds 160–162, inspection-flight poses only) were rendered with real conductors at their real size
+(`make_dataset.sh --fence-look`), at 3x supersampling so that a wire thinner than a pixel shows as the faint line a
+camera records, and compressed like the stream ([fence_looks/looks.json](fence_looks/looks.json); a box is right
+when it overlaps a labelled one of its class by IoU 0.3).
+
+| model-v0.5, 750 test frames per look | mAP50 | `wire` mAP50 | Broken wires found from 0.7 | from 0.5 | Fallen posts from 0.7 | Branches from 0.7 |
+|---|---|---|---|---|---|---|
+| Classic (as trained) | 0.919 | 0.993 | 22% | 39% | 93% | 81% |
+| Polytape, 40 mm white | 0.865 | 0.966 | 4% | 8% | 87% | 81% |
+| Polyrope, 6 mm white | 0.840 | 0.952 | **0%** | 2% | 78% | 81% |
+| Polywire, 3 mm yellow | 0.741 | 0.461 | **0%** | 0% | 61% | 77% |
+| Steel wire, 2.5 mm grey | 0.712 | 0.293 | **0%** | 0% | 59% | 77% |
+
+- **No broken wire on any real conductor.** From the flight, 11–12 m up and 2.5 m out, a strand is about 11 m from
+  the camera: a 2.5 mm wire is a tenth of a pixel wide (the classic rod: 1.5 pixels). Steel wire and polywire all but
+  vanish, so a span with a strand missing looks like any other. Rope and tape still show (`wire` mAP50 0.95 and 0.97),
+  but their breaks are not found either: the model learned breaks by the classic look's cues, glowing strands and dead
+  ones in other colours, which no real conductor has. (Per frame, 22% on the classic look is enough: the 5-of-8
+  confirmation raised every broken-wire alert in the flights above.)
+- **No false alarms:** where the wire disappears the model stays quiet. No look adds false broken wires (at most 0.1% of
+  frames at 0.7) or false fallen posts and branches.
+- **Fallen posts drop** from 93% to about 60% on thin wire, as they did for the ground robot: the dragged-down wires are
+  part of how the model sees them. **Posts and branches hold** (post mAP50 0.98–0.99).
+- **The rendering is not the cause:** the classic look at 3x scores 0.919, the same farms without supersampling 0.926.
+
+![The first test frame with a broken wire, in each look: no box from 0.7 in any; on steel wire and polywire the intact strand is gone too](fence_looks/broken-wire-by-look.jpg)
+
 ## The mission replay
 
 The recorded classic mission (1,986 frames from the real stream) through `tools/eval_mission.py` and the live
@@ -188,6 +219,11 @@ v0.3 and v0.4 are retired. They stay selectable with `engine:=` and in the panel
   projected to the ground.
 - **Loose wires on a fallen post look broken up close.** Label them, or let the re-fly accept a fallen post there.
 - **The stream itself.** `-q:v 2` or 4:4:4 colour would keep the wires sharper, at about twice the bandwidth.
+- **Real fences** ([stress test](#fence-looks-a-stress-test)). On steel wire or polywire the drone will not find a
+  broken wire with this camera at this height: the wire is a tenth of a pixel. It still finds posts, branches and,
+  less often, fallen posts. Broken thin wire is the ground robot's job ([ground-v0.3](../ground-v0.3) finds it), or a
+  low, close pass: with the DJI Mini 4 Pro's 4K camera (82°) a 2.5 mm wire is one pixel wide from 5.5 m. A drone model
+  trained on real conductors, as ground-v0.3 was, should bring back fallen posts and breaks on rope and tape.
 - **Real frames.** Everything here is simulated. The first real recordings from the field recorder come first.
 
 ## Files
@@ -203,3 +239,5 @@ v0.3 and v0.4 are retired. They stay selectable with `engine:=` and in the panel
 | [live/flights.json](live/flights.json) | Live flights: every alert with class, confidence, phase, nearest fault, verdict; re-fly reports |
 | [live/*_px4_check.txt](live) | Raw live checks: PX4 pose against the simulator, alerts against the true faults |
 | [trtexec.txt](trtexec.txt) | TensorRT FP16 engine build on the Jetson Orin Nano |
+| [fence_looks/looks.json](fence_looks/looks.json) | The fence-look stress test: per look, mAP50 per class and each fault class at conf 0.5 and 0.7 |
+| [fence_looks/broken-wire-by-look.jpg](fence_looks/broken-wire-by-look.jpg) | One broken wire in each look, model-v0.5's boxes from 0.7 |

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **The drone on real fence conductors, a stress test** ([ml/runs/model-v0.5](ml/runs/model-v0.5#fence-looks-a-stress-test)):
+  `make_dataset.sh --fence-look` and `--supersample` for the drone's dataset tool (classic and rich worlds unchanged).
+  On its flight test farms model-v0.5 finds no broken wire in any real conductor, at conf 0.7 or 0.5: from 11–12 m a
+  2.5 mm wire is a tenth of a pixel, and on rope and tape, which it sees (`wire` mAP50 0.95, 0.97), it never learned
+  what a real break looks like. No false alarms where the wire vanishes; fallen posts drop from 93% to about 60% on
+  thin wire; posts and branches hold. Broken thin wire is the ground robot's job, or a low close pass (the DJI Mini 4
+  Pro's 4K camera sees a 2.5 mm wire as one pixel from 5.5 m).
 - **ground-v0.3, thin wire (candidate)** ([ml/runs/ground-v0.3](ml/runs/ground-v0.3)): fine-tuned from ground-v0.2
   with 4,000 frames of 16 new forests in real conductors (6 steel wire, 6 polywire, 2 rope, 2 tape; 3x supersampled),
   on the M2's GPU in 1.2 h. On the stress test's forests thin wire now scores almost like thick conductors: `wire`

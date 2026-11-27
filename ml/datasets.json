@@ -570,6 +570,101 @@
     }
    },
    "notes": "Train: 3026 of the 4000 frames compressed like the robot's camera stream at a random -q:v of 2, 3, 4, 5, 6 or 8, as ground_yolo_stream; the rest are hard links to the PNGs. Val: every frame at -q:v 4, the stream's quality. Same labels."
+  },
+  {
+   "id": "drone_look_classic_q4",
+   "look": "classic",
+   "style": "inspection-flight poses only (v4), fence look classic, 3x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-27",
+   "code": "1470fe3",
+   "command": "tools/make_dataset.sh --seed 100 --look classic --style v4 --flight-share 1 --start 60 --layouts 63 --split test --frames 250 --fence-look classic --supersample 3 --out ~/querra-data/drone_look_classic; tools/jpeg_like_stream.py ~/querra-data/drone_look_classic test ~/querra-data/drone_look_classic_q4 --quality 4 --share 1",
+   "size": "6.9 MB",
+   "splits": {
+    "test": {
+     "layouts": "60-62",
+     "seeds": "160-162",
+     "frames": 750,
+     "role": "test",
+     "prefix": "L60,L61,L62"
+    }
+   },
+   "notes": "The flight test farms of fence_yolo_flight_classic (seeds 160-162) with the strands drawn as before (3.6 cm rods, glowing yellow, dead ones in other colours) but rendered at 3x: the control (sim/gen_world.py FENCE_LOOKS, drawn by the drone tool's own fence builder). The camera rendered at 3x and averaged in linear light, so a wire thinner than a pixel shows as a faint line. Same farms, poses and labels as fence_yolo_flight_classic's test split, frame for frame. Scoring only: ml/runs/model-v0.5/fence_looks."
+  },
+  {
+   "id": "drone_look_steel_q4",
+   "look": "classic",
+   "style": "inspection-flight poses only (v4), fence look steel, 3x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-27",
+   "code": "1470fe3",
+   "command": "tools/make_dataset.sh --seed 100 --look classic --style v4 --flight-share 1 --start 60 --layouts 63 --split test --frames 250 --fence-look steel --supersample 3 --out ~/querra-data/drone_look_steel; tools/jpeg_like_stream.py ~/querra-data/drone_look_steel test ~/querra-data/drone_look_steel_q4 --quality 4 --share 1",
+   "size": "6.3 MB",
+   "splits": {
+    "test": {
+     "layouts": "60-62",
+     "seeds": "160-162",
+     "frames": 750,
+     "role": "test",
+     "prefix": "L60,L61,L62"
+    }
+   },
+   "notes": "The flight test farms of fence_yolo_flight_classic (seeds 160-162) with the strands drawn as 2.5 mm galvanised steel wire, grey (sim/gen_world.py FENCE_LOOKS, drawn by the drone tool's own fence builder). The camera rendered at 3x and averaged in linear light, so a wire thinner than a pixel shows as a faint line. Same farms, poses and labels as fence_yolo_flight_classic's test split, frame for frame. Scoring only: ml/runs/model-v0.5/fence_looks."
+  },
+  {
+   "id": "drone_look_polywire_q4",
+   "look": "classic",
+   "style": "inspection-flight poses only (v4), fence look polywire, 3x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-27",
+   "code": "1470fe3",
+   "command": "tools/make_dataset.sh --seed 100 --look classic --style v4 --flight-share 1 --start 60 --layouts 63 --split test --frames 250 --fence-look polywire --supersample 3 --out ~/querra-data/drone_look_polywire; tools/jpeg_like_stream.py ~/querra-data/drone_look_polywire test ~/querra-data/drone_look_polywire_q4 --quality 4 --share 1",
+   "size": "6.3 MB",
+   "splits": {
+    "test": {
+     "layouts": "60-62",
+     "seeds": "160-162",
+     "frames": 750,
+     "role": "test",
+     "prefix": "L60,L61,L62"
+    }
+   },
+   "notes": "The flight test farms of fence_yolo_flight_classic (seeds 160-162) with the strands drawn as 3 mm yellow polywire (sim/gen_world.py FENCE_LOOKS, drawn by the drone tool's own fence builder). The camera rendered at 3x and averaged in linear light, so a wire thinner than a pixel shows as a faint line. Same farms, poses and labels as fence_yolo_flight_classic's test split, frame for frame. Scoring only: ml/runs/model-v0.5/fence_looks."
+  },
+  {
+   "id": "drone_look_polyrope_q4",
+   "look": "classic",
+   "style": "inspection-flight poses only (v4), fence look polyrope, 3x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-27",
+   "code": "1470fe3",
+   "command": "tools/make_dataset.sh --seed 100 --look classic --style v4 --flight-share 1 --start 60 --layouts 63 --split test --frames 250 --fence-look polyrope --supersample 3 --out ~/querra-data/drone_look_polyrope; tools/jpeg_like_stream.py ~/querra-data/drone_look_polyrope test ~/querra-data/drone_look_polyrope_q4 --quality 4 --share 1",
+   "size": "6.4 MB",
+   "splits": {
+    "test": {
+     "layouts": "60-62",
+     "seeds": "160-162",
+     "frames": 750,
+     "role": "test",
+     "prefix": "L60,L61,L62"
+    }
+   },
+   "notes": "The flight test farms of fence_yolo_flight_classic (seeds 160-162) with the strands drawn as 6 mm white polyrope (sim/gen_world.py FENCE_LOOKS, drawn by the drone tool's own fence builder). The camera rendered at 3x and averaged in linear light, so a wire thinner than a pixel shows as a faint line. Same farms, poses and labels as fence_yolo_flight_classic's test split, frame for frame. Scoring only: ml/runs/model-v0.5/fence_looks."
+  },
+  {
+   "id": "drone_look_polytape_q4",
+   "look": "classic",
+   "style": "inspection-flight poses only (v4), fence look polytape, 3x supersampled, stream JPEG -q:v 4",
+   "created": "2026-11-27",
+   "code": "1470fe3",
+   "command": "tools/make_dataset.sh --seed 100 --look classic --style v4 --flight-share 1 --start 60 --layouts 63 --split test --frames 250 --fence-look polytape --supersample 3 --out ~/querra-data/drone_look_polytape; tools/jpeg_like_stream.py ~/querra-data/drone_look_polytape test ~/querra-data/drone_look_polytape_q4 --quality 4 --share 1",
+   "size": "6.4 MB",
+   "splits": {
+    "test": {
+     "layouts": "60-62",
+     "seeds": "160-162",
+     "frames": 750,
+     "role": "test",
+     "prefix": "L60,L61,L62"
+    }
+   },
+   "notes": "The flight test farms of fence_yolo_flight_classic (seeds 160-162) with the strands drawn as 40 mm white polytape, a ribbon on edge (sim/gen_world.py FENCE_LOOKS, drawn by the drone tool's own fence builder). The camera rendered at 3x and averaged in linear light, so a wire thinner than a pixel shows as a faint line. Same farms, poses and labels as fence_yolo_flight_classic's test split, frame for frame. Scoring only: ml/runs/model-v0.5/fence_looks."
   }
  ]
 }
