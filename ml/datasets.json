@@ -779,6 +779,43 @@
     }
    },
    "notes": "The test forests of ground_yolo (seeds 900-902) with the strands drawn as 3 mm yellow polywire, seen by a camera of the robot's lens 1920 pixels wide instead of 640 (a 2.5 mm wire 1.9 m away: 1.1 pixels). The colour camera rendered at 2x and averaged in linear light. Labels as ground_look_polywire_q4, scaled to the frame. Scoring only: ml/runs/ground-v0.3/resolution."
+  },
+  {
+   "id": "ttpla",
+   "look": "real",
+   "style": "real drone photos of power lines (TTPLA), 3840x2160, cables and poles outlined (labelme polygons)",
+   "created": "2026-11-27",
+   "code": "6aa819b",
+   "source": "https://github.com/R3ab/ttpla_dataset (Abdelfattah, Wang and Wang, ACCV 2020)",
+   "license": "Apache-2.0",
+   "command": "data_original_size_v1.zip from the repository's README (Google Drive, 4.5 GB), unpacked flat to ~/querra-data/real/ttpla/raw; ~/.querra-train-venv/bin/python tools/ttpla_check.py ~/querra-data/real/ttpla/raw MODEL.pt OUT.json",
+   "size": "4.6 GB",
+   "splits": {
+    "test": {
+     "frames": 1242,
+     "role": "test"
+    }
+   },
+   "notes": "No farm fence in any photo: every fault box is a false alarm, and every cow or sheep box too. 1,229 photos show cables (10,103 outlined), 271 wooden poles (333). Scoring only, never for training our classes (its cables are not fence wire). ml/runs/model-v0.5#real-photos-power-lines-ttpla."
+  },
+  {
+   "id": "commons_fences",
+   "look": "real",
+   "style": "photos of electric fences from Wikimedia Commons, free licences, 1280 px wide",
+   "created": "2026-11-27",
+   "code": "6aa819b",
+   "source": "https://commons.wikimedia.org/wiki/Category:Electric_fences (and its subcategories, depth 3)",
+   "license": "per photo, in manifest.json: public domain, CC0, CC BY or CC BY-SA (most: CC BY-SA 2.0, geograph.org.uk); credit the authors when showing a photo",
+   "command": "tools/fetch_commons.py ~/querra-data/real/commons_fences --depth 3 --cat 'Pasture electric fences' --cat 'Electric fences by country' --cat 'Electric fences' --cat 'Electric fence insulators' --exclude border --exclude auschwitz --exclude camp --exclude gobi --exclude gardina --exclude 'wire of death' --exclude sign --exclude prison --exclude 'berlin wall' --exclude 'iron curtain' --exclude military --exclude missile --exclude holocaust --exclude concentration --exclude ghetto --exclude nazi --exclude 'de gas' --exclude 'gas chamber' --width 1280; ~/.querra-train-venv/bin/python tools/label_drafts.py draft ~/querra-data/real/commons_fences/images --model ~/querra-data/models/ground-yolo11n-v0.3.pt --out ~/querra-data/real/commons_fences_set",
+   "size": "about 150 MB when complete",
+   "splits": {
+    "test": {
+     "frames": 467,
+     "role": "test",
+     "reviewed": 0
+    }
+   },
+   "notes": "467 photos pass the licence and exclusion checks (one more was taken out by hand: a concentration camp photo filed under electric fences). Wikimedia throttles the download to about one a minute, so it fills over hours; label_drafts.py draft adds the new ones. Mostly eye-level landscapes from the UK, the Czech Republic and the Alps; about a third show a fence close enough to label. Labelled in ~/querra-data/real/commons_fences_set (docs/labelling.md); a photo with no usable fence is skipped there, so the test set will be smaller. Real images stay out of git."
   }
  ]
 }

@@ -1,0 +1,54 @@
+{
+ "what": "model-v0.5 on all 1,242 TTPLA photos (real drone photos of power lines, no farm fence) at imgsz 640: frames with a box of each fault or animal class (all false), labelled cables with a wire box and their length inside one, wooden poles with a post box at their centre",
+ "model": "~/querra-data/models/fence-yolo11n-v0.5.pt",
+ "source": "TTPLA, Abdelfattah, Wang and Wang, ACCV 2020, github.com/R3ab/ttpla_dataset, Apache-2.0",
+ "frames": 1242,
+ "false": {
+  "wire_break": {
+   "0.5": 5,
+   "0.7": 0
+  },
+  "fallen_post": {
+   "0.5": 15,
+   "0.7": 1
+  },
+  "branch": {
+   "0.5": 13,
+   "0.7": 1
+  },
+  "cow": {
+   "0.5": 1042,
+   "0.7": 316
+  },
+  "sheep": {
+   "0.5": 7,
+   "0.7": 0
+  }
+ },
+ "cable_frames": 1231,
+ "cable_frames_with_wire_0.5": 144,
+ "cable_points": 1624932,
+ "cable_points_in_wire_0.5": 63886,
+ "poles": 333,
+ "poles_with_post_0.5": 1,
+ "examples": {
+  "cow": [
+   "07_1035.jpg",
+   "09_6675.jpg",
+   "1000_00183.jpg",
+   "1000_00273.jpg",
+   "1000_00285.jpg",
+   "1000_00295.jpg",
+   "1000_00527.jpg",
+   "1000_00531.jpg",
+   "105_2745.jpg",
+   "105_5430.jpg"
+  ],
+  "fallen_post": [
+   "19_00641.jpg"
+  ],
+  "branch": [
+   "48_01811.jpg"
+  ]
+ }
+}

@@ -158,6 +158,34 @@ when it overlaps a labelled one of its class by IoU 0.3).
 
 ![The first test frame with a broken wire, in each look: no box from 0.7 in any; on steel wire and polywire the intact strand is gone too](fence_looks/broken-wire-by-look.jpg)
 
+### Real photos: power lines (TTPLA)
+
+The first real images: [TTPLA](https://github.com/R3ab/ttpla_dataset) (Abdelfattah, Wang and Wang, ACCV 2020,
+Apache-2.0), 1,242 drone photos of power lines in the US at 3840×2160, with the cables and poles outlined. There is no
+farm fence in them, so every fault box is a false alarm (`tools/ttpla_check.py`, [real/ttpla.json](real/ttpla.json)).
+
+| model-v0.5 on 1,242 real photos | from conf 0.7 | from 0.5 |
+|---|---|---|
+| Frames with a false broken wire | **0** | 5 (0.4%) |
+| Frames with a false fallen post | 1 (0.1%) | 15 (1.2%) |
+| Frames with a false branch | 1 (0.1%) | 13 (1.0%) |
+| Frames with a false **cow** | **316 (25%)** | **1,042 (84%)** |
+| Frames with a false sheep | 0 | 7 (0.6%) |
+
+- **Fault alarms are rare on real scenes:** 2 frames of 1,242 from 0.7, and an alert needs 5 of 8. One of the two is a
+  real tree lying across the lines, boxed as a branch.
+- **The cow class does not work on real images:** it boxes bushes, windows, a brick wall and parts of pylons. The
+  simulator's cows are simple shapes on simple ground. No alert uses the animal classes today, but anything built on
+  them (a herd count, the planned predator watch) needs a model that learned from real animals first (COCO's cows and
+  sheep, aerial cattle photos).
+- **Real cables and poles are barely seen:** a wire box in 144 of the 1,231 frames with cables, covering 4% of their
+  length, and a post box on 1 of the 333 wooden poles. These are not fences, and many cables are tens of metres away,
+  but nothing here suggests the wire and post classes carry over to real images by themselves.
+
+![Six of the photos with model-v0.5's boxes from conf 0.5: every cow is false; bottom right, a fallen tree on the lines boxed as a branch](real/ttpla-examples.jpg)
+
+Photos: TTPLA, Apache-2.0.
+
 ## The mission replay
 
 The recorded classic mission (1,986 frames from the real stream) through `tools/eval_mission.py` and the live
@@ -224,7 +252,9 @@ v0.3 and v0.4 are retired. They stay selectable with `engine:=` and in the panel
   less often, fallen posts. Broken thin wire is the ground robot's job ([ground-v0.3](../ground-v0.3) finds it), or a
   low, close pass: with the DJI Mini 4 Pro's 4K camera (82°) a 2.5 mm wire is one pixel wide from 5.5 m. A drone model
   trained on real conductors, as ground-v0.3 was, should bring back fallen posts and breaks on rope and tape.
-- **Real frames.** Everything here is simulated. The first real recordings from the field recorder come first.
+- **Real frames.** Apart from TTPLA's power lines ([above](#real-photos-power-lines-ttpla)) everything here is
+  simulated: few false faults on real scenes, but cows everywhere, and real cables and poles barely seen. The first
+  real recordings of a fence from the field recorder or the DJI come first.
 
 ## Files
 
@@ -241,3 +271,5 @@ v0.3 and v0.4 are retired. They stay selectable with `engine:=` and in the panel
 | [trtexec.txt](trtexec.txt) | TensorRT FP16 engine build on the Jetson Orin Nano |
 | [fence_looks/looks.json](fence_looks/looks.json) | The fence-look stress test: per look, mAP50 per class and each fault class at conf 0.5 and 0.7 |
 | [fence_looks/broken-wire-by-look.jpg](fence_looks/broken-wire-by-look.jpg) | One broken wire in each look, model-v0.5's boxes from 0.7 |
+| [real/ttpla.json](real/ttpla.json) | `tools/ttpla_check.py` on the 1,242 TTPLA photos: false faults and animals per frame, cables and poles seen |
+| [real/ttpla-examples.jpg](real/ttpla-examples.jpg) | Six TTPLA photos with the model's boxes (photos: TTPLA, Apache-2.0) |

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **The first real images** ([ml/datasets.json](ml/datasets.json)): `tools/fetch_commons.py` collects openly licensed
+  photos of electric fences from Wikimedia Commons with their author and licence (467 pass; drafted by ground-v0.3 for
+  review with `tools/label_drafts.py`, whose `draft` now adds photos that join a folder later). `tools/ttpla_check.py`
+  runs a drone model on TTPLA's 1,242 real drone photos of power lines ([ml/runs/model-v0.5](ml/runs/model-v0.5#real-photos-power-lines-ttpla)):
+  model-v0.5 raises a fault in 2 of them from conf 0.7 (one a real tree on the lines), but boxes a cow in 25% (bushes,
+  windows, walls) and barely sees the real cables and poles. On the first 50 fence photos ground-v0.3 boxes few posts
+  and wires and no fault from 0.5. Real labelled images, not more simulation, are what the models need next.
 - **A sharper camera for the ground robot, a test** ([ml/runs/ground-v0.3](ml/runs/ground-v0.3#a-sharper-camera)):
   `make_ground_dataset.sh --width` renders the robot's lens with more pixels. At 1,280 and 1,920 pixels a 2.5 mm wire
   is a crisp line, but ground-v0.3 cannot use it: shrunk to the 640 pixels it reads, the sharper frames score within
