@@ -288,7 +288,9 @@ Open: the stats node (28%) and the patrol's point-cloud check, if the CPU is nee
    patrols, **50 of 50 faults found, 0 false alerts**, each alert 0.4–1.4 m from its fault. The fallen post is the
    thin margin (6–7 steps show it where 5 are needed). ground-v0.2 ([run record](../ml/runs/ground-v0.2)), with
    more fallen-post data, finds every fault with every class from conf 0.7 offline (29 of 29 on four patrols); it
-   is a candidate until its live patrols.
+   is a candidate until its live patrols. ground-v0.3 ([run record](../ml/runs/ground-v0.3)) also learned real
+   conductors (steel wire, polywire, rope, tape) and finds thin wire almost as well as thick conductors, again 29
+   of 29 offline; with it, broken wires should count from conf 0.6.
 3. **Ten patrols per change** with `tools/ugv_series.sh 10` (each from a clean start, scored with
    `tools/ugv_eval.py`), as with the drone's models.
 4. **The real walk.** Walk a real forest fence with the Jetson, the camera at 0.7 m and the u-blox logging its

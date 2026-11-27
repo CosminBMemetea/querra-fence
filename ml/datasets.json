@@ -525,6 +525,51 @@
     }
    },
    "notes": "The test forests of ground_yolo (seeds 900-902) with the strands drawn as 40 mm white polytape, a ribbon on edge (sim/gen_world.py FENCE_LOOKS). The colour camera rendered at 3x and averaged in linear light, so a wire thinner than a pixel shows as a faint line. Same forests and pose distribution as ground_yolo_stream's test split, but not frame for frame: the strands change what the depth camera hides, and so which frames are kept. Scoring only: ml/runs/ground-v0.2/fence_looks."
+  },
+  {
+   "id": "ground_yolo_looks",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "ground robot side camera, real fence conductors (steel wire, polywire, polyrope, polytape), 3x supersampled",
+   "created": "2026-11-26",
+   "code": "da01160",
+   "command": "tools/make_ground_dataset.sh --layouts 18 --val-layouts 2 --frames 250 --seed 530 --fence-look steel,polywire,steel,polywire,polyrope,polytape,steel,polywire --supersample 3 --out ~/querra-data/ground_yolo_looks",
+   "size": "935 MB",
+   "splits": {
+    "train": {
+     "layouts": "0-15",
+     "seeds": "530-545",
+     "frames": 4000,
+     "role": "train"
+    },
+    "val": {
+     "layouts": "16-17",
+     "seeds": "546-547",
+     "frames": 500,
+     "role": "val"
+    }
+   },
+   "notes": "Thin wire for ground-v0.3: random forest enclosures as in ground_yolo, with the strands drawn as real conductors at their real size (sim/gen_world.py FENCE_LOOKS), one look per enclosure in the order given to --fence-look: train 6 steel wire (2.5 mm grey), 6 polywire (3 mm yellow), 2 polyrope (6 mm white), 2 polytape (40 mm white); val 1 steel wire, 1 polywire. The colour camera rendered at 3x and averaged in linear light, so a wire thinner than a pixel shows as a faint line. Labels, train: post 4631, wire 6997, wire_break 825, fallen_post 440, branch 783; val: post 613, wire 932, wire_break 140, fallen_post 41, branch 100. Seeds 530-547 are outside the training (500-525), patrol (700-702) and test (900-902) ranges. 54 minutes to render on the Mac."
+  },
+  {
+   "id": "ground_yolo_looks_stream",
+   "look": "forest (sim/gen_forest.py)",
+   "style": "copy of ground_yolo_looks, stream-like JPEG",
+   "created": "2026-11-26",
+   "code": "da01160",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/ground_yolo_looks train ~/querra-data/ground_yolo_looks_stream --share 0.75 --seed 0; tools/jpeg_like_stream.py ~/querra-data/ground_yolo_looks val ~/querra-data/ground_yolo_looks_stream --quality 4 --share 1 --seed 1",
+   "derived_from": "ground_yolo_looks",
+   "size": "82 MB",
+   "splits": {
+    "train": {
+     "frames": 4000,
+     "role": "train"
+    },
+    "val": {
+     "frames": 500,
+     "role": "val"
+    }
+   },
+   "notes": "Train: 3026 of the 4000 frames compressed like the robot's camera stream at a random -q:v of 2, 3, 4, 5, 6 or 8, as ground_yolo_stream; the rest are hard links to the PNGs. Val: every frame at -q:v 4, the stream's quality. Same labels."
   }
  ]
 }

@@ -1,0 +1,15 @@
+{
+ "mAP50": 0.981,
+ "mAP50-95": 0.837,
+ "precision": 0.945,
+ "recall": 0.944,
+ "ap50_per_class": {
+  "post": 0.992,
+  "wire": 0.968,
+  "wire_break": 0.975,
+  "fallen_post": 0.982,
+  "branch": 0.99
+ },
+ "model": "~/querra-data/models/ground-yolo11n-v0.3.pt",
+ "data": "ground_yolo_stream:test (seeds 900-902, 600 frames, JPEG -q:v 4)"
+}

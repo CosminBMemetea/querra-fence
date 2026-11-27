@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **ground-v0.3, thin wire (candidate)** ([ml/runs/ground-v0.3](ml/runs/ground-v0.3)): fine-tuned from ground-v0.2
+  with 4,000 frames of 16 new forests in real conductors (6 steel wire, 6 polywire, 2 rope, 2 tape; 3x supersampled),
+  on the M2's GPU in 1.2 h. On the stress test's forests thin wire now scores almost like thick conductors: `wire`
+  mAP50 0.95 on steel and polywire (ground-v0.2: 0.44, 0.20), broken wires found from conf 0.7 in 77% and 72% of the
+  frames (17%, 1%), from 0.5 in 90%. Classic test mAP50 0.981 (0.979); 29 of 29 faults and no false alert on the four
+  patrols. Less confident on broken wires (classic test from 0.7: 79%, ground-v0.2 85%; from 0.6: 90%), so with it
+  broken wires should count from 0.6. Not yet live on the Jetson or tested on real footage.
 - **Fence looks, a stress test** ([ml/runs/ground-v0.2](ml/runs/ground-v0.2)): every model so far learned strands drawn
   as 3.6 cm glowing yellow rods. `make_ground_dataset.sh --fence-look` draws real conductors at their real size
   (steel 2.5 mm, polywire 3 mm, polyrope 6 mm, polytape 40 mm; `sim/gen_world.py` FENCE_LOOKS, classic unchanged) and

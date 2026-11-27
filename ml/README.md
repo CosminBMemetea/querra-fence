@@ -56,6 +56,7 @@ from that view ([docs/ugv.md](../docs/ugv.md)). Same 7 classes.
 |---|---|---|---|---|---|---|---|
 | **ground-v0.1** | default | 2026-11-25 | 3,600 frames, 1 dataset | 0.957 | 5 of 5, 0 false; all 4 forests: 25 of 29, 0 false | 10 patrols: 50 of 50, 0 | [ground-v0.1](runs/ground-v0.1) |
 | **ground-v0.2** | candidate | 2026-11-26 | 5,100 frames, 2 datasets | 0.979 | 5 of 5, 0 false; all 4 forests: 29 of 29, 0 false | – | [ground-v0.2](runs/ground-v0.2) |
+| **ground-v0.3** | candidate | 2026-11-27 | 9,100 frames, 3 datasets | 0.981 | 5 of 5, 0 false; all 4 forests: 29 of 29, 0 false | – | [ground-v0.3](runs/ground-v0.3) |
 <!-- ground-registry:end -->
 
 - **Test:** 3 random forest enclosures of their own seed range (900–902), JPEG like the robot's camera stream.

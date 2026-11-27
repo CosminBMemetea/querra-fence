@@ -155,7 +155,8 @@ showed 1–2 fewer than its offline frames.
 
 ## Next
 
-1. **ground-v0.3:** trained on a mix of fence looks, thin wire most of all (above).
+1. **ground-v0.3:** trained on a mix of fence looks, thin wire most of all (above). Done:
+   [ground-v0.3](../ground-v0.3) finds thin wire almost as well as thick conductors.
 2. **Live on the Jetson:** build the engine from the ONNX, then `tools/ugv_series.sh 10 … detect:=true` with
    `engine:=/models/ground-yolo11n-v0.2-fp16.engine`. Then a few patrols with every fault from 0.7, which needs
    `ugv_alerts`' `class_conf` as a launch argument.

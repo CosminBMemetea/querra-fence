@@ -1,0 +1,122 @@
+{
+ "what": "per fault class on the held-out enclosures (ground_yolo_stream test and val): recall and precision at IoU 0.3, and the share of frames with a false box of the class, per conf threshold; ground-v0.2's numbers are in ../ground-v0.2/thresholds.json",
+ "models": {
+  "v0.3": "~/querra-data/models/ground-yolo11n-v0.3.pt"
+ },
+ "v0.3": {
+  "test": {
+   "frames": 600,
+   "wire_break": {
+    "labelled": 141,
+    "0.5": {
+     "recall": 0.957,
+     "precision": 0.964,
+     "false_frames_pct": 0.8
+    },
+    "0.6": {
+     "recall": 0.901,
+     "precision": 0.969,
+     "false_frames_pct": 0.7
+    },
+    "0.7": {
+     "recall": 0.787,
+     "precision": 0.974,
+     "false_frames_pct": 0.5
+    }
+   },
+   "fallen_post": {
+    "labelled": 61,
+    "0.5": {
+     "recall": 0.967,
+     "precision": 0.967,
+     "false_frames_pct": 0.3
+    },
+    "0.6": {
+     "recall": 0.951,
+     "precision": 0.967,
+     "false_frames_pct": 0.3
+    },
+    "0.7": {
+     "recall": 0.803,
+     "precision": 1.0,
+     "false_frames_pct": 0.0
+    }
+   },
+   "branch": {
+    "labelled": 114,
+    "0.5": {
+     "recall": 0.965,
+     "precision": 0.973,
+     "false_frames_pct": 0.5
+    },
+    "0.6": {
+     "recall": 0.947,
+     "precision": 0.991,
+     "false_frames_pct": 0.2
+    },
+    "0.7": {
+     "recall": 0.939,
+     "precision": 1.0,
+     "false_frames_pct": 0.0
+    }
+   }
+  },
+  "val": {
+   "frames": 600,
+   "wire_break": {
+    "labelled": 126,
+    "0.5": {
+     "recall": 0.865,
+     "precision": 0.94,
+     "false_frames_pct": 1.2
+    },
+    "0.6": {
+     "recall": 0.833,
+     "precision": 0.946,
+     "false_frames_pct": 1.0
+    },
+    "0.7": {
+     "recall": 0.722,
+     "precision": 0.968,
+     "false_frames_pct": 0.5
+    }
+   },
+   "fallen_post": {
+    "labelled": 76,
+    "0.5": {
+     "recall": 0.908,
+     "precision": 1.0,
+     "false_frames_pct": 0.0
+    },
+    "0.6": {
+     "recall": 0.868,
+     "precision": 1.0,
+     "false_frames_pct": 0.0
+    },
+    "0.7": {
+     "recall": 0.776,
+     "precision": 1.0,
+     "false_frames_pct": 0.0
+    }
+   },
+   "branch": {
+    "labelled": 126,
+    "0.5": {
+     "recall": 0.889,
+     "precision": 0.991,
+     "false_frames_pct": 0.2
+    },
+    "0.6": {
+     "recall": 0.873,
+     "precision": 1.0,
+     "false_frames_pct": 0.0
+    },
+    "0.7": {
+     "recall": 0.857,
+     "precision": 1.0,
+     "false_frames_pct": 0.0
+    }
+   }
+  }
+ }
+}

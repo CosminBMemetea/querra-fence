@@ -812,6 +812,154 @@
      "sha256": "4bc311cdc19b0ab73d26877dac914ffd61fb63b9e69e534b5405d5dad00e24e1"
     }
    ]
+  },
+  {
+   "id": "ground-v0.3",
+   "status": "candidate",
+   "summary": "thin wire: steel wire and polywire found almost as well as thick conductors",
+   "camera": "ground robot side camera: 0.70 m up, looking left at the fence 1.9 m away, 640x400, 100 deg",
+   "date": "2026-11-27",
+   "parent": "ground-v0.2",
+   "code": "da01160",
+   "release": null,
+   "run": "ml/runs/ground-v0.3",
+   "used_for": [],
+   "data": {
+    "train": [
+     {
+      "dataset": "ground_yolo_stream",
+      "split": "train",
+      "frames": 3600
+     },
+     {
+      "dataset": "ground_yolo_fp_stream",
+      "split": "train",
+      "frames": 1500
+     },
+     {
+      "dataset": "ground_yolo_looks_stream",
+      "split": "train",
+      "frames": 4000
+     }
+    ],
+    "val": [
+     {
+      "dataset": "ground_yolo_stream",
+      "split": "val",
+      "frames": 600
+     },
+     {
+      "dataset": "ground_yolo_looks_stream",
+      "split": "val",
+      "frames": 500
+     }
+    ],
+    "mix": "tools/mix_dataset.py (ml/runs/ground-v0.3/data.yaml); 6,889 of the 9,100 training frames are stream-like JPEG, 3,000 in thin wire (steel 1,500, polywire 1,500), 1,000 in polyrope and polytape, 5,100 in the classic look. Labels: wire_break 1,795 (ground-v0.2: 970), fallen_post 1,348 (908), branch 1,581 (798)"
+   },
+   "training": {
+    "from": "ground-v0.2",
+    "epochs": 8,
+    "selected_epoch": 8,
+    "imgsz": 640,
+    "batch": 8,
+    "optimizer": "AdamW lr0 0.000909 (Ultralytics auto), 3 warm-up epochs",
+    "close_mosaic": 3,
+    "device": "GPU (MPS), Apple M2 8 GB",
+    "hours": 2.2,
+    "notes": "The first full run on the M2's GPU: --device mps --batch 8 --workers 0, about 9 min per epoch. tools/train_with_breaks.py: 15 min cooling breaks before training and after epochs 2, 4 and 6. The lid was closed during epoch 1 and the Mac slept overnight, so epoch 1 took 10.6 h of wall time; the weights are the same as one uninterrupted run. Ultralytics 8.4.215, torch 2.15. Scores still rising at epoch 8."
+   },
+   "scores": {
+    "val_mAP50": 0.948,
+    "val_mAP50-95": 0.793,
+    "val_note": "validation includes 500 thin-wire frames: not comparable with ground-v0.2's val_mAP50",
+    "test_mAP50": 0.981,
+    "test_mAP50-95": 0.837,
+    "test_precision": 0.945,
+    "test_recall": 0.944,
+    "test_mAP50_per_class": {
+     "post": 0.992,
+     "wire": 0.968,
+     "wire_break": 0.975,
+     "fallen_post": 0.982,
+     "branch": 0.99
+    },
+    "test_wire_break_recall_at_conf": {
+     "0.7": 0.79,
+     "0.6": 0.9,
+     "0.5": 0.96
+    },
+    "test_fallen_post_recall_at_conf": {
+     "0.7": 0.8,
+     "0.6": 0.95,
+     "0.5": 0.97
+    },
+    "fence_looks_wire_mAP50": {
+     "classic": 0.969,
+     "steel": 0.948,
+     "polywire": 0.955,
+     "polyrope": 0.963,
+     "polytape": 0.968
+    },
+    "fence_looks_wire_break_recall_conf0.7": {
+     "classic": 0.825,
+     "steel": 0.765,
+     "polywire": 0.722,
+     "polyrope": 0.844,
+     "polytape": 0.797
+    },
+    "patrol_offline": {
+     "conf0.7": "5 of 5, 0 false",
+     "conf0.7_fallen_post0.5": "5 of 5, 0 false",
+     "four_forests_conf0.7": "29 of 29, 0 false",
+     "four_forests_conf0.7_fallen_post0.5": "29 of 29, 0 false",
+     "four_forests_conf0.7_fallen_post0.5_wire_break0.6": "29 of 29, 0 false",
+     "wire_break_frames_conf0.7": "10-16 of 14-20 in view (5 needed); 13-16 from 0.6",
+     "fallen_post_frames_conf0.7": "6-7 of 14-17 in view (5 needed)",
+     "false_branch_frames_conf0.7": "15 of 3,293 (ground-v0.2: 1), all 4.1-6.4 m from a real branch, continuing its frames"
+    },
+    "baseline_ground-v0.2": {
+     "test_mAP50": 0.979,
+     "test_wire_break_recall_at_conf": {
+      "0.7": 0.85,
+      "0.6": 0.93,
+      "0.5": 0.93
+     },
+     "fence_looks_wire_mAP50": {
+      "classic": 0.962,
+      "steel": 0.436,
+      "polywire": 0.196,
+      "polyrope": 0.922,
+      "polytape": 0.965
+     },
+     "fence_looks_wire_break_recall_conf0.7": {
+      "classic": 0.861,
+      "steel": 0.169,
+      "polywire": 0.014,
+      "polyrope": 0.807,
+      "polytape": 0.776
+     },
+     "four_forests_conf0.7": "29 of 29, 0 false"
+    }
+   },
+   "live": {},
+   "decision": "Candidate. On real fence conductors far better than ground-v0.2: on thin wire, wire mAP50 0.95 (steel 0.44, polywire 0.20) and broken wires found from conf 0.7 in 72-77% of the frames (17%, 1%). Nothing lost on the checks the alerts use: classic test mAP50 0.981 (0.979), and 29 of 29 faults with no false alert on the four patrols with every class at 0.7, with fallen posts from 0.5, and with broken wires from 0.6. Less confident on broken wires: on the classic test 79% from 0.7 (85%), 90% from 0.6, so with ground-v0.3 count broken wires from 0.6 (class_conf wire_break=0.6, fallen_post=0.5). Not the default until it passes live patrols on the Jetson (its engine is not built yet) and is checked on real footage: the thin wire is the simulator's 3x supersampled render.",
+   "artefacts": [
+    {
+     "file": "ground-yolo11n-v0.3.pt",
+     "bytes": 5485786,
+     "sha256": "69bb56a5ae00d1d44aa410abf619d30ed9984f1f8089491ddd94c80a965a1022"
+    },
+    {
+     "file": "ground-yolo11n-v0.3.onnx",
+     "bytes": 10610502,
+     "sha256": "5e2a2b3fc94aea4db6928da476237a1373d5a5cd4611bfe5a5a63a88916f3da2"
+    },
+    {
+     "file": "classes.json",
+     "bytes": 77,
+     "sha256": "4bc311cdc19b0ab73d26877dac914ffd61fb63b9e69e534b5405d5dad00e24e1"
+    }
+   ]
   }
  ]
 }

@@ -1,0 +1,266 @@
+{
+ "what": "ground-v0.3 on the 3 test forests (seeds 900-902, 600 frames) rendered in each fence look at 3x supersampling and compressed like the robot's stream (-q:v 4), as ../ground-v0.2/fence_looks/looks.json (ground-v0.1 and ground-v0.2); mAP50 per class from Ultralytics val; per fault class recall, precision and frames with a false box at conf 0.5 and 0.7 (IoU 0.3)",
+ "code": "da01160",
+ "looks": {
+  "classic": {
+   "v0.3": {
+    "mAP50": 0.98,
+    "mAP50-95": 0.839,
+    "ap50": {
+     "post": 0.987,
+     "wire": 0.969,
+     "wire_break": 0.969,
+     "fallen_post": 0.983,
+     "branch": 0.99
+    },
+    "wire_break": {
+     "labelled": 137,
+     "0.5": {
+      "recall": 0.949,
+      "precision": 0.935,
+      "false_frames_pct": 1.5
+     },
+     "0.7": {
+      "recall": 0.825,
+      "precision": 0.95,
+      "false_frames_pct": 1.0
+     }
+    },
+    "fallen_post": {
+     "labelled": 68,
+     "0.5": {
+      "recall": 0.985,
+      "precision": 0.971,
+      "false_frames_pct": 0.3
+     },
+     "0.7": {
+      "recall": 0.838,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    },
+    "branch": {
+     "labelled": 114,
+     "0.5": {
+      "recall": 0.956,
+      "precision": 0.982,
+      "false_frames_pct": 0.3
+     },
+     "0.7": {
+      "recall": 0.921,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    }
+   }
+  },
+  "steel": {
+   "v0.3": {
+    "mAP50": 0.972,
+    "mAP50-95": 0.819,
+    "ap50": {
+     "post": 0.987,
+     "wire": 0.948,
+     "wire_break": 0.959,
+     "fallen_post": 0.98,
+     "branch": 0.988
+    },
+    "wire_break": {
+     "labelled": 136,
+     "0.5": {
+      "recall": 0.897,
+      "precision": 0.968,
+      "false_frames_pct": 0.7
+     },
+     "0.7": {
+      "recall": 0.765,
+      "precision": 0.972,
+      "false_frames_pct": 0.5
+     }
+    },
+    "fallen_post": {
+     "labelled": 76,
+     "0.5": {
+      "recall": 0.987,
+      "precision": 0.938,
+      "false_frames_pct": 0.8
+     },
+     "0.7": {
+      "recall": 0.842,
+      "precision": 0.985,
+      "false_frames_pct": 0.2
+     }
+    },
+    "branch": {
+     "labelled": 111,
+     "0.5": {
+      "recall": 0.955,
+      "precision": 0.981,
+      "false_frames_pct": 0.3
+     },
+     "0.7": {
+      "recall": 0.928,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    }
+   }
+  },
+  "polywire": {
+   "v0.3": {
+    "mAP50": 0.973,
+    "mAP50-95": 0.826,
+    "ap50": {
+     "post": 0.984,
+     "wire": 0.955,
+     "wire_break": 0.946,
+     "fallen_post": 0.988,
+     "branch": 0.992
+    },
+    "wire_break": {
+     "labelled": 144,
+     "0.5": {
+      "recall": 0.903,
+      "precision": 0.956,
+      "false_frames_pct": 1.0
+     },
+     "0.7": {
+      "recall": 0.722,
+      "precision": 0.972,
+      "false_frames_pct": 0.5
+     }
+    },
+    "fallen_post": {
+     "labelled": 69,
+     "0.5": {
+      "recall": 1.0,
+      "precision": 0.972,
+      "false_frames_pct": 0.3
+     },
+     "0.7": {
+      "recall": 0.826,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    },
+    "branch": {
+     "labelled": 115,
+     "0.5": {
+      "recall": 0.965,
+      "precision": 0.982,
+      "false_frames_pct": 0.3
+     },
+     "0.7": {
+      "recall": 0.948,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    }
+   }
+  },
+  "polyrope": {
+   "v0.3": {
+    "mAP50": 0.982,
+    "mAP50-95": 0.839,
+    "ap50": {
+     "post": 0.99,
+     "wire": 0.963,
+     "wire_break": 0.971,
+     "fallen_post": 0.989,
+     "branch": 0.994
+    },
+    "wire_break": {
+     "labelled": 135,
+     "0.5": {
+      "recall": 0.919,
+      "precision": 0.947,
+      "false_frames_pct": 1.2
+     },
+     "0.7": {
+      "recall": 0.844,
+      "precision": 0.983,
+      "false_frames_pct": 0.3
+     }
+    },
+    "fallen_post": {
+     "labelled": 76,
+     "0.5": {
+      "recall": 0.961,
+      "precision": 0.986,
+      "false_frames_pct": 0.2
+     },
+     "0.7": {
+      "recall": 0.789,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    },
+    "branch": {
+     "labelled": 108,
+     "0.5": {
+      "recall": 0.981,
+      "precision": 0.981,
+      "false_frames_pct": 0.3
+     },
+     "0.7": {
+      "recall": 0.954,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    }
+   }
+  },
+  "polytape": {
+   "v0.3": {
+    "mAP50": 0.983,
+    "mAP50-95": 0.845,
+    "ap50": {
+     "post": 0.991,
+     "wire": 0.968,
+     "wire_break": 0.973,
+     "fallen_post": 0.989,
+     "branch": 0.994
+    },
+    "wire_break": {
+     "labelled": 143,
+     "0.5": {
+      "recall": 0.923,
+      "precision": 0.95,
+      "false_frames_pct": 1.2
+     },
+     "0.7": {
+      "recall": 0.797,
+      "precision": 0.958,
+      "false_frames_pct": 0.8
+     }
+    },
+    "fallen_post": {
+     "labelled": 66,
+     "0.5": {
+      "recall": 0.97,
+      "precision": 0.985,
+      "false_frames_pct": 0.2
+     },
+     "0.7": {
+      "recall": 0.773,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    },
+    "branch": {
+     "labelled": 109,
+     "0.5": {
+      "recall": 0.982,
+      "precision": 0.973,
+      "false_frames_pct": 0.5
+     },
+     "0.7": {
+      "recall": 0.954,
+      "precision": 1.0,
+      "false_frames_pct": 0.0
+     }
+    }
+   }
+  }
+ }
+}
