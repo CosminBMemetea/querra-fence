@@ -19,6 +19,30 @@ It works for a phone walk ([phone-walk.md](phone-walk.md)) and for drone video (
   edge when scored. To test whether ground-v0.2 beats ground-v0.1, draft with v0.1: the edge then works against the
   newer model, and a win counts for more.
 - Run it again on the same folder with another `--model` to redraw the drafts. Reviewed labels are never touched.
+  From a folder of photos, photos added since the last run join first.
+
+### Real photos: draft with more than one model
+
+On real photos our models, trained on the simulator, draft little: ground-v0.3 boxed few posts and no fault in 50
+photos of real fences, and model-v0.5 boxes bushes and windows as cows. Models trained on real images fill the gap.
+`--model` takes several, and their boxes are merged (of two overlapping boxes of a class, the surer stays):
+
+```bash
+~/.querra-train-venv/bin/python tools/label_drafts.py draft ~/querra-data/real/commons_fences/images \
+    --model ~/querra-data/models/ground-yolo11n-v0.3.pt@wire_break,fallen_post,branch \
+            ~/querra-data/models/yolov8s-worldv2.pt ~/querra-data/models/yolo11n.pt \
+    --conf 0.4 --world-conf 0.15 --out ~/querra-data/real/commons_fences_set
+```
+
+- `MODEL.pt@a,b` keeps only those classes of a model: here ground-v0.3 drafts the faults only, its post and wire boxes
+  on real photos being mostly noise.
+- **YOLO-World** (a file name with "world") finds objects from text: `--prompts "post=fence post|wooden post"` (the
+  default). It boxes close posts well, thin or distant ones less, and never a wire. It needs OpenAI's CLIP:
+  `~/.querra-train-venv/bin/pip install git+https://github.com/ultralytics/CLIP.git`.
+- **A COCO model** (`yolo11n.pt`) drafts the classes it shares by name: cow and sheep. On TTPLA's 1,242 real drone
+  photos it boxed no animal at all, where model-v0.5 boxed a cow in 84% of them.
+- Ultralytics downloads the weights the first time; it may not install packages on its own (`YOLO_AUTOINSTALL=false`).
+- Wires are drawn by hand: no model here drafts a real one.
 
 ## 2. Review
 

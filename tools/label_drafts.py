@@ -40,6 +40,7 @@ CLASSES = ["post", "wire", "wire_break", "fallen_post", "branch", "cow", "sheep"
 FAULTS = {2: "wire_break", 3: "fallen_post", 4: "branch"}
 IMG_EXT = (".jpg", ".jpeg", ".png")
 UI = os.environ.get("LABEL_UI", os.path.join(ROOT, "tools", "label_ui.html"))
+os.environ.setdefault("YOLO_AUTOINSTALL", "false")    # Ultralytics may not pip-install packages on its own
 
 
 def paths(d):
@@ -138,6 +139,46 @@ def extract(src, d, a):
     return times
 
 
+def drafter(spec, a, first):
+    """A drafting model and how its classes map to the fence classes. A fence model drafts every class. A YOLO-World
+    model (its file name says "world") gets text prompts (--prompts) and drafts what they name, from --world-conf. Any
+    other model (a COCO detector, for one) drafts only the classes it shares by name: cow and sheep. MODEL.pt@a,b keeps
+    only the fence classes a and b of that model."""
+    from ultralytics import YOLO, YOLOWorld
+    path, _, only = spec.partition("@")
+    path = os.path.abspath(os.path.expanduser(path))
+    only = [c for c in only.split(",") if c]
+    if [c for c in only if c not in CLASSES]:
+        raise SystemExit("%s: %s are not fence classes %s" % (spec, [c for c in only if c not in CLASSES], CLASSES))
+    keep = lambda mp: {i: c for i, c in mp.items() if not only or CLASSES[c] in only}
+    if "world" in os.path.basename(path).lower():
+        prompts = [(t.strip(), c.strip()) for c, ts in (kv.split("=", 1) for kv in a.prompts.split(";") if "=" in kv)
+                   for t in ts.split("|")]
+        bad = [c for _, c in prompts if c not in CLASSES]
+        if bad:
+            raise SystemExit("--prompts: %s are not fence classes %s" % (bad, CLASSES))
+        m = YOLOWorld(path)
+        m.set_classes([t for t, _ in prompts])     # needs CLIP: pip install git+https://github.com/ultralytics/CLIP.git
+        return m, keep({i: CLASSES.index(c) for i, (_, c) in enumerate(prompts)}), a.world_conf, path
+    m = YOLO(path)
+    names = [m.names[i] for i in range(len(m.names))]
+    if first and names != CLASSES:
+        print("[label] warning: the model's classes %s are not the fence classes %s" % (names, CLASSES))
+    mapping = keep({i: CLASSES.index(n) for i, n in enumerate(names) if n in CLASSES})
+    if not mapping:
+        raise SystemExit("%s has none of the fence classes" % path)
+    return m, mapping, a.conf, path
+
+
+def merge(boxes, iou_max=0.6):
+    """Boxes from several drafting models: of two of the same class overlapping by more than iou_max, the surer stays."""
+    keep = []
+    for c, b, s in sorted(boxes, key=lambda x: -x[2]):
+        if all(k[0] != c or iou(xyxy(k[1]), xyxy(b)) <= iou_max for k in keep):
+            keep.append((c, b, s))
+    return keep
+
+
 def cmd_draft(a):
     src = os.path.abspath(os.path.expanduser(a.source))
     if not os.path.exists(src):
@@ -165,28 +206,30 @@ def cmd_draft(a):
     names = frames(d)
     if not names:
         raise SystemExit("no frames")
-    from ultralytics import YOLO
-    m = YOLO(os.path.expanduser(a.model))
-    model_names = [m.names[i] for i in range(len(m.names))]
-    if model_names != CLASSES:
-        print("[label] warning: the model's classes %s are not the fence classes %s" % (model_names, CLASSES))
+    drafters = [drafter(mp, a, first=(i == 0)) for i, mp in enumerate(a.model)]
     for f in glob.glob(os.path.join(P["draft"], "*.txt")):
         os.remove(f)
     n_boxes = 0
     for k in range(0, len(names), 16):
         batch = names[k:k + 16]
-        res = m.predict([os.path.join(P["img"], n) for n in batch], conf=a.conf, imgsz=a.imgsz, device=a.device, verbose=False)
-        for n, r in zip(batch, res):
-            rows = ["%d %.6f %.6f %.6f %.6f %.3f" % (int(c), *b, s)
-                    for c, b, s in zip(r.boxes.cls.tolist(), r.boxes.xywhn.tolist(), r.boxes.conf.tolist())]
+        found = {n: [] for n in batch}                 # per frame: (class, xywhn, conf) from every drafting model
+        for m, mapping, conf, _ in drafters:
+            res = m.predict([os.path.join(P["img"], n) for n in batch], conf=conf, imgsz=a.imgsz, device=a.device, verbose=False)
+            for n, r in zip(batch, res):
+                found[n] += [(mapping[int(c)], b, s) for c, b, s in zip(r.boxes.cls.tolist(), r.boxes.xywhn.tolist(),
+                                                                         r.boxes.conf.tolist()) if int(c) in mapping]
+        for n in batch:
+            rows = ["%d %.6f %.6f %.6f %.6f %.3f" % (c, *b, s) for c, b, s in merge(found[n])]
             n_boxes += len(rows)
             with open(os.path.join(P["draft"], stem(n) + ".txt"), "w") as f:
                 f.write("".join(x + "\n" for x in rows))
         print("\r[label] drafts: %d of %d frames" % (min(k + 16, len(names)), len(names)), end="", flush=True)
     print()
-    mp = os.path.abspath(os.path.expanduser(a.model))
-    meta["drafts"] = {"model": mp.replace(os.path.expanduser("~"), "~"), "sha256": sha256(mp), "conf": a.conf,
-                      "imgsz": a.imgsz, "date": datetime.datetime.now().isoformat(timespec="seconds")}
+    home = os.path.expanduser("~")
+    meta["drafts"] = {"model": " + ".join(os.path.basename(p) for _, _, _, p in drafters),
+                      "models": [{"model": p.replace(home, "~"), "sha256": sha256(p), "conf": c,
+                                  "classes": sorted({CLASSES[v] for v in mp.values()})} for _, mp, c, p in drafters],
+                      "conf": a.conf, "imgsz": a.imgsz, "date": datetime.datetime.now().isoformat(timespec="seconds")}
     meta["created"] = meta.get("created", meta["drafts"]["date"])
     save(P["meta"], meta)
     write_yaml(d)
@@ -401,7 +444,12 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("draft", help="frames from a video or folder, and the model's boxes as drafts")
     p.add_argument("source", help="a video (phone, DJI) or a folder of images")
-    p.add_argument("--model", required=True, help="the drafting model (.pt)")
+    p.add_argument("--model", required=True, nargs="+",
+                   help="the drafting model (.pt); more models add their boxes (a YOLO-World model, a COCO detector); "
+                        "MODEL.pt@wire_break,branch keeps only those classes of a model")
+    p.add_argument("--prompts", default="post=fence post|wooden post",
+                   help="for a YOLO-World model: class=prompt|prompt;class=...")
+    p.add_argument("--world-conf", type=float, default=0.1, help="draft a YOLO-World model's boxes from this confidence")
     p.add_argument("--out", help="the dataset folder (default ~/querra-data/real/<name>)")
     p.add_argument("--every", type=float, default=1.0, help="seconds between frames taken from a video")
     p.add_argument("--start", type=float, default=0.0)

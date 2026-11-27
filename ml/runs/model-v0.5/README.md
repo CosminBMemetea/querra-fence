@@ -176,8 +176,11 @@ farm fence in them, so every fault box is a false alarm (`tools/ttpla_check.py`,
   real tree lying across the lines, boxed as a branch.
 - **The cow class does not work on real images:** it boxes bushes, windows, a brick wall and parts of pylons. The
   simulator's cows are simple shapes on simple ground. No alert uses the animal classes today, but anything built on
-  them (a herd count, the planned predator watch) needs a model that learned from real animals first (COCO's cows and
-  sheep, aerial cattle photos).
+  them (a herd count, the planned predator watch) needs a model that learned from real animals first. A standard COCO
+  detector does: `yolo11n.pt` boxes no cow, sheep or horse in any of the 1,242 photos from conf 0.5 (`yolo11s.pt`: one
+  sheep). Run beside the fence model, it is the better animal detector until we have real aerial animals to train on.
+  Training COCO's cow photos into the fence model would not do: most show a pasture fence, unlabelled, and would teach
+  it that real posts and wires are background.
 - **Real cables and poles are barely seen:** a wire box in 144 of the 1,231 frames with cables, covering 4% of their
   length, and a post box on 1 of the 333 wooden poles. These are not fences, and many cables are tens of metres away,
   but nothing here suggests the wire and post classes carry over to real images by themselves.

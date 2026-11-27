@@ -3,6 +3,7 @@ import http.client
 import http.server
 import json
 import os
+import sys
 import threading
 
 import pytest
@@ -132,3 +133,51 @@ def test_read_boxes(tmp_path):
     assert ld.read_boxes(str(p)) == [[1, 0.5, 0.5, 0.2, 0.2], [3, 0.1, 0.2, 0.3, 0.4]]
     assert ld.read_boxes(str(p), True) == [[1, 0.5, 0.5, 0.2, 0.2, 0.9], [3, 0.1, 0.2, 0.3, 0.4, 1.0]]
     assert ld.read_boxes(str(tmp_path / "missing.txt")) is None
+
+
+# ------------------------------------------------------------------ drafting with several models
+
+class _Fake:
+    names = {}
+
+    def __init__(self, path):
+        self.path, self.prompts = path, None
+
+    def set_classes(self, prompts):
+        self.prompts = prompts
+        self.names = dict(enumerate(prompts))
+
+
+def _models(monkeypatch, names):
+    import types
+    yolo = type("YOLO", (_Fake,), {"names": names})
+    monkeypatch.setitem(sys.modules, "ultralytics", types.SimpleNamespace(YOLO=yolo, YOLOWorld=_Fake))
+    return types.SimpleNamespace(conf=0.4, world_conf=0.15, prompts="post=fence post|wooden post;cow=cow")
+
+
+def test_a_coco_model_drafts_only_the_animals(monkeypatch):
+    a = _models(monkeypatch, {0: "person", 1: "sheep", 2: "cow", 3: "car"})
+    _, mapping, conf, _ = ld.drafter("coco.pt", a, first=False)
+    assert mapping == {1: ld.CLASSES.index("sheep"), 2: ld.CLASSES.index("cow")} and conf == 0.4
+
+
+def test_a_model_can_be_kept_to_some_classes(monkeypatch):
+    a = _models(monkeypatch, dict(enumerate(ld.CLASSES)))
+    _, mapping, _, _ = ld.drafter("ground.pt@wire_break,branch", a, first=True)
+    assert mapping == {2: 2, 4: 4}
+    with pytest.raises(SystemExit):
+        ld.drafter("ground.pt@wire_brake", a, first=True)
+
+
+def test_a_world_model_drafts_what_its_prompts_name(monkeypatch):
+    a = _models(monkeypatch, {})
+    m, mapping, conf, _ = ld.drafter("yolov8s-worldv2.pt", a, first=False)
+    assert m.prompts == ["fence post", "wooden post", "cow"]
+    assert mapping == {0: 0, 1: 0, 2: ld.CLASSES.index("cow")} and conf == 0.15
+
+
+def test_overlapping_drafts_of_one_class_keep_the_surer():
+    boxes = [(0, [0.5, 0.5, 0.2, 0.4], 0.6), (0, [0.51, 0.5, 0.2, 0.4], 0.9), (5, [0.5, 0.5, 0.2, 0.4], 0.7),
+             (0, [0.1, 0.5, 0.05, 0.4], 0.3)]
+    kept = ld.merge(boxes)
+    assert [(c, s) for c, _, s in kept] == [(0, 0.9), (5, 0.7), (0, 0.3)]

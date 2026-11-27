@@ -13,6 +13,8 @@ Occlusion is ignored (a post behind a tree keeps its box); boxes come from dense
 classic 3.6 cm glowing yellow rods (sim/gen_world.py FENCE_LOOKS); a comma-separated list gives the layouts one look each,
 in turn. The layouts, poses and labels stay the same. --supersample K renders the camera K times wider and taller and
 averages it back down in linear light (tools/supersample.py), so a wire thinner than a pixel shows as a faint line.
+--no-wire-labels steel,polywire: layouts drawn in these looks get no wire or wire_break boxes. From the flight a 2.5 mm
+wire is a tenth of a pixel: a label on it would teach the model to box, or to break, a wire it cannot see.
 """
 import argparse
 import copy
@@ -583,6 +585,8 @@ def run_layout(li, seed, n_frames, split, out, args):
             labs = labels_for(objs, np.array([x, y, z]), rot(roll, pitch, yaw))
             if not labs and rnd.random() < 0.7:
                 continue  # keep only some empty frames
+            if gen_world.FENCE_LOOK in args.no_wire_labels:  # after the draw above: the same poses as with the labels
+                labs = [lb for lb in labs if CLASSES[lb[0]] not in ("wire", "wire_break")]
             name = "L%02d_%04d" % (li, saved)
             write_png(os.path.join(out, "images", split, name + ".png"), img)
             with open(os.path.join(out, "labels", split, name + ".txt"), "w") as fh:
@@ -598,8 +602,8 @@ def run_layout(li, seed, n_frames, split, out, args):
             gz.kill()
         subprocess.run(["pkill", "-f", wpath])
         log.close()
-    extra = "" if (gen_world.FENCE_LOOK, args.supersample) == ("classic", 1) else ", fence %s, supersample %d" % (
-        gen_world.FENCE_LOOK, args.supersample)
+    extra = "" if (gen_world.FENCE_LOOK, args.supersample) == ("classic", 1) else ", fence %s, supersample %d%s" % (
+        gen_world.FENCE_LOOK, args.supersample, ", no wire labels" if gen_world.FENCE_LOOK in args.no_wire_labels else "")
     print("[dataset] layout %d (%s, %s%s, seed %d): %d frames in %.0f s, faults %s, light elev %.0f, boxes %s" % (
         li, split, gen_world.look(), extra, seed, saved, time.time() - t0, [ft["type"] for ft in cfg["faults"]], (light or {}).get("elev") or 0,
         dict(zip(CLASSES, counts))), flush=True)
@@ -625,9 +629,12 @@ def main():
                     help="strands as %s (default classic: 3.6 cm glowing rods); a comma-separated list gives the layouts "
                          "one look each, in turn" % ", ".join(sorted(gen_world.FENCE_LOOKS)))
     ap.add_argument("--supersample", type=int, default=1, help="render the camera K times larger, averaged down")
+    ap.add_argument("--no-wire-labels", default="", help="fence looks whose layouts get no wire or wire_break boxes "
+                    "(comma-separated, e.g. steel,polywire: too thin to see from the flight)")
     args = ap.parse_args()
+    args.no_wire_labels = [x for x in args.no_wire_labels.split(",") if x]
     args.looks = args.fence_look.split(",")
-    bad = [x for x in args.looks if x not in gen_world.FENCE_LOOKS]
+    bad = [x for x in args.looks + args.no_wire_labels if x not in gen_world.FENCE_LOOKS]
     if bad:
         ap.error("unknown fence look %s (known: %s)" % (", ".join(bad), ", ".join(sorted(gen_world.FENCE_LOOKS))))
     gen_world.LOOK = args.look

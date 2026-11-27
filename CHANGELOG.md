@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **Drafting real photos with models trained on real images** ([docs/labelling.md](docs/labelling.md)):
+  `label_drafts.py draft --model` takes several models and merges their boxes. A YOLO-World model drafts from text
+  prompts (posts, by default), a COCO model drafts the classes it shares (cow, sheep), and `MODEL.pt@classes` keeps a
+  model to some classes. On the 176 Commons photos so far: 148 drafts (51 posts, 75 cows, 16 sheep, 6 faults) where
+  ground-v0.3 alone gave 2,633, mostly noise. A COCO detector (`yolo11n.pt`) boxes no animal in any of TTPLA's 1,242
+  photos (model-v0.5: a cow in 84%), so it is the better animal detector for now. `make_dataset.sh --no-wire-labels
+  steel,polywire` leaves out the wire boxes of conductors too thin to see from the flight.
+
 - **The first real images** ([ml/datasets.json](ml/datasets.json)): `tools/fetch_commons.py` collects openly licensed
   photos of electric fences from Wikimedia Commons with their author and licence (467 pass; drafted by ground-v0.3 for
   review with `tools/label_drafts.py`, whose `draft` now adds photos that join a folder later). `tools/ttpla_check.py`
