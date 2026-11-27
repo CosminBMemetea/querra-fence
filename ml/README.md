@@ -22,6 +22,7 @@ trained, how it scored offline and in live flights, and why it is or is not used
 <!-- registry:start -->
 | Model | Status | Date | Trained on | Test mAP50 classic / rich | `wire_break` recall classic / rich | Mission replay: faults, false alerts | Live classic | Live rich | Run |
 |---|---|---|---|---|---|---|---|---|---|
+| **model-v0.6** | not adopted | 2026-11-27 | 12,600 frames, 7 datasets | 0.94 / 0.944 | 0.64 / 0.63 | 3 of 3, 1 | – | – | [model-v0.6](runs/model-v0.6) |
 | **model-v0.5** | default | 2026-11-21 | 9,600 frames, 6 datasets | 0.937 / 0.937 | 0.65 / 0.61 | 3 of 3, 0 | 3 of 3, 0 | 3 of 3, 0 | [model-v0.5](runs/model-v0.5) |
 | **model-v0.4** | retired | 2026-11-20 | 7,200 frames, 4 datasets | 0.938 / 0.938 | 0.69 / 0.68 | 3 of 3, 12 | 3 of 3, 13 | 3 of 3, 6 | [model-v0.4](runs/model-v0.4) |
 | **model-v0.3** | retired | 2026-11-19 | 4,800 frames, 2 datasets | 0.911 / 0.71 | 0.61 / 0.14 | 3 of 3, 6 | 3 of 3, 5 | 1 of 3, 0 | – |
@@ -44,6 +45,7 @@ trained, how it scored offline and in live flights, and why it is or is not used
   - `default`: what the system uses unless told otherwise (the ROS 2 detector, the replay demo, field mode).
   - `live-sim`: used for live Gazebo flights (`ros.sh demo tcp://…`).
   - `candidate`: better than the default offline; waits for live tests before it is used by default.
+  - `not adopted`: trained and scored, but not better than the default where it counts; kept for comparison.
   - `retired`: kept for comparison.
 
 ### Ground robot models

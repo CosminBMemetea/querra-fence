@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **model-v0.6, real fence conductors (not adopted)** ([ml/runs/model-v0.6](ml/runs/model-v0.6)): fine-tuned from
+  model-v0.5 with 3,000 frames of 12 new farms at flight poses in steel wire, polywire, polyrope and polytape (steel
+  wire and polywire without wire boxes, too thin to see from 11 m), on the M2's GPU in 1.5 h. Fallen posts on thin wire
+  are found far more often (from conf 0.7: steel wire 75%, polywire 76%; model-v0.5 59%, 61%), but broken wires on
+  real conductors still are not (rope 3%, tape 8%), and false broken wires rose: one false alert in the mission replay
+  (model-v0.5: none), 15 false frames from 0.7 (1), 3.5% of TTPLA's real photos from 0.5 (0.4%). No threshold makes
+  up for it. model-v0.5 stays the default; a new registry status, `not adopted`, keeps model-v0.6 for comparison.
 - **Drafting real photos with models trained on real images** ([docs/labelling.md](docs/labelling.md)):
   `label_drafts.py draft --model` takes several models and merges their boxes. A YOLO-World model drafts from text
   prompts (posts, by default), a COCO model drafts the classes it shares (cow, sheep), and `MODEL.pt@classes` keeps a

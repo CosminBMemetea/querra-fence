@@ -1,0 +1,142 @@
+{
+ "model-v0.6": {
+  "model": "model-v0.6",
+  "frames": 1986,
+  "F1": {
+   "near": 249,
+   "detected": 73,
+   "max_conf": 0.918
+  },
+  "false_frames_wire_break@0.35": 59,
+  "false_frames_wire_break@0.5": 35,
+  "false_frames_wire_break@0.7": 15,
+  "F2": {
+   "near": 242,
+   "detected": 68,
+   "max_conf": 0.945
+  },
+  "false_frames_fallen_post@0.35": 2,
+  "false_frames_fallen_post@0.5": 0,
+  "false_frames_fallen_post@0.7": 0,
+  "F3": {
+   "near": 242,
+   "detected": 63,
+   "max_conf": 0.903
+  },
+  "false_frames_branch@0.35": 0,
+  "false_frames_branch@0.5": 0,
+  "false_frames_branch@0.7": 0,
+  "alerts_1of1": {
+   "total": 18,
+   "false": 13,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  },
+  "alerts_3of5": {
+   "total": 7,
+   "false": 3,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  },
+  "alerts_5of8": {
+   "total": 6,
+   "false": 2,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  },
+  "alerts_5of8_conf0.7": {
+   "total": 5,
+   "false": 1,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  }
+ },
+ "model-v0.5": {
+  "model": "model-v0.5",
+  "frames": 1986,
+  "F1": {
+   "near": 249,
+   "detected": 66,
+   "max_conf": 0.871
+  },
+  "false_frames_wire_break@0.35": 20,
+  "false_frames_wire_break@0.5": 9,
+  "false_frames_wire_break@0.7": 1,
+  "F2": {
+   "near": 242,
+   "detected": 68,
+   "max_conf": 0.939
+  },
+  "false_frames_fallen_post@0.35": 5,
+  "false_frames_fallen_post@0.5": 1,
+  "false_frames_fallen_post@0.7": 1,
+  "F3": {
+   "near": 242,
+   "detected": 64,
+   "max_conf": 0.909
+  },
+  "false_frames_branch@0.35": 0,
+  "false_frames_branch@0.5": 0,
+  "false_frames_branch@0.7": 0,
+  "alerts_1of1": {
+   "total": 13,
+   "false": 7,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  },
+  "alerts_3of5": {
+   "total": 5,
+   "false": 1,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  },
+  "alerts_5of8": {
+   "total": 5,
+   "false": 1,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  },
+  "alerts_5of8_conf0.7": {
+   "total": 5,
+   "false": 0,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  }
+ },
+ "wire_break_threshold": {
+  "note": "the same detections (det_*.jsonl) replayed through tools/confirm.py, 5 of 8 at conf 0.7, with wire_break boxes counted only from the given conf; chosen after seeing this replay, so not an independent test (see wb_thresholds.json)",
+  "model-v0.6": {
+   "0.7": "5 alerts: wire_break 2 m, wire_break FALSE 57 m, fallen_post 4 m, branch 6 m and 3 m",
+   "0.75": "4 alerts, 0 false: wire_break 4 m, fallen_post 4 m, branch 6 m and 3 m",
+   "0.8": "4 alerts, 0 false: wire_break 3 m, fallen_post 4 m, branch 6 m and 3 m"
+  },
+  "model-v0.5": {
+   "0.7": "5 alerts, 0 false: wire_break 2 m, fallen_post 4 m twice, branch 6 m and 3 m",
+   "0.8": "5 alerts, 0 false: wire_break 0 m, fallen_post 4 m twice, branch 6 m and 3 m"
+  }
+ }
+}

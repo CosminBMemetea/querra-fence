@@ -44,6 +44,15 @@
     "fallen_post": 0.909,
     "branch": 0.941,
     "wb_false": 0.0
+   },
+   "model-v0.6": {
+    "all": 0.929,
+    "wire_break": 0.845,
+    "wb_p": 0.9,
+    "wb_r": 0.74,
+    "fallen_post": 0.913,
+    "branch": 0.931,
+    "wb_false": 0.0
    }
   },
   "classic: v2 validation farms": {
@@ -88,6 +97,15 @@
     "fallen_post": 0.976,
     "branch": 0.96,
     "wb_false": 0.0
+   },
+   "model-v0.6": {
+    "all": 0.96,
+    "wire_break": 0.825,
+    "wb_p": 0.91,
+    "wb_r": 0.7,
+    "fallen_post": 0.982,
+    "branch": 0.962,
+    "wb_false": 0.2
    }
   },
   "classic: test seeds 140-142": {
@@ -132,6 +150,15 @@
     "fallen_post": 0.937,
     "branch": 0.943,
     "wb_false": 0.1
+   },
+   "model-v0.6": {
+    "all": 0.94,
+    "wire_break": 0.821,
+    "wb_p": 0.95,
+    "wb_r": 0.64,
+    "fallen_post": 0.939,
+    "branch": 0.948,
+    "wb_false": 0.0
    }
   },
   "classic: mission pasture": {
@@ -173,6 +200,15 @@
     "wire_break": 0.865,
     "wb_p": 1.0,
     "wb_r": 0.72,
+    "fallen_post": 0.995,
+    "branch": 0.995,
+    "wb_false": 0.0
+   },
+   "model-v0.6": {
+    "all": 0.983,
+    "wire_break": 0.912,
+    "wb_p": 0.94,
+    "wb_r": 0.83,
     "fallen_post": 0.995,
     "branch": 0.995,
     "wb_false": 0.0
@@ -220,6 +256,15 @@
     "fallen_post": 0.99,
     "branch": 0.995,
     "wb_false": 0.2
+   },
+   "model-v0.6": {
+    "all": 0.98,
+    "wire_break": 0.963,
+    "wb_p": 0.94,
+    "wb_r": 0.94,
+    "fallen_post": 0.988,
+    "branch": 0.995,
+    "wb_false": 0.8
    }
   },
   "rich: validation farms": {
@@ -264,6 +309,15 @@
     "fallen_post": 0.928,
     "branch": 0.978,
     "wb_false": 0.3
+   },
+   "model-v0.6": {
+    "all": 0.956,
+    "wire_break": 0.868,
+    "wb_p": 0.87,
+    "wb_r": 0.79,
+    "fallen_post": 0.924,
+    "branch": 0.984,
+    "wb_false": 0.2
    }
   },
   "rich: test seeds 140-142": {
@@ -307,6 +361,15 @@
     "wb_r": 0.61,
     "fallen_post": 0.953,
     "branch": 0.95,
+    "wb_false": 0.0
+   },
+   "model-v0.6": {
+    "all": 0.944,
+    "wire_break": 0.8,
+    "wb_p": 0.95,
+    "wb_r": 0.63,
+    "fallen_post": 0.956,
+    "branch": 0.972,
     "wb_false": 0.0
    }
   },
@@ -352,6 +415,15 @@
     "fallen_post": 0.995,
     "branch": 0.995,
     "wb_false": 0.0
+   },
+   "model-v0.6": {
+    "all": 0.975,
+    "wire_break": 0.865,
+    "wb_p": 0.85,
+    "wb_r": 0.88,
+    "fallen_post": 0.995,
+    "branch": 0.995,
+    "wb_false": 0.2
    }
   },
   "rich: re-fly close-ups": {
@@ -396,6 +468,15 @@
     "fallen_post": 0.991,
     "branch": 0.995,
     "wb_false": 0.5
+   },
+   "model-v0.6": {
+    "all": 0.984,
+    "wire_break": 0.972,
+    "wb_p": 0.96,
+    "wb_r": 0.87,
+    "fallen_post": 0.988,
+    "branch": 0.995,
+    "wb_false": 0.0
    }
   }
  }

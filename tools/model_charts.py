@@ -47,7 +47,7 @@ def evolution(models, highlight=None, out=None):
     ids = [m["id"] for m in models]
     x = list(range(len(models)))
     hi = ids.index(highlight) if highlight else None
-    fig, axs = plt.subplots(2, 2, figsize=(10.4, 7.0), dpi=130)
+    fig, axs = plt.subplots(2, 2, figsize=(max(10.4, 2.15 * len(models)), 7.0), dpi=130)  # wider as models are added
     fig.patch.set_facecolor(SURF)
     get = lambda m, k: m["scores"].get(k)
 
@@ -91,7 +91,8 @@ def evolution(models, highlight=None, out=None):
         live = m.get("live") or {}
         flown = [(look, live[look]) for look in ("classic", "rich") if "false_alerts" in live.get(look, {})]
         if not flown:
-            a.annotate("no confirmed\nlive flight", (i, 0.3), ha="center", fontsize=8, color=MUTED)
+            a.annotate("no confirmed\nlive flight" if live else "not flown", (i, 0.3), ha="center", fontsize=8,
+                       color=MUTED)
             continue
         for look, lv in flown:
             dx, col = (-0.16, CLASSIC) if look == "classic" else (0.16, RICH)

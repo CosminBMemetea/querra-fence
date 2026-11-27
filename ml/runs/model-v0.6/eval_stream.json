@@ -1,0 +1,170 @@
+{
+ "classic flight: mission pasture q4": {
+  "n": 400,
+  "model-v0.5.pt": {
+   "all": 0.963,
+   "wire_break": 0.793,
+   "wb_p": 1.0,
+   "wb_r": 0.69,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.0
+  },
+  "model-v0.6.pt": {
+   "all": 0.967,
+   "wire_break": 0.811,
+   "wb_p": 0.92,
+   "wb_r": 0.71,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.2
+  }
+ },
+ "rich flight: mission pasture q4": {
+  "n": 400,
+  "model-v0.5.pt": {
+   "all": 0.954,
+   "wire_break": 0.772,
+   "wb_p": 0.93,
+   "wb_r": 0.71,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.0
+  },
+  "model-v0.6.pt": {
+   "all": 0.956,
+   "wire_break": 0.785,
+   "wb_p": 0.86,
+   "wb_r": 0.75,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.5
+  }
+ },
+ "classic flight: test seeds 160-162 q4": {
+  "n": 750,
+  "model-v0.5.pt": {
+   "all": 0.926,
+   "wire_break": 0.623,
+   "wb_p": 0.71,
+   "wb_r": 0.58,
+   "fallen_post": 0.987,
+   "branch": 0.975,
+   "wb_false": 0.4
+  },
+  "model-v0.6.pt": {
+   "all": 0.927,
+   "wire_break": 0.614,
+   "wb_p": 0.65,
+   "wb_r": 0.57,
+   "fallen_post": 0.994,
+   "branch": 0.978,
+   "wb_false": 1.1
+  }
+ },
+ "rich flight: test seeds 160-162 q4": {
+  "n": 750,
+  "model-v0.5.pt": {
+   "all": 0.914,
+   "wire_break": 0.516,
+   "wb_p": 0.73,
+   "wb_r": 0.33,
+   "fallen_post": 0.991,
+   "branch": 0.949,
+   "wb_false": 0.3
+  },
+  "model-v0.6.pt": {
+   "all": 0.924,
+   "wire_break": 0.544,
+   "wb_p": 0.65,
+   "wb_r": 0.43,
+   "fallen_post": 0.994,
+   "branch": 0.97,
+   "wb_false": 1.2
+  }
+ },
+ "classic: test seeds 140-142 q4": {
+  "n": 750,
+  "model-v0.5.pt": {
+   "all": 0.91,
+   "wire_break": 0.671,
+   "wb_p": 0.76,
+   "wb_r": 0.54,
+   "fallen_post": 0.899,
+   "branch": 0.943,
+   "wb_false": 1.2
+  },
+  "model-v0.6.pt": {
+   "all": 0.915,
+   "wire_break": 0.682,
+   "wb_p": 0.76,
+   "wb_r": 0.6,
+   "fallen_post": 0.912,
+   "branch": 0.943,
+   "wb_false": 1.3
+  }
+ },
+ "rich: test seeds 140-142 q4": {
+  "n": 750,
+  "model-v0.5.pt": {
+   "all": 0.92,
+   "wire_break": 0.705,
+   "wb_p": 0.8,
+   "wb_r": 0.52,
+   "fallen_post": 0.928,
+   "branch": 0.947,
+   "wb_false": 0.4
+  },
+  "model-v0.6.pt": {
+   "all": 0.931,
+   "wire_break": 0.726,
+   "wb_p": 0.81,
+   "wb_r": 0.62,
+   "fallen_post": 0.948,
+   "branch": 0.968,
+   "wb_false": 0.5
+  }
+ },
+ "classic flight: mission pasture PNG": {
+  "n": 400,
+  "model-v0.5.pt": {
+   "all": 0.974,
+   "wire_break": 0.863,
+   "wb_p": 1.0,
+   "wb_r": 0.68,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.0
+  },
+  "model-v0.6.pt": {
+   "all": 0.974,
+   "wire_break": 0.855,
+   "wb_p": 0.97,
+   "wb_r": 0.75,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.0
+  }
+ },
+ "rich flight: mission pasture PNG": {
+  "n": 400,
+  "model-v0.5.pt": {
+   "all": 0.969,
+   "wire_break": 0.867,
+   "wb_p": 1.0,
+   "wb_r": 0.78,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.0
+  },
+  "model-v0.6.pt": {
+   "all": 0.97,
+   "wire_break": 0.856,
+   "wb_p": 0.9,
+   "wb_r": 0.79,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.2
+  }
+ }
+}

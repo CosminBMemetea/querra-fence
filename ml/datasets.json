@@ -816,6 +816,51 @@
     }
    },
    "notes": "467 photos pass the licence and exclusion checks (one more was taken out by hand: a concentration camp photo filed under electric fences). Wikimedia throttles the download to about one a minute, so it fills over hours; label_drafts.py draft adds the new ones. Mostly eye-level landscapes from the UK, the Czech Republic and the Alps; about a third show a fence close enough to label. Labelled in ~/querra-data/real/commons_fences_set (docs/labelling.md); a photo with no usable fence is skipped there, so the test set will be smaller. Real images stay out of git."
+  },
+  {
+   "id": "drone_yolo_looks",
+   "look": "classic and rich",
+   "style": "v4 (inspection-flight poses), real fence conductors (polytape, polyrope, steel wire, polywire), 3x supersampled",
+   "created": "2026-11-27",
+   "code": "9c4cb0a",
+   "command": "tools/make_dataset.sh --seed 100 --look classic --style v4 --start 250 --layouts 256 --split train --frames 250 --supersample 3 --fence-look polytape,polyrope,steel,polywire --no-wire-labels steel,polywire --out ~/querra-data/drone_yolo_looks (rich: --look rich --start 256 --layouts 262; val: --look classic --start 262 --layouts 264 --split val --fence-look polyrope,polytape)",
+   "size": "586 MB",
+   "splits": {
+    "train": {
+     "layouts": "250-261",
+     "seeds": "350-361",
+     "frames": 3000,
+     "role": "train"
+    },
+    "val": {
+     "layouts": "262-263",
+     "seeds": "362-363",
+     "frames": 500,
+     "role": "val"
+    }
+   },
+   "notes": "Real conductors for model-v0.6: new farms flown at the measured flight poses (as fence_yolo_flight_*), with the strands drawn at their real size (sim/gen_world.py FENCE_LOOKS) and the colour camera rendered at 3x and averaged in linear light. The look cycles by layout number: train 750 frames each of steel wire (2.5 mm grey; 500 classic, 250 rich), polywire (3 mm yellow; 500, 250), polytape (40 mm white; 250, 500) and polyrope (6 mm white; 250, 500); val 250 polyrope, 250 polytape (classic). Steel-wire and polywire layouts have no wire or wire_break boxes (--no-wire-labels): from 11 m the wire is a tenth of a pixel, so the model is not asked to find it; their posts, fallen posts, branches and animals are labelled as usual, and the poses are the same as with the labels. Labels, train: post 8926, wire 5111, wire_break 419, fallen_post 287, branch 273, cow 528, sheep 399; val: post 1397, wire 1615, wire_break 100, fallen_post 52, branch 29, cow 79, sheep 55. Seeds 350-363 are outside every other range. 30 minutes to render on the Mac."
+  },
+  {
+   "id": "drone_yolo_looks_stream",
+   "look": "classic and rich",
+   "style": "copy of drone_yolo_looks, stream-like JPEG",
+   "created": "2026-11-27",
+   "code": "9c4cb0a",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/drone_yolo_looks train ~/querra-data/drone_yolo_looks_stream --share 0.75 --seed 1; tools/jpeg_like_stream.py ~/querra-data/drone_yolo_looks val ~/querra-data/drone_yolo_looks_stream --quality 4 --share 1 --seed 1",
+   "derived_from": "drone_yolo_looks",
+   "size": "63 MB",
+   "splits": {
+    "train": {
+     "frames": 3000,
+     "role": "train"
+    },
+    "val": {
+     "frames": 500,
+     "role": "val"
+    }
+   },
+   "notes": "Train: 2283 of the 3000 frames compressed like the live camera stream (MJPEG, 4:2:0) at a random ffmpeg -q:v of 2, 3, 4, 5, 6 or 8; the rest are hard links to the PNGs. Val: every frame at -q:v 4, the stream's quality. Same labels."
   }
  ]
 }

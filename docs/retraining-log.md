@@ -347,12 +347,46 @@ alert on the loose wires there.
 **Decision.** **v0.5 is the default for everything** from platform v0.11.0: the replay demo, live Gazebo flights, the
 ROS 2 detector and field mode. v0.3 and v0.4 are retired and stay selectable.
 
-## v0.6 · planned
+## v0.6 · real fence conductors, not adopted (`model-v0.6`)
 
-- **Broken-wire margin.** v0.5 sees the recorded broken wire in 66 frames (v0.4: 147), best confidence 0.87. More
-  broken wires at flight poses, or a lower per-frame threshold for `wire_break`.
+Full run record: [ml/runs/model-v0.6](../ml/runs/model-v0.6/README.md).
+
+**Why.** Rendered with real conductors at their real size, v0.5 found no broken wire on any of them, and fallen posts
+dropped from 93% to about 60% on thin wire ([the stress test](../ml/runs/model-v0.5/README.md#fence-looks-a-stress-test)).
+Training on real conductors had fixed thin wire for the ground robot ([ground-v0.3](../ml/runs/ground-v0.3/README.md)).
+
+**What we changed.** 12 new farms at flight poses, 750 frames each of steel wire, polywire, polyrope and polytape (3x
+supersampled, 75% JPEG like the stream). From 11 m steel wire and polywire are a tenth of a pixel, so their frames
+have no wire or broken-wire boxes (`--no-wire-labels`). Added to v0.5's mix (12,600 frames) and fine-tuned from v0.5
+for 8 epochs on the M2's GPU, 1.5 h.
+
+### Scores, v0.5 → v0.6
+
+| | v0.5 | v0.6 |
+|---|---|---|
+| Fallen posts found from 0.7, steel wire / polywire | 59% / 61% | **75% / 76%** |
+| Broken wires found from 0.7, polyrope / polytape | 0% / 4% | 3% / 8% |
+| Held-out test mAP50, classic / rich (PNG) | 0.937 / 0.937 | 0.940 / 0.944 |
+| False `wire_break` frames, flight stream sets | 0.0–0.4% | **0.2–1.2%** |
+| Mission replay: faults, false alerts | 3 of 3, 0 | **3 of 3, 1** |
+| False `wire_break` frames in the replay, conf ≥ 0.7 | 1 | **15** |
+| TTPLA real photos with a false broken wire from 0.5 | 0.4% | **3.5%** |
+
+The false alert sits at a corner post, where the strands of a span line up into what looks like one. v0.5 boxes the
+same spot just under the alert rule. Counting broken wires from 0.75 removes the alert in the replay, but on the
+stream sets no threshold makes v0.6 as good as v0.5 on both broken wires found and false frames.
+
+**Decision.** **Not adopted**; v0.5 stays the default. Training on real conductors helps fallen posts, not breaks: from
+the flight, a break in thin wire stays out of reach, and more positive examples brought more false breaks.
+
+## v0.7 · planned
+
+- **Hard negatives.** Corner-heavy flight frames with no break, and the replay's false frames, before adding broken-wire
+  examples again. Keep the real-conductor farms for fallen posts.
+- **A per-class threshold** in the drone's alert path (`tools/confirm.py`), as the ground robot has.
+- **Broken-wire margin.** v0.5 sees the recorded broken wire in 66 frames (v0.4: 147), best confidence 0.87.
 - **Branch alert position.** Branch alerts sit about 4 m off, so the re-fly misses the branch.
 - **Fallen post up close.** Loose wires on a fallen post look broken from 6 m.
 - **Re-fly budget.** Visit every alert, or rank by confidence, not only by distance.
-- **Real frames.** Fine-tune on photos from the field mode recorder (`field.sh`). Reality matters more than any
-  simulation artefact.
+- **Real frames.** Fine-tune on labelled real footage (the field recorder, the DJI Mini 4 Pro, the Commons photos).
+  Reality matters more than any simulation artefact.

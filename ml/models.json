@@ -13,9 +13,198 @@
   "default": "the model the system uses unless told otherwise (ROS 2 detector, replay demo, field mode)",
   "live-sim": "used for live Gazebo flights (ros.sh demo tcp://...), not the default elsewhere",
   "retired": "kept for comparison; not used by default",
-  "candidate": "better than the default offline; waits for live tests before it is used by default"
+  "candidate": "better than the default offline; waits for live tests before it is used by default",
+  "not adopted": "trained and scored, not better than the default where it counts; kept for comparison, never used by default"
  },
  "models": [
+  {
+   "id": "model-v0.6",
+   "status": "not adopted",
+   "summary": "+ real fence conductors",
+   "date": "2026-11-27",
+   "parent": "model-v0.5",
+   "code": "9c4cb0a",
+   "release": null,
+   "run": "ml/runs/model-v0.6",
+   "used_for": [],
+   "data": {
+    "train": [
+     {
+      "dataset": "fence_yolo_flight_classic_stream",
+      "split": "train",
+      "frames": 2400
+     },
+     {
+      "dataset": "fence_yolo_flight_rich_stream",
+      "split": "train",
+      "frames": 2400
+     },
+     {
+      "dataset": "fence_yolo_rich_stream",
+      "split": "train",
+      "frames": 2000,
+      "sample": "random 2000 of 3600, seed 0"
+     },
+     {
+      "dataset": "fence_yolo_v3c_stream",
+      "split": "train",
+      "frames": 1000,
+      "sample": "random 1000 of 1200, seed 0"
+     },
+     {
+      "dataset": "fence_yolo_v2_stream",
+      "split": "train",
+      "frames": 1000,
+      "sample": "random 1000 of 2400, seed 0"
+     },
+     {
+      "dataset": "fence_yolo_stream",
+      "split": "train",
+      "frames": 800,
+      "sample": "random 800 of 3500, seed 0"
+     },
+     {
+      "dataset": "drone_yolo_looks_stream",
+      "split": "train",
+      "frames": 3000
+     }
+    ],
+    "val": [
+     {
+      "dataset": "fence_yolo_flight_classic_q4",
+      "split": "val",
+      "frames": 600
+     },
+     {
+      "dataset": "fence_yolo_flight_rich_q4",
+      "split": "val",
+      "frames": 600
+     },
+     {
+      "dataset": "fence_yolo_v2",
+      "split": "val",
+      "frames": 600
+     },
+     {
+      "dataset": "drone_yolo_looks_stream",
+      "split": "val",
+      "frames": 500
+     }
+    ],
+    "mix": "tools/mix_dataset.py (ml/runs/model-v0.6/data.yaml): model-v0.5's mix plus drone_yolo_looks_stream; 8,402 of the 12,600 training frames are stream-like JPEG, 3,000 in real conductors (750 each of steel wire, polywire, polyrope, polytape; steel wire and polywire without wire or wire_break boxes)"
+   },
+   "training": {
+    "from": "model-v0.5",
+    "epochs": 8,
+    "selected_epoch": 8,
+    "imgsz": 640,
+    "batch": 8,
+    "optimizer": "AdamW lr0 0.000909 (Ultralytics auto), 3 warm-up epochs",
+    "close_mosaic": 3,
+    "device": "GPU (MPS), Apple M2 8 GB",
+    "hours": 1.5,
+    "notes": "tools/train_with_breaks.py --device mps --batch 8 --workers 0: about 11.5 min per epoch, 15 min cooling breaks before training and after epochs 2, 4 and 6 (2.6 h of wall time). Ultralytics 8.4.215, torch 2.15."
+   },
+   "scores": {
+    "val_mix_mAP50": 0.944,
+    "val_note": "validation includes 500 polyrope and polytape frames: not comparable with model-v0.5's val_mix_mAP50",
+    "test_classic_mAP50": 0.94,
+    "test_classic_wire_break_recall": 0.64,
+    "test_rich_mAP50": 0.944,
+    "test_rich_wire_break_recall": 0.63,
+    "mission_frames_classic_mAP50": 0.983,
+    "mission_frames_rich_mAP50": 0.975,
+    "refly_classic_mAP50": 0.98,
+    "refly_rich_mAP50": 0.984,
+    "stream_q4": {
+     "flight_mission_classic": {
+      "mAP50": 0.967,
+      "wire_break_mAP50": 0.811,
+      "wb_false_pct": 0.2
+     },
+     "flight_mission_rich": {
+      "mAP50": 0.956,
+      "wire_break_mAP50": 0.785,
+      "wb_false_pct": 0.5
+     },
+     "flight_test_classic": {
+      "mAP50": 0.927,
+      "wire_break_mAP50": 0.614,
+      "wb_false_pct": 1.1
+     },
+     "flight_test_rich": {
+      "mAP50": 0.924,
+      "wire_break_mAP50": 0.544,
+      "wb_false_pct": 1.2
+     }
+    },
+    "fence_looks_fallen_post_recall_conf0.7": {
+     "classic": 0.921,
+     "steel": 0.752,
+     "polywire": 0.762,
+     "polyrope": 0.851,
+     "polytape": 0.911
+    },
+    "fence_looks_wire_break_recall_conf0.7": {
+     "classic": 0.259,
+     "steel": 0.0,
+     "polywire": 0.0,
+     "polyrope": 0.032,
+     "polytape": 0.082
+    },
+    "ttpla_false_frames_conf0.7": {
+     "wire_break": 2,
+     "fallen_post": 2,
+     "branch": 1,
+     "cow": 577,
+     "of": 1242
+    },
+    "baseline_model-v0.5": {
+     "fence_looks_fallen_post_recall_conf0.7": {
+      "classic": 0.931,
+      "steel": 0.594,
+      "polywire": 0.614,
+      "polyrope": 0.782,
+      "polytape": 0.871
+     },
+     "fence_looks_wire_break_recall_conf0.7": {
+      "classic": 0.215,
+      "steel": 0.0,
+      "polywire": 0.0,
+      "polyrope": 0.0,
+      "polytape": 0.044
+     },
+     "ttpla_false_frames_conf0.7": {
+      "wire_break": 0,
+      "fallen_post": 1,
+      "branch": 1,
+      "cow": 316,
+      "of": 1242
+     }
+    }
+   },
+   "mission_replay": {
+    "faults_found": "3 of 3",
+    "false_alerts": 1,
+    "false_wire_break_frames_conf0.7": 15,
+    "notes": "the false alert is a broken wire 57 m from F1; with wire_break counted from 0.75 it goes (4 alerts, 3 of 3, 0 false), a threshold chosen on this replay"
+   },
+   "live": {},
+   "decision": "Not adopted: model-v0.5 stays the default. Better on real conductors where they show: fallen posts from conf 0.7 on steel wire 75% (v0.5: 59%), polywire 76% (61%), polyrope 85% (78%), polytape 91% (87%), and equal or higher mAP50 on every stream set and most held-out sets. But broken wires on real conductors are still not found (rope 3%, tape 8%, steel wire and polywire 0%), and it raises more false broken wires: 15 false frames from 0.7 in the mission replay (v0.5: 1) and one false confirmed alert (0), wb_false 0.2-1.2% on the four flight stream sets (0.0-0.4%), 3.5% of TTPLA's real photos with a false broken wire from 0.5 (0.4%). No threshold makes it as good as v0.5 on both broken-wire recall and false frames across the stream sets (wb_thresholds.json). The data that helped fallen posts can go into a later model with more negative examples.",
+   "artefacts": [
+    {
+     "file": "fence-yolo11n-v0.6.pt",
+     "bytes": 5485786,
+     "sha256": "9d01e2abfb0f84b19f9a8e182b3c284caa10efa570fc5063a08d3edc109d3ba3"
+    },
+    {
+     "file": "fence-yolo11n-v0.6.onnx",
+     "bytes": 10610501,
+     "sha256": "f59915ea4dd17c28488dc6924b4bdd6569e60bd1f5952f5a284de6b00f221b27"
+    }
+   ],
+   "benchmark": "ml/benchmark"
+  },
   {
    "id": "model-v0.5",
    "status": "default",

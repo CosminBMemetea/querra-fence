@@ -1,0 +1,13 @@
+# Training mix written by tools/mix_dataset.py (image lists live on the training machine; ids in ml/datasets.json)
+# mix: --train ~/querra-data/fence_yolo_flight_classic_stream:train ~/querra-data/fence_yolo_flight_rich_stream:train ~/querra-data/fence_yolo_rich_stream:train@2000 ~/querra-data/fence_yolo_v3c_stream:train@1000 ~/querra-data/fence_yolo_v2_stream:train@1000 ~/querra-data/fence_yolo_stream:train@800 ~/querra-data/drone_yolo_looks_stream:train --val ~/querra-data/fence_yolo_flight_classic_q4:val ~/querra-data/fence_yolo_flight_rich_q4:val ~/querra-data/fence_yolo_v2:val ~/querra-data/drone_yolo_looks_stream:val --seed 0
+# model-v0.5's mix plus drone_yolo_looks_stream (real fence conductors), train and val
+# *_stream: copies made by tools/jpeg_like_stream.py (MJPEG 4:2:0 at a random -q:v of 2,3,4,5,6,8); *_q4: all frames at -q:v 4, like the live stream
+# train: 12600 images (8402 JPEG), val: 2300 images
+names:
+  0: post
+  1: wire
+  2: wire_break
+  3: fallen_post
+  4: branch
+  5: cow
+  6: sheep
