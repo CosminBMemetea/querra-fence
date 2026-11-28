@@ -861,6 +861,41 @@
     }
    },
    "notes": "Train: 2283 of the 3000 frames compressed like the live camera stream (MJPEG, 4:2:0) at a random ffmpeg -q:v of 2, 3, 4, 5, 6 or 8; the rest are hard links to the PNGs. Val: every frame at -q:v 4, the stream's quality. Same labels."
+  },
+  {
+   "id": "drone_yolo_corners",
+   "look": "classic and rich",
+   "style": "v4 (inspection-flight poses), mostly near corner posts, no broken wire",
+   "created": "2026-11-28",
+   "code": "e51b664",
+   "command": "tools/make_dataset.sh --seed 100 --look classic --style v4 --flight-share 1 --corner-share 0.9 --breaks 0 --start 264 --layouts 268 --split train --frames 250 --out ~/querra-data/drone_yolo_corners (rich: --look rich --start 268 --layouts 272)",
+   "size": "356 MB",
+   "splits": {
+    "train": {
+     "layouts": "264-271",
+     "seeds": "364-371",
+     "frames": 2000,
+     "role": "train"
+    }
+   },
+   "notes": "Negatives for broken wires, for model-v0.7: new farms with every wire whole (--breaks 0; the rest of each farm, its fallen posts, branches and animals, comes from the same random draws as without the option), flown at the measured flight poses, 90% of them drawn from poses within 12 m of a corner post (--corner-share 0.9), where model-v0.6 saw a false break in the two strands of a span lined up in perspective. Classic 264-267, rich 268-271. Labels: post 5366, wire 6328, wire_break 0, fallen_post 142, branch 117, cow 267, sheep 114; 9 frames with no box. Seeds 364-371 are outside every other range. 4 minutes to render on the Mac."
+  },
+  {
+   "id": "drone_yolo_corners_stream",
+   "look": "classic and rich",
+   "style": "copy of drone_yolo_corners, stream-like JPEG",
+   "created": "2026-11-28",
+   "code": "e51b664",
+   "command": "tools/jpeg_like_stream.py ~/querra-data/drone_yolo_corners train ~/querra-data/drone_yolo_corners_stream --share 0.75 --seed 1",
+   "derived_from": "drone_yolo_corners",
+   "size": "37 MB",
+   "splits": {
+    "train": {
+     "frames": 2000,
+     "role": "train"
+    }
+   },
+   "notes": "Train: 1530 of the 2000 frames compressed like the live camera stream (MJPEG, 4:2:0) at a random ffmpeg -q:v of 2, 3, 4, 5, 6 or 8; the rest are hard links to the PNGs. Same labels."
   }
  ]
 }

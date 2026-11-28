@@ -379,15 +379,51 @@ stream sets no threshold makes v0.6 as good as v0.5 on both broken wires found a
 **Decision.** **Not adopted**; v0.5 stays the default. Training on real conductors helps fallen posts, not breaks: from
 the flight, a break in thin wire stays out of reach, and more positive examples brought more false breaks.
 
-## v0.7 · planned
+## v0.7 · negatives for broken wires, not adopted (`model-v0.7`)
 
-- **Hard negatives.** Corner-heavy flight frames with no break, and the replay's false frames, before adding broken-wire
-  examples again. Keep the real-conductor farms for fallen posts.
-- **A per-class threshold** in the drone's alert path (`tools/confirm.py`), as the ground robot has.
+Full run record: [ml/runs/model-v0.7](../ml/runs/model-v0.7/README.md).
+
+**Why.** v0.6's false alert was at a corner post, and its run suggested negatives: frames near corners with every
+wire whole. v0.7 tests that, keeping the steel-wire and polywire frames (for fallen posts) and dropping the rope and
+tape breaks (which did not teach breaks).
+
+**What we changed.** 8 new farms rendered with no broken wire (`--breaks 0`), 90% of their flight poses within 12 m
+of a corner (`--corner-share 0.9`), 2,000 frames; plus the 1,500 steel-wire and polywire frames of v0.6. Added to
+v0.5's mix (13,100 frames) and fine-tuned from v0.5 for 8 epochs on the M2's GPU, 1.7 h. Validation is v0.5's, so
+the two compare.
+
+### Scores, v0.5 → v0.7
+
+| | v0.5 | v0.7 |
+|---|---|---|
+| Validation mAP50 (same 1,800 frames) | 0.952 | 0.957 |
+| Fallen posts found from 0.7, steel wire / polywire | 59% / 61% | **70% / 72%** |
+| `wire` mAP50, polyrope / polytape | 0.952 / 0.966 | **0.898 / 0.778** |
+| False `wire_break` frames, flight stream sets | 0.0–0.4% | **0.0–0.8%** |
+| False `wire_break` frames, test stream sets (4) | 0.3–1.2% | **0.8–2.3%** |
+| Mission replay: faults, false alerts | 3 of 3, 0 | **3 of 3, 1** |
+| False `wire_break` frames in the replay, conf ≥ 0.7 | 1 | **8** |
+| TTPLA real photos with a false broken wire from 0.5 | 0.4% | 1.0% |
+
+The false alert is v0.6's, at the same corner: the negatives did not lower the confidence there (6 frames from 0.7,
+v0.6: 5, v0.5: 1). A broken-wire threshold of 0.75 removes it in the replay, but on the flight test farms no threshold
+makes v0.7 as good as v0.5 on both breaks found and false frames.
+
+**Decision.** **Not adopted**; v0.5 stays the default. Two lessons: v0.6 and v0.7 share the thin-wire frames and 8
+more epochs on v0.5's mix, and both raise false breaks, so one of those may be the cause rather than the data each added; and
+thin wire labelled as no wire, without rope and tape beside it, teaches the model to miss rope and tape.
+
+## v0.8 · planned
+
+- **A control run first.** v0.5 fine-tuned 8 epochs on its own mix, nothing added: if its false breaks rise too, the
+  extra training does it, not the data. Cheap (1.5 h) and it decides what the next mixes can be credited with.
+- **Hard negatives where it fails.** The generator's corners do not reproduce the mission's: render corners whose
+  span strands line up from the inspection pose, checked against the false frames before training.
+- **Thin wire with rope and tape.** Keep all four real conductors together (as v0.6), for fallen posts without losing
+  wires.
 - **Broken-wire margin.** v0.5 sees the recorded broken wire in 66 frames (v0.4: 147), best confidence 0.87.
-- **Branch alert position: done offline.** Alerts now take the mean of every sighting, not only the first five (seen
-  from far ahead, the least accurate): on the replay v0.5's alerts sit 0.4–1.4 m from their fault (before 2.3–5.8 m).
-  Next: a re-fly in SITL to confirm the branch is now in view.
+- **Re-fly to the refined positions.** Alerts now take the mean of every sighting (0.4–1.4 m from their fault in the
+  replay, before 2.3–5.8 m); a re-fly in SITL to confirm the branch is now in view.
 - **Fallen post up close.** Loose wires on a fallen post look broken from 6 m.
 - **Re-fly budget.** Visit every alert, or rank by confidence, not only by distance.
 - **Real frames.** Fine-tune on labelled real footage (the field recorder, the DJI Mini 4 Pro, the Commons photos).

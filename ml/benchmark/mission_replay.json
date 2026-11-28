@@ -373,10 +373,211 @@
      "wire_break"
     ]
    }
+  },
+  "model-v0.7": {
+   "frames": 1986,
+   "F1": {
+    "near": 249,
+    "detected": 65,
+    "max_conf": 0.909
+   },
+   "false_frames_wire_break@0.35": 34,
+   "false_frames_wire_break@0.5": 24,
+   "false_frames_wire_break@0.7": 8,
+   "F2": {
+    "near": 242,
+    "detected": 68,
+    "max_conf": 0.941
+   },
+   "false_frames_fallen_post@0.35": 0,
+   "false_frames_fallen_post@0.5": 0,
+   "false_frames_fallen_post@0.7": 0,
+   "F3": {
+    "near": 242,
+    "detected": 64,
+    "max_conf": 0.905
+   },
+   "false_frames_branch@0.35": 0,
+   "false_frames_branch@0.5": 0,
+   "false_frames_branch@0.7": 0,
+   "alerts_1of1": {
+    "total": 13,
+    "false": 9,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ],
+    "distances_m": [
+     [
+      "wire_break",
+      57.3
+     ],
+     [
+      "wire_break",
+      0.2
+     ],
+     [
+      "wire_break",
+      12.2
+     ],
+     [
+      "wire_break",
+      53.2
+     ],
+     [
+      "fallen_post",
+      0.5
+     ],
+     [
+      "wire_break",
+      95.8
+     ],
+     [
+      "wire_break",
+      125.9
+     ],
+     [
+      "branch",
+      1.4
+     ],
+     [
+      "wire_break",
+      131.1
+     ],
+     [
+      "wire_break",
+      135.7
+     ],
+     [
+      "wire_break",
+      134.3
+     ],
+     [
+      "wire_break",
+      127.9
+     ],
+     [
+      "wire_break",
+      110.0
+     ]
+    ]
+   },
+   "alerts_3of5": {
+    "total": 5,
+    "false": 1,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ],
+    "distances_m": [
+     [
+      "wire_break",
+      57.3
+     ],
+     [
+      "wire_break",
+      0.2
+     ],
+     [
+      "wire_break",
+      12.2
+     ],
+     [
+      "fallen_post",
+      0.5
+     ],
+     [
+      "branch",
+      1.4
+     ]
+    ]
+   },
+   "alerts_5of8": {
+    "total": 4,
+    "false": 1,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ],
+    "distances_m": [
+     [
+      "wire_break",
+      57.3
+     ],
+     [
+      "wire_break",
+      0.2
+     ],
+     [
+      "fallen_post",
+      0.5
+     ],
+     [
+      "branch",
+      1.4
+     ]
+    ]
+   },
+   "alerts_5of8_conf0.7": {
+    "total": 4,
+    "false": 1,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ],
+    "distances_m": [
+     [
+      "wire_break",
+      57.0
+     ],
+     [
+      "wire_break",
+      0.5
+     ],
+     [
+      "fallen_post",
+      0.5
+     ],
+     [
+      "branch",
+      1.4
+     ]
+    ]
+   },
+   "alerts_5of8_conf0.7_class_conf": {
+    "total": 3,
+    "false": 0,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ],
+    "distances_m": [
+     [
+      "wire_break",
+      0.5
+     ],
+     [
+      "fallen_post",
+      0.5
+     ],
+     [
+      "branch",
+      1.4
+     ]
+    ]
+   },
+   "class_conf": {
+    "wire_break": 0.75
+   }
   }
  },
  "refined_positions": {
-  "note": "From 2026-11-28 tools/confirm.py refines an alert's position with every sighting matched to it (before: the mean of the 5 sightings that confirmed it, often seen from far ahead). Every model replayed from its saved detections (eval_mission.py --reuse) with the new rule. The results above keep the counts of their time. False alerts are the same for every model but model-v0.4 (12 -> 11); duplicate alerts of a real fault merge, and true alerts sit 0.4-1.5 m from their fault (before: 2-6 m), except model-v0.2's broken wire at 11.6 m, pulled by its many false breaks nearby.",
+  "note": "From 2026-11-28 tools/confirm.py refines an alert's position with every sighting matched to it (before: the mean of the 5 sightings that confirmed it, often seen from far ahead). Every model replayed from its saved detections (eval_mission.py --reuse) with the new rule. The results above keep the counts of their time. False alerts are the same for every model but model-v0.4 (12 -> 11); duplicate alerts of a real fault merge, and true alerts sit 0.4-1.5 m from their fault (before: 2-6 m), except model-v0.2's broken wire at 11.6 m, pulled by its many false breaks nearby. model-v0.7 and later were replayed with the new rule in the results above too; their fixed_position is the same detections through the old rule.",
   "results": {
    "model-v0.1": {
     "alerts_5of8_conf0.7": {
@@ -644,6 +845,39 @@
       [
        "wire_break",
        0.4
+      ],
+      [
+       "fallen_post",
+       0.5
+      ],
+      [
+       "branch",
+       1.4
+      ]
+     ]
+    },
+    "fixed_position": {
+     "total": 5,
+     "false": 1
+    }
+   },
+   "model-v0.7": {
+    "alerts_5of8_conf0.7": {
+     "total": 4,
+     "false": 1,
+     "faults_alerted": [
+      "branch",
+      "fallen_post",
+      "wire_break"
+     ],
+     "distances_m": [
+      [
+       "wire_break",
+       57.0
+      ],
+      [
+       "wire_break",
+       0.5
       ],
       [
        "fallen_post",

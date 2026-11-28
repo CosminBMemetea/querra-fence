@@ -1,0 +1,293 @@
+{
+ "model-v0.7": {
+  "model": "model-v0.7",
+  "frames": 1986,
+  "F1": {
+   "near": 249,
+   "detected": 65,
+   "max_conf": 0.909
+  },
+  "false_frames_wire_break@0.35": 34,
+  "false_frames_wire_break@0.5": 24,
+  "false_frames_wire_break@0.7": 8,
+  "F2": {
+   "near": 242,
+   "detected": 68,
+   "max_conf": 0.941
+  },
+  "false_frames_fallen_post@0.35": 0,
+  "false_frames_fallen_post@0.5": 0,
+  "false_frames_fallen_post@0.7": 0,
+  "F3": {
+   "near": 242,
+   "detected": 64,
+   "max_conf": 0.905
+  },
+  "false_frames_branch@0.35": 0,
+  "false_frames_branch@0.5": 0,
+  "false_frames_branch@0.7": 0,
+  "alerts_1of1": {
+   "total": 13,
+   "false": 9,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ],
+   "distances_m": [
+    [
+     "wire_break",
+     57.3
+    ],
+    [
+     "wire_break",
+     0.2
+    ],
+    [
+     "wire_break",
+     12.2
+    ],
+    [
+     "wire_break",
+     53.2
+    ],
+    [
+     "fallen_post",
+     0.5
+    ],
+    [
+     "wire_break",
+     95.8
+    ],
+    [
+     "wire_break",
+     125.9
+    ],
+    [
+     "branch",
+     1.4
+    ],
+    [
+     "wire_break",
+     131.1
+    ],
+    [
+     "wire_break",
+     135.7
+    ],
+    [
+     "wire_break",
+     134.3
+    ],
+    [
+     "wire_break",
+     127.9
+    ],
+    [
+     "wire_break",
+     110.0
+    ]
+   ]
+  },
+  "alerts_3of5": {
+   "total": 5,
+   "false": 1,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ],
+   "distances_m": [
+    [
+     "wire_break",
+     57.3
+    ],
+    [
+     "wire_break",
+     0.2
+    ],
+    [
+     "wire_break",
+     12.2
+    ],
+    [
+     "fallen_post",
+     0.5
+    ],
+    [
+     "branch",
+     1.4
+    ]
+   ]
+  },
+  "alerts_5of8": {
+   "total": 4,
+   "false": 1,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ],
+   "distances_m": [
+    [
+     "wire_break",
+     57.3
+    ],
+    [
+     "wire_break",
+     0.2
+    ],
+    [
+     "fallen_post",
+     0.5
+    ],
+    [
+     "branch",
+     1.4
+    ]
+   ]
+  },
+  "alerts_5of8_conf0.7": {
+   "total": 4,
+   "false": 1,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ],
+   "distances_m": [
+    [
+     "wire_break",
+     57.0
+    ],
+    [
+     "wire_break",
+     0.5
+    ],
+    [
+     "fallen_post",
+     0.5
+    ],
+    [
+     "branch",
+     1.4
+    ]
+   ]
+  },
+  "alerts_5of8_conf0.7_class_conf": {
+   "total": 3,
+   "false": 0,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ],
+   "distances_m": [
+    [
+     "wire_break",
+     0.5
+    ],
+    [
+     "fallen_post",
+     0.5
+    ],
+    [
+     "branch",
+     1.4
+    ]
+   ]
+  },
+  "class_conf": {
+   "wire_break": 0.75
+  }
+ },
+ "model-v0.5": {
+  "model": "model-v0.5",
+  "frames": 1986,
+  "F1": {
+   "near": 249,
+   "detected": 66,
+   "max_conf": 0.871
+  },
+  "false_frames_wire_break@0.35": 20,
+  "false_frames_wire_break@0.5": 9,
+  "false_frames_wire_break@0.7": 1,
+  "F2": {
+   "near": 242,
+   "detected": 68,
+   "max_conf": 0.939
+  },
+  "false_frames_fallen_post@0.35": 5,
+  "false_frames_fallen_post@0.5": 1,
+  "false_frames_fallen_post@0.7": 1,
+  "F3": {
+   "near": 242,
+   "detected": 64,
+   "max_conf": 0.909
+  },
+  "false_frames_branch@0.35": 0,
+  "false_frames_branch@0.5": 0,
+  "false_frames_branch@0.7": 0,
+  "alerts_1of1": {
+   "total": 13,
+   "false": 7,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  },
+  "alerts_3of5": {
+   "total": 5,
+   "false": 1,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  },
+  "alerts_5of8": {
+   "total": 5,
+   "false": 1,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  },
+  "alerts_5of8_conf0.7": {
+   "total": 5,
+   "false": 0,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  }
+ },
+ "note": "tools/eval_mission.py on the recorded classic mission; model-v0.7 with tools/confirm.py's refined positions (from e51b664), model-v0.5 as recorded in model-v0.6's run (fixed positions; with the refined rule: 3 alerts, 0 false, see ml/benchmark/mission_replay.json refined_positions). alerts_5of8_conf0.7_class_conf: broken wires counted only from 0.75, the threshold chosen on model-v0.6's replay.",
+ "corner_false_alert": {
+  "note": "frames with a wire_break box projected within 10 m of model-v0.7's false alert (57 m from F1, a corner post), best box per frame",
+  "model-v0.5": {
+   "frames": 6,
+   "from_0.5": 5,
+   "from_0.7": 1,
+   "from_0.75": 1,
+   "max_conf": 0.754
+  },
+  "model-v0.6": {
+   "frames": 8,
+   "from_0.5": 6,
+   "from_0.7": 5,
+   "from_0.75": 3,
+   "max_conf": 0.817
+  },
+  "model-v0.7": {
+   "frames": 9,
+   "from_0.5": 7,
+   "from_0.7": 6,
+   "from_0.75": 2,
+   "max_conf": 0.84
+  }
+ }
+}

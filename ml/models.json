@@ -18,6 +18,203 @@
  },
  "models": [
   {
+   "id": "model-v0.7",
+   "status": "not adopted",
+   "summary": "+ corner negatives",
+   "date": "2026-11-28",
+   "parent": "model-v0.5",
+   "code": "e51b664",
+   "release": null,
+   "run": "ml/runs/model-v0.7",
+   "used_for": [],
+   "data": {
+    "train": [
+     {
+      "dataset": "fence_yolo_flight_classic_stream",
+      "split": "train",
+      "frames": 2400
+     },
+     {
+      "dataset": "fence_yolo_flight_rich_stream",
+      "split": "train",
+      "frames": 2400
+     },
+     {
+      "dataset": "fence_yolo_rich_stream",
+      "split": "train",
+      "frames": 2000,
+      "sample": "random 2000 of 3600, seed 0"
+     },
+     {
+      "dataset": "fence_yolo_v3c_stream",
+      "split": "train",
+      "frames": 1000,
+      "sample": "random 1000 of 1200, seed 0"
+     },
+     {
+      "dataset": "fence_yolo_v2_stream",
+      "split": "train",
+      "frames": 1000,
+      "sample": "random 1000 of 2400, seed 0"
+     },
+     {
+      "dataset": "fence_yolo_stream",
+      "split": "train",
+      "frames": 800,
+      "sample": "random 800 of 3500, seed 0"
+     },
+     {
+      "dataset": "drone_yolo_looks_stream",
+      "split": "train",
+      "frames": 1500,
+      "sample": "layouts L250, L251, L254, L255, L258, L259: the steel-wire and polywire farms, without wire boxes"
+     },
+     {
+      "dataset": "drone_yolo_corners_stream",
+      "split": "train",
+      "frames": 2000
+     }
+    ],
+    "val": [
+     {
+      "dataset": "fence_yolo_flight_classic_q4",
+      "split": "val",
+      "frames": 600
+     },
+     {
+      "dataset": "fence_yolo_flight_rich_q4",
+      "split": "val",
+      "frames": 600
+     },
+     {
+      "dataset": "fence_yolo_v2",
+      "split": "val",
+      "frames": 600
+     }
+    ],
+    "mix": "tools/mix_dataset.py (ml/runs/model-v0.7/data.yaml): model-v0.5's mix plus the steel-wire and polywire layouts of drone_yolo_looks_stream and drone_yolo_corners_stream; 8,774 of the 13,100 training frames are stream-like JPEG; validation is model-v0.5's"
+   },
+   "training": {
+    "from": "model-v0.5",
+    "epochs": 8,
+    "selected_epoch": 8,
+    "imgsz": 640,
+    "batch": 8,
+    "optimizer": "AdamW lr0 0.000909 (Ultralytics auto), 3 warm-up epochs",
+    "close_mosaic": 3,
+    "device": "GPU (MPS), Apple M2 8 GB",
+    "hours": 1.7,
+    "notes": "tools/train_with_breaks.py --device mps --batch 8 --workers 0: about 11.5 min per epoch, 15 min cooling breaks before training and after epochs 2, 4 and 6 (2.7 h of wall time). Ultralytics 8.4.215, torch 2.15."
+   },
+   "scores": {
+    "val_mix_mAP50": 0.957,
+    "val_note": "same validation set as model-v0.5 (0.952)",
+    "val_wire_break_mAP50": 0.827,
+    "test_classic_mAP50": 0.939,
+    "test_classic_wire_break_recall": 0.67,
+    "test_rich_mAP50": 0.941,
+    "test_rich_wire_break_recall": 0.62,
+    "mission_frames_classic_mAP50": 0.982,
+    "mission_frames_rich_mAP50": 0.978,
+    "refly_classic_mAP50": 0.985,
+    "refly_rich_mAP50": 0.983,
+    "stream_q4": {
+     "flight_mission_classic": {
+      "mAP50": 0.963,
+      "wire_break_mAP50": 0.81,
+      "wb_false_pct": 0.0
+     },
+     "flight_mission_rich": {
+      "mAP50": 0.953,
+      "wire_break_mAP50": 0.797,
+      "wb_false_pct": 0.2
+     },
+     "flight_test_classic": {
+      "mAP50": 0.929,
+      "wire_break_mAP50": 0.623,
+      "wb_false_pct": 0.8
+     },
+     "flight_test_rich": {
+      "mAP50": 0.924,
+      "wire_break_mAP50": 0.544,
+      "wb_false_pct": 0.8
+     }
+    },
+    "fence_looks_fallen_post_recall_conf0.7": {
+     "classic": 0.911,
+     "steel": 0.703,
+     "polywire": 0.723,
+     "polyrope": 0.792,
+     "polytape": 0.851
+    },
+    "fence_looks_wire_break_recall_conf0.7": {
+     "classic": 0.215,
+     "steel": 0.0,
+     "polywire": 0.0,
+     "polyrope": 0.006,
+     "polytape": 0.051
+    },
+    "fence_looks_wire_mAP50": {
+     "classic": 0.993,
+     "steel": 0.014,
+     "polywire": 0.037,
+     "polyrope": 0.898,
+     "polytape": 0.778
+    },
+    "ttpla_false_frames_conf0.7": {
+     "wire_break": 0,
+     "fallen_post": 4,
+     "branch": 0,
+     "cow": 319,
+     "of": 1242
+    },
+    "baseline_model-v0.5": {
+     "fence_looks_fallen_post_recall_conf0.7": {
+      "classic": 0.931,
+      "steel": 0.594,
+      "polywire": 0.614,
+      "polyrope": 0.782,
+      "polytape": 0.871
+     },
+     "fence_looks_wire_break_recall_conf0.7": {
+      "classic": 0.215,
+      "steel": 0.0,
+      "polywire": 0.0,
+      "polyrope": 0.0,
+      "polytape": 0.044
+     },
+     "ttpla_false_frames_conf0.7": {
+      "wire_break": 0,
+      "fallen_post": 1,
+      "branch": 1,
+      "cow": 316,
+      "of": 1242
+     }
+    }
+   },
+   "mission_replay": {
+    "faults_found": "3 of 3",
+    "false_alerts": 1,
+    "false_wire_break_frames_conf0.7": 8,
+    "notes": "replayed with refined alert positions (tools/confirm.py from e51b664; model-v0.5 with the same rule: 3 alerts, 0 false). The false alert is the corner post 57 m from F1, as model-v0.6's: 6 frames with a break box there from 0.7 (model-v0.5: 1, model-v0.6: 5). With wire_break counted from 0.75: 3 alerts, 0 false, a threshold chosen on model-v0.6's replay"
+   },
+   "live": {},
+   "decision": "Not adopted: model-v0.5 stays the default. The corner negatives did not lower false broken wires: frames with a false break from conf 0.7 doubled on the four test stream sets (0.8-2.3%, model-v0.5 0.3-1.2%), 8 false frames in the mission replay (1), and the same false alert at the corner as model-v0.6. From 0.75 or 0.8 it does not beat model-v0.5 on both breaks found and false frames on the flight test farms (wb_thresholds.json). Gained fallen posts on thin wire from 0.7 (steel 70%, polywire 72%; v0.5 59%, 61%), higher val mAP50 on the same set (0.957, 0.952), TTPLA close to v0.5. Lost wires on polytape (wire mAP50 0.778, v0.5 0.966) and polyrope (0.898, 0.952): thin wire without wire boxes needs the thick conductors beside it. Next: a control run (model-v0.5 fine-tuned on its own mix) to tell whether the extra training or the thin-wire frames raise false breaks.",
+   "artefacts": [
+    {
+     "file": "fence-yolo11n-v0.7.pt",
+     "bytes": 5485786,
+     "sha256": "bcb7f48902e046a12cd2f0e3169e54e5a26f832ba20e75e39ca155d9f2e252d1"
+    },
+    {
+     "file": "fence-yolo11n-v0.7.onnx",
+     "bytes": 10610501,
+     "sha256": "b5d7d5139840b083652f751bad3d2c6b0cf7773ec86e56cec3f751bd0c1eb5da"
+    }
+   ],
+   "benchmark": "ml/benchmark"
+  },
+  {
    "id": "model-v0.6",
    "status": "not adopted",
    "summary": "+ real fence conductors",

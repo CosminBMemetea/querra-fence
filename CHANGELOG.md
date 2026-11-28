@@ -14,6 +14,14 @@
   reports each alert's distance to its fault. With broken wires from 0.75, model-v0.6's false alert goes.
 - **Negatives for broken wires:** `make_dataset.sh --breaks 0` renders farms with no broken wire (fallen posts and
   branches stay), `--corner-share 0.9` puts that share of the flight poses near a corner.
+- **model-v0.7, negatives for broken wires (not adopted)** ([ml/runs/model-v0.7](ml/runs/model-v0.7)): fine-tuned
+  from model-v0.5 with 2,000 frames of 8 new farms with no broken wire, flown mostly near corners, and model-v0.6's
+  1,500 steel-wire and polywire frames, on the M2's GPU in 1.7 h. The negatives did not lower false broken wires:
+  frames with a false break from 0.7 doubled on the test stream sets (0.8–2.3%; model-v0.5 0.3–1.2%), and the mission
+  replay keeps model-v0.6's false alert at the same corner (8 false frames from 0.7; model-v0.5: 1). Fallen posts on
+  thin wire rose (steel wire 70%, polywire 72%), wires on polytape fell (`wire` mAP50 0.778, model-v0.5 0.966).
+  model-v0.5 stays the default. Next is a control run, to tell whether the extra training or the thin-wire frames
+  raise false breaks.
 - **model-v0.6, real fence conductors (not adopted)** ([ml/runs/model-v0.6](ml/runs/model-v0.6)): fine-tuned from
   model-v0.5 with 3,000 frames of 12 new farms at flight poses in steel wire, polywire, polyrope and polytape (steel
   wire and polywire without wire boxes, too thin to see from 11 m), on the M2's GPU in 1.5 h. Fallen posts on thin wire
