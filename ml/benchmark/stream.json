@@ -59,6 +59,15 @@
     "fallen_post": 0.995,
     "branch": 0.995,
     "wb_false": 0.0
+   },
+   "model-v0.9": {
+    "all": 0.963,
+    "wire_break": 0.779,
+    "wb_p": 0.98,
+    "wb_r": 0.71,
+    "fallen_post": 0.995,
+    "branch": 0.995,
+    "wb_false": 0.0
    }
   },
   "rich flight: mission pasture q4": {
@@ -117,6 +126,15 @@
     "fallen_post": 0.995,
     "branch": 0.995,
     "wb_false": 0.0
+   },
+   "model-v0.9": {
+    "all": 0.957,
+    "wire_break": 0.775,
+    "wb_p": 0.9,
+    "wb_r": 0.75,
+    "fallen_post": 0.995,
+    "branch": 0.995,
+    "wb_false": 0.2
    }
   },
   "classic flight: test seeds 160-162 q4": {
@@ -175,6 +193,15 @@
     "fallen_post": 0.989,
     "branch": 0.961,
     "wb_false": 0.1
+   },
+   "model-v0.9": {
+    "all": 0.93,
+    "wire_break": 0.63,
+    "wb_p": 0.69,
+    "wb_r": 0.56,
+    "fallen_post": 0.992,
+    "branch": 0.978,
+    "wb_false": 0.8
    }
   },
   "rich flight: test seeds 160-162 q4": {
@@ -233,6 +260,15 @@
     "fallen_post": 0.989,
     "branch": 0.95,
     "wb_false": 0.1
+   },
+   "model-v0.9": {
+    "all": 0.933,
+    "wire_break": 0.604,
+    "wb_p": 0.76,
+    "wb_r": 0.41,
+    "fallen_post": 0.991,
+    "branch": 0.976,
+    "wb_false": 0.4
    }
   },
   "classic: test seeds 140-142 q4": {
@@ -291,6 +327,15 @@
     "fallen_post": 0.903,
     "branch": 0.946,
     "wb_false": 0.4
+   },
+   "model-v0.9": {
+    "all": 0.916,
+    "wire_break": 0.7,
+    "wb_p": 0.81,
+    "wb_r": 0.56,
+    "fallen_post": 0.903,
+    "branch": 0.947,
+    "wb_false": 1.6
    }
   },
   "rich: test seeds 140-142 q4": {
@@ -349,6 +394,15 @@
     "fallen_post": 0.939,
     "branch": 0.938,
     "wb_false": 0.5
+   },
+   "model-v0.9": {
+    "all": 0.93,
+    "wire_break": 0.757,
+    "wb_p": 0.88,
+    "wb_r": 0.59,
+    "fallen_post": 0.929,
+    "branch": 0.958,
+    "wb_false": 0.4
    }
   },
   "classic flight: mission pasture PNG": {
@@ -403,6 +457,15 @@
     "all": 0.976,
     "wire_break": 0.867,
     "wb_p": 1.0,
+    "wb_r": 0.71,
+    "fallen_post": 0.995,
+    "branch": 0.995,
+    "wb_false": 0.0
+   },
+   "model-v0.9": {
+    "all": 0.971,
+    "wire_break": 0.832,
+    "wb_p": 0.99,
     "wb_r": 0.71,
     "fallen_post": 0.995,
     "branch": 0.995,
@@ -462,6 +525,15 @@
     "wire_break": 0.846,
     "wb_p": 0.98,
     "wb_r": 0.79,
+    "fallen_post": 0.995,
+    "branch": 0.995,
+    "wb_false": 0.0
+   },
+   "model-v0.9": {
+    "all": 0.968,
+    "wire_break": 0.851,
+    "wb_p": 0.97,
+    "wb_r": 0.75,
     "fallen_post": 0.995,
     "branch": 0.995,
     "wb_false": 0.0

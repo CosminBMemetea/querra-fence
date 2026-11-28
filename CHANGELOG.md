@@ -14,6 +14,14 @@
   reports each alert's distance to its fault. With broken wires from 0.75, model-v0.6's false alert goes.
 - **Negatives for broken wires:** `make_dataset.sh --breaks 0` renders farms with no broken wire (fallen posts and
   branches stay), `--corner-share 0.9` puts that share of the flight poses near a corner.
+- **model-v0.9, the steel-wire and polywire frames alone (not adopted)** ([ml/runs/model-v0.9](ml/runs/model-v0.9)):
+  model-v0.5's data plus only the 1,500 thin-wire frames (no wire boxes) that model-v0.6 and model-v0.7 shared,
+  trained exactly like the control model-v0.8. Those frames are the cause of the false broken wires: against the
+  control, false-break frames rose on 3 of the 4 test stream sets (to 0.4–1.6%) and fivefold in the mission replay
+  (1 to 5 from 0.7), and break boxes came back at model-v0.7's corner. They also give the best fallen-post recall yet
+  on thin wire (81% and 82% from 0.7, model-v0.5 59% and 61%) and more sure true breaks, but cost rope and tape wires
+  (`wire` mAP50 0.881 and 0.747, model-v0.5 0.952 and 0.966). No false alert in the replay; model-v0.5 stays the
+  default. Next: the same frames with the thin wire boxed where it is visible.
 - **model-v0.8, a control run (not adopted)** ([ml/runs/model-v0.8](ml/runs/model-v0.8)): model-v0.5 fine-tuned 8
   more epochs on its own data, nothing added, as model-v0.6 and model-v0.7 were trained. Its false broken wires did not
   rise (0.1–0.5% of frames on the test stream sets, model-v0.5 0.3–1.2%; no false alert in the mission replay), so the

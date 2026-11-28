@@ -439,17 +439,45 @@ on every held-out set and on real photos.
 
 **Decision.** **Not adopted**; v0.5 stays the default.
 
-## v0.9 · planned
+## v0.9 · steel-wire and polywire frames only, not adopted (`model-v0.9`)
 
-- **Compare at the same false-break rate.** Give each model the broken-wire threshold that matches v0.5's false-break
-  rate on validation, then compare the breaks found. A fixed 0.7 favours the less sure model (v0.8).
-- **One change at a time.** v0.5's mix plus only the 1,500 steel-wire and polywire frames would confirm the suspect.
-- **New data, not more epochs.** Repeating v0.5's frames overfits; keep TTPLA as a guard on every run.
+Full run record: [ml/runs/model-v0.9](../ml/runs/model-v0.9/README.md).
+
+**Why.** The control v0.8 showed that the data v0.6 and v0.7 added raised their false breaks, not the extra epochs.
+v0.9 adds only the 1,500 steel-wire and polywire frames both shared (no wire boxes) to v0.5's mix and trains exactly
+like the control, so the two differ by those frames alone. 11,100 frames, 1.4 h on the M2's GPU.
+
+### Scores, v0.5 → v0.9
+
+| | v0.5 | control v0.8 | v0.9 |
+|---|---|---|---|
+| False `wire_break` frames, test stream sets (4) | 0.3–1.2% | 0.1–0.5% | **0.4–1.6%** |
+| False `wire_break` frames in the replay, conf ≥ 0.5 / ≥ 0.7 | 9 / 1 | 4 / 1 | **23 / 5** |
+| Break boxes at v0.7's false-alert corner, from 0.5 / 0.7 | 5 / 1 | 0 / 0 | **6 / 2** |
+| Mission replay: faults, false alerts | 3 of 3, 0 | 3 of 3, 0 | 3 of 3, 0 |
+| Breaks found at 0.4% false, classic flight test farms | 23% | | **15%** |
+| Fallen posts found from 0.7, steel wire / polywire | 59% / 61% | 48% / 55% | **81% / 82%** |
+| `wire` mAP50, polyrope / polytape | 0.952 / 0.966 | 0.956 / 0.969 | **0.881 / 0.747** |
+| `wire_break` mAP50, 9 held-out sets | | lower on all 9 | **higher on 8** |
+
+**The steel-wire and polywire frames are the cause of the false breaks.** They also made the model more sure of true
+breaks and gave the best fallen-post recall on thin wire yet, but they cost rope and tape wires, as in v0.7.
+
+**Decision.** **Not adopted**; v0.5 stays the default. Five times v0.5's false-break frames in the replay, fewer breaks
+found at the same false rate on the flight look closest to the mission, rope and tape wires lost, and not flown.
+
+## v0.10 · planned
+
+- **The same frames, labelled as they look.** The likely mechanism: a thin wire drawn at real size still shows as a
+  faint line, and with no box the model learns to drop faint wires, then reads a wire that stops as a break. Box the
+  thin wire where it is visible in the image, leave it out where it is not, and train exactly like v0.9: one change.
+  The goal is the control's false breaks with v0.9's fallen posts.
+- **Compare at the same false-break rate** and keep TTPLA as the guard on every run.
+- **New data, not more epochs.** Repeating v0.5's frames overfits (v0.8).
 - **Real frames first.** A reviewed set of real fence footage (the DJI Mini 4 Pro, the field recorder, the Commons
   photos) would tell which of these simulator scores carry over. It matters more than another simulated mix.
 - **Re-fly to the refined positions.** Alerts now take the mean of every sighting (0.4–1.4 m from their fault in the
   replay, before 2.3–5.8 m); a live re-fly in SITL with the Jetson to confirm the branch is now in view.
-- **Thin wire with rope and tape**, if the real-conductor frames come back: v0.7 lost rope and tape wires without them.
 - **Broken-wire margin.** v0.5 sees the recorded broken wire in 66 frames (v0.4: 147), best confidence 0.87.
 - **Fallen post up close.** Loose wires on a fallen post look broken from 6 m.
 - **Re-fly budget.** Visit every alert, or rank by confidence, not only by distance.
