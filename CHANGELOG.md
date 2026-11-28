@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- **Alerts land on the fault** ([tools/confirm.py](tools/confirm.py), [benchmark](ml/benchmark/mission_replay.json)):
+  an alert's position was the mean of the 5 sightings that confirmed it, often seen from far ahead, where a box lands
+  ±3–5 m off. It is now the mean of every sighting matched to it. On the recorded mission model-v0.5's alerts moved
+  from 2.3–5.8 m to 0.4–1.4 m from their fault, the two duplicate alerts (fallen post, branch) merged, and no model
+  gained a false alert (model-v0.4 lost one). The re-fly reads the refined positions from `/fence/alerts/updates`, so
+  it should now find the branch it missed; not yet flown.
+- **A threshold per fault class for the drone's alerts:** `AlertConfirmer(class_conf=…)`, `./ros.sh … class_conf:=wire_break=0.75`
+  (empty by default: every fault from 0.7, as before), `tools/confirm.py --class-conf`. `tools/eval_mission.py
+  --class-conf … --reuse` replays a setting on the recorded mission from saved detections, without the model, and
+  reports each alert's distance to its fault. With broken wires from 0.75, model-v0.6's false alert goes.
+- **Negatives for broken wires:** `make_dataset.sh --breaks 0` renders farms with no broken wire (fallen posts and
+  branches stay), `--corner-share 0.9` puts that share of the flight poses near a corner.
 - **model-v0.6, real fence conductors (not adopted)** ([ml/runs/model-v0.6](ml/runs/model-v0.6)): fine-tuned from
   model-v0.5 with 3,000 frames of 12 new farms at flight poses in steel wire, polywire, polyrope and polytape (steel
   wire and polywire without wire boxes, too thin to see from 11 m), on the M2's GPU in 1.5 h. Fallen posts on thin wire

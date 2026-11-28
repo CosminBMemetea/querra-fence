@@ -149,3 +149,34 @@ def test_a_wider_ground_camera_keeps_the_labels_and_slows_its_frames(mg, monkeyp
     xml = m.cam_xml(2)
     assert "<width>3840</width>" in xml and "<update_rate>2</update_rate>" in xml        # colour: 3840x2400, 55 MB/s
     assert "<update_rate>6</update_rate><topic>/ds_cam/depth" in xml                    # depth: 1920x1200 floats
+
+
+# ------------------------------------------------------------------ negatives for wire_break (--breaks, --corner-share)
+
+def test_breaks_zero_gives_a_farm_without_broken_wire(mg, monkeypatch):
+    """--breaks 0: no broken wire, the other faults stay, and the farm itself (fence, posts, herd) is the same as
+    with the style's breaks, since the number is drawn either way."""
+    md = sys.modules["make_dataset"]
+    monkeypatch.setitem(md.STYLE, "v", "v4")
+    with_breaks, _ = md.random_layout(364)
+    monkeypatch.setitem(md.STYLE, "breaks", 0)
+    without, _ = md.random_layout(364)
+    kinds = [f["type"] for f in without["faults"]]
+    assert "wire_break" not in kinds and {"post_down", "branch_short"} <= set(kinds)
+    assert "wire_break" in [f["type"] for f in with_breaks["faults"]]
+    assert without["fence"] == with_breaks["fence"] and without["_render"]["break_styles"] == {}
+
+
+def test_corner_share_puts_flight_poses_near_corners(mg, monkeypatch):
+    md = sys.modules["make_dataset"]
+    import random as rnd_mod
+    monkeypatch.setitem(md.STYLE, "v", "v4")
+    cfg, _ = md.random_layout(364)
+    f = geo.Fence(cfg)
+
+    def near_share(share):
+        monkeypatch.setitem(md.STYLE, "corner", share)
+        rnd = rnd_mod.Random(0)
+        poses = [md.flight_pose(rnd, f, cfg) for _ in range(300)]
+        return sum(min(((x - cx) ** 2 + (y - cy) ** 2) ** 0.5 for cx, cy in f.poly) < 12 for x, y, *_ in poses) / 300
+    assert near_share(0.9) == pytest.approx(0.9, abs=0.06) and near_share(0.0) == 0.0

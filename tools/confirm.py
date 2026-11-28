@@ -4,13 +4,15 @@ A single frame never raises an alert. A fault class becomes an alert only when a
 detector frames saw that class at the same ground spot (within RADIUS metres). Each box is placed on the ground
 with a flat-ground pinhole model: drone GPS + altitude + heading, camera pitched 55 degrees down, fx 465.7 px at
 640x400. Sightings within merge_m (10 m) of an existing alert update it. If heading or altitude are missing it falls back to the drone position. One spot alerts once; later
-sightings only update its count and best confidence.
+sightings update its count, best confidence and position: the mean of every sighting matched to it (the first
+ones, from far ahead, are the least accurate). class_conf gives a class its own threshold instead of conf
+(wire_break 0.75: a model that sees more false breaks than the other faults).
 
     from querra_scout.confirm import AlertConfirmer
     c = AlertConfirmer(n=5, m=8, radius_m=5.0, conf=0.7)
     for alert in c.update(frame_dets, lat, lon, alt_m, heading_deg): ...
 
-Offline: python3 confirm.py detections.jsonl [--n 5 --m 8 --radius 5 --conf 0.7]
+Offline: python3 confirm.py detections.jsonl [--n 5 --m 8 --radius 5 --conf 0.7 --class-conf wire_break=0.75]
 """
 import argparse, collections, json, math
 
@@ -38,24 +40,31 @@ def ground_point(lat, lon, alt_m, heading_deg, box, img_w=640, img_h=400, fx=465
     return lat + north / M_PER_DEG_LAT, lon + east / (M_PER_DEG_LAT * math.cos(math.radians(lat)))
 
 
+def parse_class_conf(text):
+    """'wire_break=0.75,fallen_post=0.5' -> {'wire_break': 0.75, 'fallen_post': 0.5}; '' -> {}."""
+    return {k.strip(): float(v) for k, v in (kv.split("=", 1) for kv in (text or "").split(",") if "=" in kv)}
+
+
 def dist_m(a, b):
     return math.hypot((a[0] - b[0]) * M_PER_DEG_LAT, (a[1] - b[1]) * M_PER_DEG_LAT * math.cos(math.radians(a[0])))
 
 
 class AlertConfirmer:
-    def __init__(self, n=5, m=8, radius_m=5.0, conf=0.7, classes=FAULTS, merge_m=10.0, cam=None):
+    def __init__(self, n=5, m=8, radius_m=5.0, conf=0.7, classes=FAULTS, merge_m=10.0, cam=None, class_conf=None):
         self.cam = cam or {}   # img_w, img_h, fx, pitch_deg for ground_point(); the default is the drone camera
         assert 1 <= n <= m
         self.n, self.m, self.radius, self.conf, self.classes = n, m, radius_m, conf, set(classes)
+        self.class_conf = dict(class_conf or {})     # per-class thresholds that replace conf, e.g. wire_break 0.75
         self.merge = max(merge_m, radius_m)  # a new sighting this close to an existing alert updates it, no new alert
         self.window = collections.deque(maxlen=m)   # per frame: {class: [(lat, lon, conf)]}
         self.alerts = []                              # confirmed spots
+        self.sums = []                                # per alert: [lat sum, lon sum, count] of its sightings
 
     def update(self, detections, lat, lon, alt_m=None, heading_deg=None, meta=None):
         """Feed one detector frame. Returns the list of NEW alerts confirmed by this frame."""
         frame = collections.defaultdict(list)
         for d in detections or ():
-            if d.get("class") in self.classes and d.get("conf", 0) >= self.conf:
+            if d.get("class") in self.classes and d.get("conf", 0) >= self.class_conf.get(d.get("class"), self.conf):
                 p = ground_point(lat, lon, alt_m, heading_deg, d.get("box_xyxy") or d.get("box"), **self.cam)
                 if p:
                     frame[d["class"]].append((p[0], p[1], d["conf"]))
@@ -63,10 +72,14 @@ class AlertConfirmer:
         new = []
         for cls, pts in frame.items():
             for la, lo, cf in pts:
-                old = next((a for a in self.alerts if a["class"] == cls and dist_m((la, lo), (a["lat"], a["lon"])) <= self.merge), None)
+                i, old = next(((i, a) for i, a in enumerate(self.alerts)
+                               if a["class"] == cls and dist_m((la, lo), (a["lat"], a["lon"])) <= self.merge), (None, None))
                 if old:
                     old["sightings"] += 1
                     old["max_conf"] = max(old["max_conf"], round(cf, 3))
+                    s = self.sums[i]
+                    s[0] += la; s[1] += lo; s[2] += 1
+                    old["lat"], old["lon"] = round(s[0] / s[2], 7), round(s[1] / s[2], 7)
                     continue
                 support = [next(((q[0], q[1]) for q in f.get(cls, ()) if dist_m((la, lo), q) <= self.radius), None)
                            for f in self.window]
@@ -77,6 +90,7 @@ class AlertConfirmer:
                              max_conf=round(cf, 3), sightings=len(hits), **(meta or {}))
                     a["class"] = a.pop("cls")
                     self.alerts.append(a)
+                    self.sums.append([sum(h[0] for h in hits), sum(h[1] for h in hits), len(hits)])
                     new.append(a)
         return new
 
@@ -89,9 +103,10 @@ def main():
     ap.add_argument("--radius", type=float, default=5.0)
     ap.add_argument("--conf", type=float, default=0.7)
     ap.add_argument("--merge", type=float, default=10.0)
+    ap.add_argument("--class-conf", default="", help="per-class thresholds that replace --conf: wire_break=0.75,...")
     ap.add_argument("--out", help="write alerts.jsonl here")
     a = ap.parse_args()
-    c = AlertConfirmer(a.n, a.m, a.radius, a.conf, merge_m=a.merge)
+    c = AlertConfirmer(a.n, a.m, a.radius, a.conf, merge_m=a.merge, class_conf=parse_class_conf(a.class_conf))
     out = open(a.out, "w") if a.out else None
     for line in open(a.jsonl):
         r = json.loads(line)

@@ -15,6 +15,9 @@ in turn. The layouts, poses and labels stay the same. --supersample K renders th
 averages it back down in linear light (tools/supersample.py), so a wire thinner than a pixel shows as a faint line.
 --no-wire-labels steel,polywire: layouts drawn in these looks get no wire or wire_break boxes. From the flight a 2.5 mm
 wire is a tenth of a pixel: a label on it would teach the model to box, or to break, a wire it cannot see.
+--breaks N puts N broken wires on each farm instead of the style's 2-4 (0: farms with no broken wire, negatives for
+wire_break); fallen posts and branches stay. --corner-share P places that share of the v4 flight poses within 12 m of a
+fence corner (the measured flights: 48%), where the strands of two spans line up and look like one.
 """
 import argparse
 import copy
@@ -58,7 +61,7 @@ WORLD = "pasture"
 
 
 # ---------------------------------------------------------------- layouts
-STYLE = {"v": "v1", "mission": False, "refly": 0.2, "flight": 0.7}
+STYLE = {"v": "v1", "mission": False, "refly": 0.2, "flight": 0.7, "breaks": None, "corner": None}
 # v4 flight poses come from ml/flight_poses.json: offset, heading against the route, camera pitch (55 deg minus the body
 # pitch), roll and distance to the nearest corner, measured in PX4 SITL logs of mission flights
 # (tools/flight_poses_from_ulog.py). A share of the frames fly the route the other way round.
@@ -161,7 +164,10 @@ def random_layout(seed):
                 used.add(k)
                 return k
         return None
-    for i in range(rnd.randint(3, 4) if STYLE["v"] in ("v2", "v3", "v4") else rnd.randint(2, 3)):
+    nb = rnd.randint(3, 4) if STYLE["v"] in ("v2", "v3", "v4") else rnd.randint(2, 3)
+    if STYLE["breaks"] is not None:     # --breaks (drawn above anyway, so the rest of the farm keeps its random sequence)
+        nb = STYLE["breaks"]
+    for i in range(nb):
         k = pick()
         if k is not None:
             faults.append({"id": "B%d" % i, "type": "wire_break", "segment": k, "strand": rnd.randint(0, 1)})
@@ -418,7 +424,11 @@ def flight_pose(rnd, f, cfg):
         _SAMPLES.extend(json.load(open(FLIGHT_POSES))["samples"])
     route, corners = flight_route(cfg, f)
     n = len(route)
-    s = rnd.choice(_SAMPLES)
+    if STYLE["corner"] is None:
+        s = rnd.choice(_SAMPLES)
+    else:                               # --corner-share: near a corner with this probability
+        near = rnd.random() < STYLE["corner"]
+        s = rnd.choice([x for x in _SAMPLES if (x["corner_m"] < 12) == near])
     if s["corner_m"] < 12:
         along = math.sqrt(max(0.0, s["corner_m"] ** 2 - s["offset_m"] ** 2))
         i = (rnd.choice(corners) + int(rnd.choice((-1, 1)) * along / 0.5)) % n
@@ -604,6 +614,8 @@ def run_layout(li, seed, n_frames, split, out, args):
         log.close()
     extra = "" if (gen_world.FENCE_LOOK, args.supersample) == ("classic", 1) else ", fence %s, supersample %d%s" % (
         gen_world.FENCE_LOOK, args.supersample, ", no wire labels" if gen_world.FENCE_LOOK in args.no_wire_labels else "")
+    extra += "" if args.breaks is None else ", breaks %d" % args.breaks
+    extra += "" if args.corner_share is None else ", corners %.0f%%" % (100 * args.corner_share)
     print("[dataset] layout %d (%s, %s%s, seed %d): %d frames in %.0f s, faults %s, light elev %.0f, boxes %s" % (
         li, split, gen_world.look(), extra, seed, saved, time.time() - t0, [ft["type"] for ft in cfg["faults"]], (light or {}).get("elev") or 0,
         dict(zip(CLASSES, counts))), flush=True)
@@ -631,6 +643,8 @@ def main():
     ap.add_argument("--supersample", type=int, default=1, help="render the camera K times larger, averaged down")
     ap.add_argument("--no-wire-labels", default="", help="fence looks whose layouts get no wire or wire_break boxes "
                     "(comma-separated, e.g. steel,polywire: too thin to see from the flight)")
+    ap.add_argument("--breaks", type=int, help="broken wires per farm instead of the style's (0: no broken wire)")
+    ap.add_argument("--corner-share", type=float, help="v4: share of flight poses within 12 m of a corner (measured: 0.48)")
     args = ap.parse_args()
     args.no_wire_labels = [x for x in args.no_wire_labels.split(",") if x]
     args.looks = args.fence_look.split(",")
@@ -643,11 +657,14 @@ def main():
     with open(os.path.join(args.out, "data.yaml"), "w") as fh:
         if (args.fence_look, args.supersample) != ("classic", 1):
             fh.write("# fence look %s, supersample %d\n" % (args.fence_look, args.supersample))
+        if args.breaks is not None or args.corner_share is not None:
+            fh.write("# breaks %s, corner share %s\n" % (args.breaks, args.corner_share))
         fh.write("path: %s\ntrain: images/train\nval: images/val\ntest: images/test\nnames:\n" % args.out +
                  "".join("  %d: %s\n" % (i, c) for i, c in enumerate(CLASSES)))
     for li in range(args.start, args.layouts):
         split = args.split or ("val" if li >= args.layouts - args.val_layouts else "train")
-        STYLE.update(v=args.style, mission=args.mission_world, refly=args.refly_share, flight=args.flight_share)
+        STYLE.update(v=args.style, mission=args.mission_world, refly=args.refly_share, flight=args.flight_share,
+                     breaks=args.breaks, corner=args.corner_share)
         for attempt in range(3):
             try:
                 run_layout(li, args.seed + li, args.frames, split, args.out, args)

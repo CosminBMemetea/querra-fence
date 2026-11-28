@@ -89,6 +89,22 @@ def test_sightings_below_the_threshold_do_not_count():
     assert run(AlertConfirmer(), [[det(conf=0.69)]] * 8) == {}
 
 
+def test_a_class_threshold_replaces_conf_for_that_class_only():
+    """class_conf wire_break 0.75: a break seen at 0.72 no longer counts, a branch at 0.72 still does."""
+    c = AlertConfirmer(class_conf={"wire_break": 0.75})
+    run(c, [[det(conf=0.72), det(cls="branch", conf=0.72)]] * 8)
+    assert [a["class"] for a in c.alerts] == ["branch"]
+
+
+def test_a_class_threshold_can_be_lower_than_conf():
+    assert list(run(AlertConfirmer(class_conf={"fallen_post": 0.5}), [[det(cls="fallen_post", conf=0.55)]] * 5)) == [4]
+
+
+def test_class_thresholds_parse_from_text():
+    assert confirm.parse_class_conf("wire_break=0.75, fallen_post=0.5") == {"wire_break": 0.75, "fallen_post": 0.5}
+    assert confirm.parse_class_conf("") == {}
+
+
 def test_classes_that_are_not_faults_are_ignored():
     assert run(AlertConfirmer(), [[det(cls="post")]] * 8) == {}
 
@@ -99,6 +115,21 @@ def test_sightings_at_an_alert_update_it_instead_of_raising_another():
     assert list(got) == [4]
     assert len(c.alerts) == 1
     assert c.alerts[0]["sightings"] == 10 and c.alerts[0]["max_conf"] == 0.97
+
+
+def test_later_sightings_refine_the_position():
+    """The alert moves to the mean of every sighting matched to it, not only the five that confirmed it: the first
+    sightings come from far ahead and are the least accurate (on the recorded mission alerts moved from 2-6 m off
+    their fault to 0.4-1.4 m)."""
+    far, near = (320, 200, 320, 200), (320, 300, 320, 300)     # 8.40 m and 5.07 m ahead of the drone
+    c = AlertConfirmer()
+    run(c, [[det(box=far)]] * 5 + [[det(box=near)]] * 15)
+    assert len(c.alerts) == 1 and c.alerts[0]["sightings"] == 20
+    n_far, _ = offset_m((LAT, LON), ground_point(LAT, LON, 12.0, 0.0, far))
+    n_near, _ = offset_m((LAT, LON), ground_point(LAT, LON, 12.0, 0.0, near))
+    n, e = offset_m((LAT, LON), (c.alerts[0]["lat"], c.alerts[0]["lon"]))
+    assert n == pytest.approx((5 * n_far + 15 * n_near) / 20, abs=0.02)
+    assert e == pytest.approx(0.0, abs=0.01)
 
 
 def test_another_class_at_the_same_spot_is_its_own_alert():

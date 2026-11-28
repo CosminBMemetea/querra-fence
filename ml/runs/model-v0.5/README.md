@@ -247,7 +247,11 @@ v0.3 and v0.4 are retired. They stay selectable with `engine:=` and in the panel
   margin is smaller. Next: more broken-wire examples at flight poses, or a lower per-frame threshold for
   `wire_break` once false frames stay rare.
 - **Branch alerts sit about 4 m off**, so the re-fly misses the branch. Look at how a branch box on top of the wire is
-  projected to the ground.
+  projected to the ground. *Update 2026-11-28:* the boxes land without bias (median along-track error about 0 m), but
+  spread by ±3–5 m, more from far ahead; the alert took the mean of the 5 sightings that confirmed it, often the
+  farthest. The confirmation now refines the position with every sighting: on the replay this model's alerts moved
+  from 2.3–5.8 m to 0.4–1.4 m from their fault, and the two duplicate alerts (fallen post, branch) merged
+  ([benchmark](../../benchmark/mission_replay.json)). Not yet flown with the re-fly.
 - **Loose wires on a fallen post look broken up close.** Label them, or let the re-fly accept a fallen post there.
 - **The stream itself.** `-q:v 2` or 4:4:4 colour would keep the wires sharper, at about twice the bandwidth.
 - **Real fences** ([stress test](#fence-looks-a-stress-test)). On steel wire or polywire the drone will not find a

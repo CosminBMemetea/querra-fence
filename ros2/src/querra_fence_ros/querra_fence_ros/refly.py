@@ -1,7 +1,7 @@
 """Re-fly node (phase 3, part 2): after the inspection loop, fly back low over every confirmed fault for a close look.
 
 Trigger: PX4 enters Return (AUTO_RTL) while armed, at the end of the inspection mission, and there are confirmed
-alerts on /fence/alerts. The node then:
+alerts on /fence/alerts (their positions kept up to date from /fence/alerts/updates). The node then:
   1. streams OffboardControlMode + TrajectorySetpoint (10 Hz) holding the current position, then asks PX4 for OFFBOARD;
   2. visits the alerts nearest-first: it descends to `altitude_m`, stops `standoff` metres before the fault (the
      inspection camera looks forward-down at `pitch_deg`, so the fault is in the middle of the frame) and faces it;
@@ -58,6 +58,7 @@ class Refly(Node):
         self.create_subscription(VehicleStatus, "/fmu/out/vehicle_status_v5", self._on_status, qos_profile_sensor_data)
         self.create_subscription(FenceAlert, "/fence/alerts", self._on_alert,
                                  QoSProfile(depth=200, durability=DurabilityPolicy.TRANSIENT_LOCAL))
+        self.create_subscription(FenceAlert, "/fence/alerts/updates", self._on_update, 10)
         self.create_subscription(Detection2DArray, "/detections", self._on_dets, 10)
         self.loc = self.status = None
         self.alerts = {}                 # id -> FenceAlert
@@ -83,6 +84,10 @@ class Refly(Node):
 
     def _on_alert(self, a):
         if a.is_new and a.class_name in FAULTS:
+            self.alerts[a.id] = a
+
+    def _on_update(self, a):
+        if a.id in self.alerts:          # a known alert seen again: its position, refined with every sighting
             self.alerts[a.id] = a
 
     def _on_dets(self, m):

@@ -3,6 +3,7 @@
 Phase 1 (always): cameras from the panel hub, GPS from gpsd, LD2450 radar, static TFs, stats, foxglove_bridge.
 Phase 2 (detector:=sim or detector:=usb): YOLO11n TensorRT detector + 5-of-8 GPS alert confirmation.
   engine:= picks the model: model-v0.5 by default (both world looks, trained on stream-like JPEG; ml/README.md).
+  class_conf:= gives a fault class its own alert threshold, e.g. wire_break=0.75 (empty: every fault from conf 0.7).
   detector:=sim  replays the recorded Gazebo mission (sim_source:=/sim/m1, or tcp://<mac>:5601 for the live sim)
   detector:=usb  runs on the real USB camera with gpsd as the position source (bench use: no fence, no alerts)
 Phase 3 (px4:=true): the micro-ROS agent on UDP 8888 bridges PX4's uXRCE-DDS client into ROS 2 (/fmu/out/*), and
@@ -16,6 +17,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def tf(child, xyz, rpy):
@@ -43,6 +45,8 @@ def generate_launch_description():
         DeclareLaunchArgument("detector", default_value="none", description="none | sim | usb"),
         DeclareLaunchArgument("engine", default_value="/models/fence-yolo11n-v0.5-fp16.engine",
                               description="TensorRT engine for the detector (container path; /models is the models dir)"),
+        DeclareLaunchArgument("class_conf", default_value="",
+                              description="per-class alert thresholds, e.g. wire_break=0.75 (empty: every fault from 0.7)"),
         DeclareLaunchArgument("notify", default_value="false", description="each new alert to the phone (phone_alerts)"),
         DeclareLaunchArgument("sim_source", default_value="/sim/m1", description="recording dir or tcp://host:port"),
         DeclareLaunchArgument("px4", default_value="false", description="true: PX4 over uXRCE-DDS (agent on UDP px4_port)"),
@@ -66,7 +70,8 @@ def generate_launch_description():
         Node(package="querra_fence_ros", executable="detector", name="fence_detector", condition=is_sim,
              parameters=[{"image": "/sim/camera/image_raw/compressed", "engine": LaunchConfiguration("engine")}], output="screen"),
         Node(package="querra_fence_ros", executable="alerts", name="alert_confirm", condition=is_sim,
-             parameters=[{"telemetry": telemetry}], output="screen"),
+             parameters=[{"telemetry": telemetry,
+                          "class_conf": ParameterValue(LaunchConfiguration("class_conf"), value_type=str)}], output="screen"),
         Node(package="querra_fence_ros", executable="phone_alerts", name="phone_alerts",
              condition=IfCondition(PythonExpression(["'", det, "' == 'sim' and '", LaunchConfiguration("notify"),
                                                      "'.lower() in ('true', '1')"])),

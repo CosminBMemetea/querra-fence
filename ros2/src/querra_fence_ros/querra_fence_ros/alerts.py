@@ -1,5 +1,6 @@
 """Alert confirmation node: a fault becomes an alert only when 5 of the last 8 detector frames saw it within 5 m
-on the ground (conf >= 0.7), the same rule as tools/confirm.py and field mode.
+on the ground (conf >= 0.7), the same rule as tools/confirm.py and field mode. class_conf gives a class its own
+threshold, e.g. class_conf:=wire_break=0.75 (empty by default: every fault from conf).
 
 Subscribes /detections and a Telemetry topic (sim: /sim/telemetry). Publishes:
 - /fence/alerts         FenceAlert, once per confirmed alert (is_new=true); transient-local, so a late subscriber
@@ -24,7 +25,9 @@ class Alerts(Node):
         super().__init__("alert_confirm")
         p = lambda k, v: self.declare_parameter(k, v).value
         cam = {"img_w": p("img_w", 640), "img_h": p("img_h", 400), "fx": p("fx", 465.7), "pitch_deg": p("pitch_deg", 55.0)}
-        self.c = AlertConfirmer(n=p("n", 5), m=p("m", 8), radius_m=p("radius_m", 5.0), conf=p("conf", 0.7), merge_m=p("merge_m", 10.0), cam=cam)
+        class_conf = {k.strip(): float(v) for k, v in (kv.split("=", 1) for kv in p("class_conf", "").split(",") if "=" in kv)}
+        self.c = AlertConfirmer(n=p("n", 5), m=p("m", 8), radius_m=p("radius_m", 5.0), conf=p("conf", 0.7), merge_m=p("merge_m", 10.0), cam=cam,
+                                class_conf=class_conf)
         self.tel = None
         latched = QoSProfile(depth=200, durability=DurabilityPolicy.TRANSIENT_LOCAL)   # one message per alert spot
         self.pub = self.create_publisher(FenceAlert, "/fence/alerts", latched)
@@ -34,7 +37,8 @@ class Alerts(Node):
         self.create_subscription(Telemetry, p("telemetry", "/sim/telemetry"), lambda m: setattr(self, "tel", m), 10)
         self.create_subscription(Detection2DArray, "/detections", self._on_dets, 10)
         self.pub_n.publish(UInt32(data=0))
-        self.get_logger().info(f"confirm n={self.c.n} of m={self.c.m}, radius {self.c.radius} m, conf {self.c.conf}, camera {cam}")
+        self.get_logger().info(f"confirm n={self.c.n} of m={self.c.m}, radius {self.c.radius} m, conf {self.c.conf}"
+                               f"{''.join(f', {k} {v}' for k, v in class_conf.items())}, camera {cam}")
 
     def _on_dets(self, msg):
         t = self.tel

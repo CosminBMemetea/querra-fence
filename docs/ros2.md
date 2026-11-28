@@ -131,7 +131,9 @@ From a shell on the Jetson, in `/ssd/querra/ros2`:
   engine and `querra_scout` are mounted read-only from JetPack on the host; the image only adds `vision_msgs` and Pillow.
 - **`alert_confirm`** is `tools/confirm.py` on ROS 2: it projects each box centre to the ground with the position,
   altitude, heading and camera pitch from `Telemetry`, needs 5 of the last 8 frames to agree within 5 m at conf ≥ 0.7, and
-  merges alerts within 10 m. It publishes `/fence/alerts` (`FenceAlert`: id, class, lat/lon, max conf, frames,
+  merges alerts within 10 m; each later sighting refines the alert's position (the mean of all its sightings), and the
+  re-fly takes the refined position from the updates. `class_conf:=wire_break=0.75` gives a class its own threshold (empty by default); check a
+  setting on the recorded mission first with `tools/eval_mission.py … --reuse --class-conf wire_break=0.75`. It publishes `/fence/alerts` (`FenceAlert`: id, class, lat/lon, max conf, frames,
   sightings; one message per confirmed alert), `/fence/alerts/fix` (`NavSatFix` per new alert, for Foxglove's Map) and
   `/fence/alerts/count`. All three are transient-local, so a late subscriber (Foxglove, a bag) still gets every alert.
   Re-sightings of a known alert go to `/fence/alerts/updates` (volatile), so they never push earlier alerts out of the

@@ -385,7 +385,9 @@ the flight, a break in thin wire stays out of reach, and more positive examples 
   examples again. Keep the real-conductor farms for fallen posts.
 - **A per-class threshold** in the drone's alert path (`tools/confirm.py`), as the ground robot has.
 - **Broken-wire margin.** v0.5 sees the recorded broken wire in 66 frames (v0.4: 147), best confidence 0.87.
-- **Branch alert position.** Branch alerts sit about 4 m off, so the re-fly misses the branch.
+- **Branch alert position: done offline.** Alerts now take the mean of every sighting, not only the first five (seen
+  from far ahead, the least accurate): on the replay v0.5's alerts sit 0.4–1.4 m from their fault (before 2.3–5.8 m).
+  Next: a re-fly in SITL to confirm the branch is now in view.
 - **Fallen post up close.** Loose wires on a fallen post look broken from 6 m.
 - **Re-fly budget.** Visit every alert, or rank by confidence, not only by distance.
 - **Real frames.** Fine-tune on labelled real footage (the field recorder, the DJI Mini 4 Pro, the Commons photos).
