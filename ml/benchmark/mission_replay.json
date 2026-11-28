@@ -574,6 +574,175 @@
    "class_conf": {
     "wire_break": 0.75
    }
+  },
+  "model-v0.8": {
+   "frames": 1986,
+   "F1": {
+    "near": 249,
+    "detected": 66,
+    "max_conf": 0.872
+   },
+   "false_frames_wire_break@0.35": 17,
+   "false_frames_wire_break@0.5": 4,
+   "false_frames_wire_break@0.7": 1,
+   "F2": {
+    "near": 242,
+    "detected": 69,
+    "max_conf": 0.923
+   },
+   "false_frames_fallen_post@0.35": 0,
+   "false_frames_fallen_post@0.5": 0,
+   "false_frames_fallen_post@0.7": 0,
+   "F3": {
+    "near": 242,
+    "detected": 63,
+    "max_conf": 0.914
+   },
+   "false_frames_branch@0.35": 0,
+   "false_frames_branch@0.5": 0,
+   "false_frames_branch@0.7": 0,
+   "alerts_1of1": {
+    "total": 8,
+    "false": 4,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ],
+    "distances_m": [
+     [
+      "wire_break",
+      0.3
+     ],
+     [
+      "wire_break",
+      12.1
+     ],
+     [
+      "wire_break",
+      53.1
+     ],
+     [
+      "fallen_post",
+      0.5
+     ],
+     [
+      "wire_break",
+      94.3
+     ],
+     [
+      "branch",
+      1.4
+     ],
+     [
+      "wire_break",
+      128.5
+     ],
+     [
+      "wire_break",
+      108.4
+     ]
+    ]
+   },
+   "alerts_3of5": {
+    "total": 4,
+    "false": 0,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ],
+    "distances_m": [
+     [
+      "wire_break",
+      0.3
+     ],
+     [
+      "wire_break",
+      12.1
+     ],
+     [
+      "fallen_post",
+      0.5
+     ],
+     [
+      "branch",
+      1.4
+     ]
+    ]
+   },
+   "alerts_5of8": {
+    "total": 3,
+    "false": 0,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ],
+    "distances_m": [
+     [
+      "wire_break",
+      0.3
+     ],
+     [
+      "fallen_post",
+      0.5
+     ],
+     [
+      "branch",
+      1.4
+     ]
+    ]
+   },
+   "alerts_5of8_conf0.7": {
+    "total": 3,
+    "false": 0,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ],
+    "distances_m": [
+     [
+      "wire_break",
+      0.5
+     ],
+     [
+      "fallen_post",
+      0.5
+     ],
+     [
+      "branch",
+      1.4
+     ]
+    ]
+   },
+   "alerts_5of8_conf0.7_class_conf": {
+    "total": 3,
+    "false": 0,
+    "faults_alerted": [
+     "branch",
+     "fallen_post",
+     "wire_break"
+    ],
+    "distances_m": [
+     [
+      "wire_break",
+      0.6
+     ],
+     [
+      "fallen_post",
+      0.5
+     ],
+     [
+      "branch",
+      1.4
+     ]
+    ]
+   },
+   "class_conf": {
+    "wire_break": 0.75
+   }
   }
  },
  "refined_positions": {
@@ -892,6 +1061,31 @@
     "fixed_position": {
      "total": 5,
      "false": 1
+    }
+   },
+   "model-v0.8": {
+    "alerts_5of8_conf0.7": {
+     "total": 3,
+     "false": 0,
+     "faults_alerted": [
+      "branch",
+      "fallen_post",
+      "wire_break"
+     ],
+     "distances_m": [
+      [
+       "wire_break",
+       0.5
+      ],
+      [
+       "fallen_post",
+       0.5
+      ],
+      [
+       "branch",
+       1.4
+      ]
+     ]
     }
    }
   }

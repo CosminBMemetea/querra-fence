@@ -1,0 +1,110 @@
+{
+ "classic: old validation farms": {
+  "n": 700,
+  "model-v0.8.pt": {
+   "all": 0.927,
+   "wire_break": 0.841,
+   "wb_p": 0.93,
+   "wb_r": 0.75,
+   "fallen_post": 0.928,
+   "branch": 0.926,
+   "wb_false": 0.0
+  }
+ },
+ "classic: v2 validation farms": {
+  "n": 600,
+  "model-v0.8.pt": {
+   "all": 0.951,
+   "wire_break": 0.807,
+   "wb_p": 0.9,
+   "wb_r": 0.68,
+   "fallen_post": 0.98,
+   "branch": 0.934,
+   "wb_false": 0.0
+  }
+ },
+ "classic: test seeds 140-142": {
+  "n": 750,
+  "model-v0.8.pt": {
+   "all": 0.935,
+   "wire_break": 0.8,
+   "wb_p": 0.89,
+   "wb_r": 0.63,
+   "fallen_post": 0.933,
+   "branch": 0.948,
+   "wb_false": 0.0
+  }
+ },
+ "classic: mission pasture": {
+  "n": 400,
+  "model-v0.8.pt": {
+   "all": 0.974,
+   "wire_break": 0.847,
+   "wb_p": 0.93,
+   "wb_r": 0.68,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.0
+  }
+ },
+ "classic: re-fly close-ups": {
+  "n": 400,
+  "model-v0.8.pt": {
+   "all": 0.982,
+   "wire_break": 0.967,
+   "wb_p": 0.94,
+   "wb_r": 0.93,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.5
+  }
+ },
+ "rich: validation farms": {
+  "n": 600,
+  "model-v0.8.pt": {
+   "all": 0.952,
+   "wire_break": 0.846,
+   "wb_p": 0.9,
+   "wb_r": 0.7,
+   "fallen_post": 0.932,
+   "branch": 0.975,
+   "wb_false": 0.2
+  }
+ },
+ "rich: test seeds 140-142": {
+  "n": 750,
+  "model-v0.8.pt": {
+   "all": 0.932,
+   "wire_break": 0.773,
+   "wb_p": 0.93,
+   "wb_r": 0.57,
+   "fallen_post": 0.951,
+   "branch": 0.941,
+   "wb_false": 0.1
+  }
+ },
+ "rich: mission pasture": {
+  "n": 400,
+  "model-v0.8.pt": {
+   "all": 0.971,
+   "wire_break": 0.831,
+   "wb_p": 0.9,
+   "wb_r": 0.68,
+   "fallen_post": 0.995,
+   "branch": 0.995,
+   "wb_false": 0.0
+  }
+ },
+ "rich: re-fly close-ups": {
+  "n": 400,
+  "model-v0.8.pt": {
+   "all": 0.986,
+   "wire_break": 0.961,
+   "wb_p": 0.95,
+   "wb_r": 0.9,
+   "fallen_post": 0.994,
+   "branch": 0.995,
+   "wb_false": 0.2
+  }
+ }
+}

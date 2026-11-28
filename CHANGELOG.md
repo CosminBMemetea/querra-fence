@@ -14,6 +14,13 @@
   reports each alert's distance to its fault. With broken wires from 0.75, model-v0.6's false alert goes.
 - **Negatives for broken wires:** `make_dataset.sh --breaks 0` renders farms with no broken wire (fallen posts and
   branches stay), `--corner-share 0.9` puts that share of the flight poses near a corner.
+- **model-v0.8, a control run (not adopted)** ([ml/runs/model-v0.8](ml/runs/model-v0.8)): model-v0.5 fine-tuned 8
+  more epochs on its own data, nothing added, as model-v0.6 and model-v0.7 were trained. Its false broken wires did not
+  rise (0.1–0.5% of frames on the test stream sets, model-v0.5 0.3–1.2%; no false alert in the mission replay), so the
+  data those two models added raised theirs, first suspect the steel-wire and polywire frames they share. It is not a
+  better model: less sure of every break, it finds fewer on the flight test farms (9% from 0.7, model-v0.5 16–23%),
+  and the repeated data overfits (lower on every held-out set; false branches in 19.5% of TTPLA's real photos from 0.5,
+  model-v0.5 1.0%). model-v0.5 stays the default.
 - **model-v0.7, negatives for broken wires (not adopted)** ([ml/runs/model-v0.7](ml/runs/model-v0.7)): fine-tuned
   from model-v0.5 with 2,000 frames of 8 new farms with no broken wire, flown mostly near corners, and model-v0.6's
   1,500 steel-wire and polywire frames, on the M2's GPU in 1.7 h. The negatives did not lower false broken wires:

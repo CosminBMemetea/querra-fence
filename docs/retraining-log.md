@@ -413,18 +413,43 @@ makes v0.7 as good as v0.5 on both breaks found and false frames.
 more epochs on v0.5's mix, and both raise false breaks, so one of those may be the cause rather than the data each added; and
 thin wire labelled as no wire, without rope and tape beside it, teaches the model to miss rope and tape.
 
-## v0.8 · planned
+## v0.8 · control run: more training, no new data, not adopted (`model-v0.8`)
 
-- **A control run first.** v0.5 fine-tuned 8 epochs on its own mix, nothing added: if its false breaks rise too, the
-  extra training does it, not the data. Cheap (1.5 h) and it decides what the next mixes can be credited with.
-- **Hard negatives where it fails.** The generator's corners do not reproduce the mission's: render corners whose
-  span strands line up from the inspection pose, checked against the false frames before training.
-- **Thin wire with rope and tape.** Keep all four real conductors together (as v0.6), for fallen posts without losing
-  wires.
-- **Broken-wire margin.** v0.5 sees the recorded broken wire in 66 frames (v0.4: 147), best confidence 0.87.
+Full run record: [ml/runs/model-v0.8](../ml/runs/model-v0.8/README.md).
+
+**Why.** v0.6 and v0.7 added different data and both raised false breaks. What they shared was the steel-wire and
+polywire frames, and 8 more epochs on top of v0.5. v0.8 keeps the epochs and drops the data: v0.5 fine-tuned 8
+epochs on its own 9,600 frames, nothing added, the same settings. 1.2 h on the M2's GPU.
+
+### Scores, v0.5 → v0.8
+
+| | v0.5 | v0.8 | v0.7, for reference |
+|---|---|---|---|
+| False `wire_break` frames, test stream sets (4) | 0.3–1.2% | **0.1–0.5%** | 0.8–2.3% |
+| Mission replay: faults, false alerts | 3 of 3, 0 | 3 of 3, 0 | 3 of 3, 1 |
+| False `wire_break` frames in the replay, conf ≥ 0.5 / ≥ 0.7 | 9 / 1 | **4 / 1** | 24 / 8 |
+| Breaks found from 0.7, flight test farms classic / rich | 23% / 16% | **9% / 9%** | 21% / 20% |
+| `wire_break` mAP50, 9 held-out sets | | **lower on all 9** | |
+| TTPLA real photos with a false branch from 0.5 | 1.0% | **19.5%** | 0.8% |
+
+**The extra training did not raise false breaks: the data v0.6 and v0.7 added did.** The steel-wire and polywire
+frames, in both, are the first suspect. But v0.8 is not a better model. It is less sure of every break, true ones too,
+so at the same false-break rate it finds no more than v0.5; and 8 more epochs on frames v0.5 had already seen cost it
+on every held-out set and on real photos.
+
+**Decision.** **Not adopted**; v0.5 stays the default.
+
+## v0.9 · planned
+
+- **Compare at the same false-break rate.** Give each model the broken-wire threshold that matches v0.5's false-break
+  rate on validation, then compare the breaks found. A fixed 0.7 favours the less sure model (v0.8).
+- **One change at a time.** v0.5's mix plus only the 1,500 steel-wire and polywire frames would confirm the suspect.
+- **New data, not more epochs.** Repeating v0.5's frames overfits; keep TTPLA as a guard on every run.
+- **Real frames first.** A reviewed set of real fence footage (the DJI Mini 4 Pro, the field recorder, the Commons
+  photos) would tell which of these simulator scores carry over. It matters more than another simulated mix.
 - **Re-fly to the refined positions.** Alerts now take the mean of every sighting (0.4–1.4 m from their fault in the
-  replay, before 2.3–5.8 m); a re-fly in SITL to confirm the branch is now in view.
+  replay, before 2.3–5.8 m); a live re-fly in SITL with the Jetson to confirm the branch is now in view.
+- **Thin wire with rope and tape**, if the real-conductor frames come back: v0.7 lost rope and tape wires without them.
+- **Broken-wire margin.** v0.5 sees the recorded broken wire in 66 frames (v0.4: 147), best confidence 0.87.
 - **Fallen post up close.** Loose wires on a fallen post look broken from 6 m.
 - **Re-fly budget.** Visit every alert, or rank by confidence, not only by distance.
-- **Real frames.** Fine-tune on labelled real footage (the field recorder, the DJI Mini 4 Pro, the Commons photos).
-  Reality matters more than any simulation artefact.

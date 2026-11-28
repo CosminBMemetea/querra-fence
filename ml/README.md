@@ -22,6 +22,7 @@ trained, how it scored offline and in live flights, and why it is or is not used
 <!-- registry:start -->
 | Model | Status | Date | Trained on | Test mAP50 classic / rich | `wire_break` recall classic / rich | Mission replay: faults, false alerts | Live classic | Live rich | Run |
 |---|---|---|---|---|---|---|---|---|---|
+| **model-v0.8** | not adopted | 2026-11-28 | 9,600 frames, 6 datasets | 0.935 / 0.932 | 0.63 / 0.57 | 3 of 3, 0 | – | – | [model-v0.8](runs/model-v0.8) |
 | **model-v0.7** | not adopted | 2026-11-28 | 13,100 frames, 8 datasets | 0.939 / 0.941 | 0.67 / 0.62 | 3 of 3, 1 | – | – | [model-v0.7](runs/model-v0.7) |
 | **model-v0.6** | not adopted | 2026-11-27 | 12,600 frames, 7 datasets | 0.94 / 0.944 | 0.64 / 0.63 | 3 of 3, 1 | – | – | [model-v0.6](runs/model-v0.6) |
 | **model-v0.5** | default | 2026-11-21 | 9,600 frames, 6 datasets | 0.937 / 0.937 | 0.65 / 0.61 | 3 of 3, 0 | 3 of 3, 0 | 3 of 3, 0 | [model-v0.5](runs/model-v0.5) |

@@ -18,6 +18,199 @@
  },
  "models": [
   {
+   "id": "model-v0.8",
+   "status": "not adopted",
+   "summary": "control: +8 epochs",
+   "date": "2026-11-28",
+   "parent": "model-v0.5",
+   "code": "85f3ebb",
+   "release": null,
+   "run": "ml/runs/model-v0.8",
+   "used_for": [],
+   "data": {
+    "train": [
+     {
+      "dataset": "fence_yolo_flight_classic_stream",
+      "split": "train",
+      "frames": 2400
+     },
+     {
+      "dataset": "fence_yolo_flight_rich_stream",
+      "split": "train",
+      "frames": 2400
+     },
+     {
+      "dataset": "fence_yolo_rich_stream",
+      "split": "train",
+      "frames": 2000,
+      "sample": "random 2000 of 3600, seed 0"
+     },
+     {
+      "dataset": "fence_yolo_v3c_stream",
+      "split": "train",
+      "frames": 1000,
+      "sample": "random 1000 of 1200, seed 0"
+     },
+     {
+      "dataset": "fence_yolo_v2_stream",
+      "split": "train",
+      "frames": 1000,
+      "sample": "random 1000 of 2400, seed 0"
+     },
+     {
+      "dataset": "fence_yolo_stream",
+      "split": "train",
+      "frames": 800,
+      "sample": "random 800 of 3500, seed 0"
+     }
+    ],
+    "val": [
+     {
+      "dataset": "fence_yolo_flight_classic_q4",
+      "split": "val",
+      "frames": 600
+     },
+     {
+      "dataset": "fence_yolo_flight_rich_q4",
+      "split": "val",
+      "frames": 600
+     },
+     {
+      "dataset": "fence_yolo_v2",
+      "split": "val",
+      "frames": 600
+     }
+    ],
+    "mix": "model-v0.5's mix unchanged (ml/runs/model-v0.8/data.yaml, ~/querra-data/fence_yolo_v5): a control run with nothing added"
+   },
+   "training": {
+    "from": "model-v0.5",
+    "epochs": 8,
+    "selected_epoch": 7,
+    "imgsz": 640,
+    "batch": 8,
+    "optimizer": "AdamW lr0 0.000909 (Ultralytics auto), 3 warm-up epochs",
+    "close_mosaic": 3,
+    "device": "GPU (MPS), Apple M2 8 GB",
+    "hours": 1.2,
+    "notes": "tools/train_with_breaks.py --device mps --batch 8 --workers 0, the settings of model-v0.6 and model-v0.7: about 8 min per epoch, 15 min cooling breaks before training and after epochs 2, 4 and 6 (2.2 h of wall time). Epoch 7 kept (best mAP50-95, 0.79184 against epoch 8's 0.79180). Ultralytics 8.4.215, torch 2.15."
+   },
+   "scores": {
+    "val_mix_mAP50": 0.95,
+    "val_note": "same validation set as model-v0.5 (0.952)",
+    "val_wire_break_mAP50": 0.793,
+    "test_classic_mAP50": 0.935,
+    "test_classic_wire_break_recall": 0.63,
+    "test_rich_mAP50": 0.932,
+    "test_rich_wire_break_recall": 0.57,
+    "mission_frames_classic_mAP50": 0.974,
+    "mission_frames_rich_mAP50": 0.971,
+    "refly_classic_mAP50": 0.982,
+    "refly_rich_mAP50": 0.986,
+    "stream_q4": {
+     "flight_mission_classic": {
+      "mAP50": 0.964,
+      "wire_break_mAP50": 0.797,
+      "wb_false_pct": 0.0
+     },
+     "flight_mission_rich": {
+      "mAP50": 0.949,
+      "wire_break_mAP50": 0.756,
+      "wb_false_pct": 0.0
+     },
+     "flight_test_classic": {
+      "mAP50": 0.92,
+      "wire_break_mAP50": 0.593,
+      "wb_false_pct": 0.1
+     },
+     "flight_test_rich": {
+      "mAP50": 0.921,
+      "wire_break_mAP50": 0.559,
+      "wb_false_pct": 0.1
+     }
+    },
+    "fence_looks_fallen_post_recall_conf0.7": {
+     "classic": 0.891,
+     "steel": 0.485,
+     "polywire": 0.554,
+     "polyrope": 0.772,
+     "polytape": 0.851
+    },
+    "fence_looks_wire_break_recall_conf0.7": {
+     "classic": 0.108,
+     "steel": 0.0,
+     "polywire": 0.0,
+     "polyrope": 0.006,
+     "polytape": 0.044
+    },
+    "fence_looks_wire_mAP50": {
+     "classic": 0.992,
+     "steel": 0.194,
+     "polywire": 0.376,
+     "polyrope": 0.956,
+     "polytape": 0.969
+    },
+    "ttpla_false_frames_conf0.7": {
+     "wire_break": 2,
+     "fallen_post": 0,
+     "branch": 15,
+     "cow": 452,
+     "of": 1242
+    },
+    "ttpla_false_frames_conf0.5": {
+     "wire_break": 8,
+     "fallen_post": 2,
+     "branch": 242,
+     "cow": 1065,
+     "of": 1242
+    },
+    "baseline_model-v0.5": {
+     "fence_looks_fallen_post_recall_conf0.7": {
+      "classic": 0.931,
+      "steel": 0.594,
+      "polywire": 0.614,
+      "polyrope": 0.782,
+      "polytape": 0.871
+     },
+     "fence_looks_wire_break_recall_conf0.7": {
+      "classic": 0.215,
+      "steel": 0.0,
+      "polywire": 0.0,
+      "polyrope": 0.0,
+      "polytape": 0.044
+     },
+     "ttpla_false_frames_conf0.7": {
+      "wire_break": 0,
+      "fallen_post": 1,
+      "branch": 1,
+      "cow": 316,
+      "of": 1242
+     }
+    }
+   },
+   "mission_replay": {
+    "faults_found": "3 of 3",
+    "false_alerts": 0,
+    "false_wire_break_frames_conf0.7": 1,
+    "notes": "replayed with refined alert positions; alerts 0.5, 0.5 and 1.4 m from their faults. No break box from 0.5 at the corner where model-v0.6 and model-v0.7 raised a false alert (model-v0.5: 5 frames from 0.5, 1 from 0.7)"
+   },
+   "live": {},
+   "decision": "Not adopted: a control run, model-v0.5 fine-tuned 8 more epochs on its own mix with nothing added, the settings of model-v0.6 and model-v0.7. It answers its question: the extra training did not raise false broken wires (wb_false 0.0-0.5% on the stream sets, model-v0.5 0.0-1.2%; 1 false frame from 0.7 in the replay, 0 false alerts), so the data model-v0.6 and model-v0.7 added did, first suspect the steel-wire and polywire frames both share. But it is not better: less sure of every break, it finds fewer on the flight test farms (9% from 0.7, model-v0.5 23% and 16%), is lower on every held-out set (wire_break mAP50 -0.003 to -0.034), and on TTPLA's real photos boxes false branches in 19.5% from 0.5 (model-v0.5 1.0%) and false cows in 36% from 0.7 (25%): repeating the same data overfits.",
+   "artefacts": [
+    {
+     "file": "fence-yolo11n-v0.8.pt",
+     "bytes": 5485786,
+     "sha256": "02d65834a94b364d3ec2463fd24aa74ba843441feb7200a997a1c72f5708070b"
+    },
+    {
+     "file": "fence-yolo11n-v0.8.onnx",
+     "bytes": 10610501,
+     "sha256": "831815d6ceede4ec361aeb91e76645aabe3c73427865f54d5886760fcc592e08"
+    }
+   ],
+   "benchmark": "ml/benchmark"
+  },
+  {
    "id": "model-v0.7",
    "status": "not adopted",
    "summary": "+ corner negatives",

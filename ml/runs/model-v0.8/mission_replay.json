@@ -1,0 +1,261 @@
+{
+ "model-v0.8": {
+  "frames": 1986,
+  "F1": {
+   "near": 249,
+   "detected": 66,
+   "max_conf": 0.872
+  },
+  "false_frames_wire_break@0.35": 17,
+  "false_frames_wire_break@0.5": 4,
+  "false_frames_wire_break@0.7": 1,
+  "F2": {
+   "near": 242,
+   "detected": 69,
+   "max_conf": 0.923
+  },
+  "false_frames_fallen_post@0.35": 0,
+  "false_frames_fallen_post@0.5": 0,
+  "false_frames_fallen_post@0.7": 0,
+  "F3": {
+   "near": 242,
+   "detected": 63,
+   "max_conf": 0.914
+  },
+  "false_frames_branch@0.35": 0,
+  "false_frames_branch@0.5": 0,
+  "false_frames_branch@0.7": 0,
+  "alerts_1of1": {
+   "total": 8,
+   "false": 4,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ],
+   "distances_m": [
+    [
+     "wire_break",
+     0.3
+    ],
+    [
+     "wire_break",
+     12.1
+    ],
+    [
+     "wire_break",
+     53.1
+    ],
+    [
+     "fallen_post",
+     0.5
+    ],
+    [
+     "wire_break",
+     94.3
+    ],
+    [
+     "branch",
+     1.4
+    ],
+    [
+     "wire_break",
+     128.5
+    ],
+    [
+     "wire_break",
+     108.4
+    ]
+   ]
+  },
+  "alerts_3of5": {
+   "total": 4,
+   "false": 0,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ],
+   "distances_m": [
+    [
+     "wire_break",
+     0.3
+    ],
+    [
+     "wire_break",
+     12.1
+    ],
+    [
+     "fallen_post",
+     0.5
+    ],
+    [
+     "branch",
+     1.4
+    ]
+   ]
+  },
+  "alerts_5of8": {
+   "total": 3,
+   "false": 0,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ],
+   "distances_m": [
+    [
+     "wire_break",
+     0.3
+    ],
+    [
+     "fallen_post",
+     0.5
+    ],
+    [
+     "branch",
+     1.4
+    ]
+   ]
+  },
+  "alerts_5of8_conf0.7": {
+   "total": 3,
+   "false": 0,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ],
+   "distances_m": [
+    [
+     "wire_break",
+     0.5
+    ],
+    [
+     "fallen_post",
+     0.5
+    ],
+    [
+     "branch",
+     1.4
+    ]
+   ]
+  },
+  "alerts_5of8_conf0.7_class_conf": {
+   "total": 3,
+   "false": 0,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ],
+   "distances_m": [
+    [
+     "wire_break",
+     0.6
+    ],
+    [
+     "fallen_post",
+     0.5
+    ],
+    [
+     "branch",
+     1.4
+    ]
+   ]
+  },
+  "class_conf": {
+   "wire_break": 0.75
+  },
+  "model": "model-v0.8"
+ },
+ "model-v0.5": {
+  "model": "model-v0.5",
+  "frames": 1986,
+  "F1": {
+   "near": 249,
+   "detected": 66,
+   "max_conf": 0.871
+  },
+  "false_frames_wire_break@0.35": 20,
+  "false_frames_wire_break@0.5": 9,
+  "false_frames_wire_break@0.7": 1,
+  "F2": {
+   "near": 242,
+   "detected": 68,
+   "max_conf": 0.939
+  },
+  "false_frames_fallen_post@0.35": 5,
+  "false_frames_fallen_post@0.5": 1,
+  "false_frames_fallen_post@0.7": 1,
+  "F3": {
+   "near": 242,
+   "detected": 64,
+   "max_conf": 0.909
+  },
+  "false_frames_branch@0.35": 0,
+  "false_frames_branch@0.5": 0,
+  "false_frames_branch@0.7": 0,
+  "alerts_1of1": {
+   "total": 13,
+   "false": 7,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  },
+  "alerts_3of5": {
+   "total": 5,
+   "false": 1,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  },
+  "alerts_5of8": {
+   "total": 5,
+   "false": 1,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  },
+  "alerts_5of8_conf0.7": {
+   "total": 5,
+   "false": 0,
+   "faults_alerted": [
+    "branch",
+    "fallen_post",
+    "wire_break"
+   ]
+  }
+ },
+ "note": "tools/eval_mission.py on the recorded classic mission; model-v0.8 with tools/confirm.py's refined positions, model-v0.5 as recorded in model-v0.6's run (fixed positions; with the refined rule: 3 alerts, 0 false). alerts_5of8_conf0.7_class_conf: broken wires counted only from 0.75.",
+ "corner_false_alert": {
+  "note": "frames with a wire_break box projected within 10 m of the corner where model-v0.6 and model-v0.7 raised a false alert (57 m from F1), best box per frame",
+  "model-v0.5": {
+   "frames": 6,
+   "from_0.5": 5,
+   "from_0.7": 1,
+   "from_0.75": 1,
+   "max_conf": 0.754
+  },
+  "model-v0.7": {
+   "frames": 9,
+   "from_0.5": 7,
+   "from_0.7": 6,
+   "from_0.75": 2,
+   "max_conf": 0.84
+  },
+  "model-v0.8": {
+   "frames": 2,
+   "from_0.5": 0,
+   "from_0.7": 0,
+   "from_0.75": 0,
+   "max_conf": 0.458
+  }
+ }
+}
